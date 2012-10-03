@@ -1,7 +1,8 @@
 import Test.QuickCheck
 import Control.Applicative
+import Control.Monad
 import Data.Set hiding (map)
-import Data.List (nubBy, groupBy)
+import Data.List (nubBy, groupBy, nub)
 import FA
 
 states = fromList [State "A", State "B", State "C", State "D"]
@@ -45,6 +46,14 @@ nfa = NFA states alphabets transitions start accepts
 dfa1 = DFA q1 aa t1 s1 f1
 dfa2 = DFA q2 aa t2 s2 f2
 
+
+genStates :: Gen (States String)
+genStates = fromList <$> fmap State <$> (listOf1 $ show <$> seed)
+    where   seed = choose (0, 100) :: Gen Int
+
+genAlphabets :: Gen Alphabets
+genAlphabets =  fromList . nub <$> (listOf1 $ elements ['a' .. 'z'])
+
 genCompleteGraph :: States a -> Alphabets -> Gen [Arc a]
 genCompleteGraph states alphabets = 
     let inits = [ (from, alphabet) | from <- toList states, alphabet <- toList alphabets] in
@@ -52,6 +61,8 @@ genCompleteGraph states alphabets =
     where   extend (from, alphabet) = do
                 to <- elements $ toList states
                 return (from, alphabet, to)
+
+
 
 genDFA :: (Ord a) => States a -> Alphabets -> Gen (FA a)
 genDFA states alphabets = do
@@ -63,45 +74,23 @@ genDFA states alphabets = do
 genLanguage :: Alphabets -> Gen Language
 genLanguage = listOf . elements . toList
 
---genRLof :: FA a -> Gen Language
---genRLof (DFA states alphabets transitions start accepts) = do
---    language <- genLanguage alphabets
---    return $ if passed language then language else genRLof dfa
---    where   dfa = DFA states alphabets transitions start accepts
---            passed = machine dfa
+propNegateTwice :: Property
+propNegateTwice =
+    forAll (genDFA') (\dfa -> 
+        let __dfa = negateFA . negateFA $ dfa in
+        forAll (genAlphabets >>= genLanguage) (\language ->
+            machine dfa language == machine __dfa language
+        )
+    )
+    where genDFA' = join $ genDFA <$> genStates <*> genAlphabets
 
-
---prop_negateTwice :: Prop
-prop_negateTwice = do
-    transitions <- genCompleteGraph states alphabets
-    dfa <- return $ DFA states alphabets (transition transitions) start accepts
-    return $ dfa == (negateFA . negateFA) dfa
-
---genEdge :: Gen (State, Alphabet, State)
---genEdge = do
---    start <- elements states
---    alphabet <- elements alphabets
---    final <- elements states
---    return (start, alphabet, final)
-
---nubEdge :: [(State, Alphabet, State)] -> [(State, Alphabet, State)]
---nubEdge = nubBy sameStart
---    where   sameStart (state0, alphabet0, _) (state1, alphabet1, _) = 
---                state0 == state1 && alphabet0 == alphabet1
-
-
-
---prop_noTransition = 
---    forAll genStart (\x -> 
---        let target = uncurry (transition (fromList alphabets) []) x
---        in target == "")
-
---prop_someTransitions = 
---    let edges = fmap nubEdge $ sample' genEdge in
---    edges
-
---prop_someTransitions = do
---    raw <- sample' input
---    return edges
---    where 
---        edges = List.nub raw
+propComplementary :: Property
+propComplementary = do
+    alphabets <- genAlphabets
+    states <- genStates
+    forAll (genDFA states alphabets) (\dfa ->
+            let _dfa = negateFA dfa in 
+            forAll (genLanguage alphabets) (\language ->
+                machine dfa language /= machine _dfa language
+            )
+        )
