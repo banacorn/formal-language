@@ -2,7 +2,7 @@ module FA (
     S(S),
     Alphabet,
     Language,
-    States,
+    State,
     Alphabets,
     Transition,
     NDTransition,
@@ -22,7 +22,7 @@ import Data.List (groupBy)
 import Test.QuickCheck
 
 
---  States can be tricky
+--  State can be tricky
 --  * set (powerset construction)
 --  * set of set (non-determinism)
 --  * cartesian product (union, intersection ... )
@@ -30,15 +30,15 @@ import Test.QuickCheck
 data S a = S a | a :. (S a) deriving (Ord, Eq)
 type Alphabet = Char
 type Language = [Alphabet]
-type States a = Set (S a)
+type State a = Set (S a)
 type Alphabets = Set Alphabet
 type Transition a = S a -> Alphabet -> S a
 type Arc a = (S a, Alphabet, S a)
-type NDArc a = (S a, Alphabet, States a)
-type NDTransition a = S a -> Alphabet -> States a
+type NDArc a = (S a, Alphabet, State a)
+type NDTransition a = S a -> Alphabet -> State a
 
-data FA a = DFA (States a) Alphabets (Transition a) (S a) (States a) 
-          | NFA (States a) Alphabets (NDTransition a) (S a) (States a)
+data FA a = DFA (State a) Alphabets (Transition a) (S a) (State a) 
+          | NFA (State a) Alphabets (NDTransition a) (S a) (State a)
 
 instance (Show a) => Show (S a) where
     show (S a) = show a
@@ -107,7 +107,7 @@ instance (Eq a) => Eq (FA a) where
                 transitionList1 = [ transition1 state' alphabet' | state' <- toList states1, alphabet' <- toList alphabets1 ]
 
 
-(*.) :: (Ord a) => States a -> States a -> States a
+(*.) :: (Ord a) => State a -> State a -> State a
 s0 *. s1 = 
     fromList [ q0 :. S q1 | S q0 <- toList s0, S q1 <- toList s1]
 

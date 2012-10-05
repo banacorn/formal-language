@@ -47,14 +47,14 @@ dfa1 = DFA q1 aa t1 s1 f1
 dfa2 = DFA q2 aa t2 s2 f2
 
 
-genStates :: Gen (States String)
+genStates :: Gen (State String)
 genStates = fromList <$> fmap S <$> (listOf1 $ show <$> seed)
     where   seed = choose (0, 100) :: Gen Int
 
 genAlphabets :: Gen Alphabets
 genAlphabets =  fromList . nub <$> (listOf1 $ elements ['a' .. 'z'])
 
-genCompleteGraph :: States a -> Alphabets -> Gen [Arc a]
+genCompleteGraph :: State a -> Alphabets -> Gen [Arc a]
 genCompleteGraph states alphabets = 
     let inits = [ (from, alphabet) | from <- toList states, alphabet <- toList alphabets] in
     sequence $ fmap extend inits
@@ -64,7 +64,7 @@ genCompleteGraph states alphabets =
 
 
 
-genDFA :: (Ord a) => States a -> Alphabets -> Gen (FA a)
+genDFA :: (Ord a) => State a -> Alphabets -> Gen (FA a)
 genDFA states alphabets = do
     start <- elements $ toList states
     accepts <- listOf . elements $ toList states
