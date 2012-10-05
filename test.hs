@@ -5,42 +5,42 @@ import Data.Set hiding (map)
 import Data.List (nubBy, groupBy, nub)
 import FA
 
-states = fromList [State "A", State "B", State "C", State "D"]
+states = fromList [S "A", S "B", S "C", S "D"]
 alphabets = fromList ['0', '1']
 transitions = ndtransition [
-    (State "A", '0', fromList [State "B"]),
-    (State "A", ' ', fromList [State "C"]),
-    (State "B", '1', fromList [State "B", State "D"]),
-    (State "C", ' ', fromList [State "B"]),
-    (State "C", '0', fromList [State "D"]),
-    (State "D", '0', fromList [State "C"])
+    (S "A", '0', fromList [S "B"]),
+    (S "A", ' ', fromList [S "C"]),
+    (S "B", '1', fromList [S "B", S "D"]),
+    (S "C", ' ', fromList [S "B"]),
+    (S "C", '0', fromList [S "D"]),
+    (S "D", '0', fromList [S "C"])
     ]
-start = State "A"
-accepts = fromList [State "C", State "D"]
+start = S "A"
+accepts = fromList [S "C", S "D"]
 
 
-q1 = fromList [State "even", State "odd"]
+q1 = fromList [S "even", S "odd"]
 aa = fromList ['0', '1']
 t1 = transition [
-    (State "even", '0', State "even"),
-    (State "even", '1', State "odd"),
-    (State "odd", '0', State "odd"),
-    (State "odd", '1', State "even")
+    (S "even", '0', S "even"),
+    (S "even", '1', S "odd"),
+    (S "odd", '0', S "odd"),
+    (S "odd", '1', S "even")
     ]
-s1 = State "even"
-f1 = fromList [State "odd"]
+s1 = S "even"
+f1 = fromList [S "odd"]
 
 
 
-q2 = fromList [State "1", State "2"]
+q2 = fromList [S "1", S "2"]
 t2 = transition [
-    (State "1", '0', State "1"),
-    (State "1", '1', State "2"),
-    (State "2", '0', State "2"),
-    (State "2", '1', State "2")
+    (S "1", '0', S "1"),
+    (S "1", '1', S "2"),
+    (S "2", '0', S "2"),
+    (S "2", '1', S "2")
     ]
-s2 = State "1"
-f2 = fromList [State "2"]
+s2 = S "1"
+f2 = fromList [S "2"]
 
 nfa = NFA states alphabets transitions start accepts
 dfa1 = DFA q1 aa t1 s1 f1
@@ -48,7 +48,7 @@ dfa2 = DFA q2 aa t2 s2 f2
 
 
 genStates :: Gen (States String)
-genStates = fromList <$> fmap State <$> (listOf1 $ show <$> seed)
+genStates = fromList <$> fmap S <$> (listOf1 $ show <$> seed)
     where   seed = choose (0, 100) :: Gen Int
 
 genAlphabets :: Gen Alphabets
