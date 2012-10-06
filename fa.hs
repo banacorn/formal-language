@@ -112,7 +112,9 @@ instance (Eq a) => Eq (FA a) where
 
 --(*.) :: (Ord a) => States a -> States a -> States a
 --s0 *. s1 = 
---    fromList [ q0 :. S q1 | q0 <- toList s0, q1 <- toList s1]
+--    fromList [ q0 *.. q1 | q0 <- toList s0, q1 <- toList s1]
+--    where   q0 *.. q1 = fromList [ q0 :. S q1 | q0 <- toList s0, q1 <- toList s1]
+
 
 negateFA :: (Ord a) => FA a -> FA a
 negateFA (DFA states a t s accepts) = DFA states a t s $ difference states accepts
