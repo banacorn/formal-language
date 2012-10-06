@@ -8,6 +8,7 @@ module FA (
     Transition,
     NDTransition,
     ndtransition,
+    transition2ndtransition,
     negateFA,
     --unionFA,
     --intersectionFA,
@@ -34,6 +35,9 @@ type Alphabet = Char
 type Language = [Alphabet]
 type Alphabets = Set Alphabet
 
+type Mapping a = (State a, Alphabet, State a)
+type NDMapping a = (State a, Alphabet, States a)
+
 type Transition a = State a -> Alphabet -> State a
 type NDTransition a = State a -> Alphabet -> States a
 
@@ -44,13 +48,13 @@ instance (Show a) => Show (S a) where
     show (S a) = show a
     show (a :. state) = (show a) ++ "-" ++ (show state)
 
-transition :: (Eq a) => [(State a, Alphabet, State a)] -> Transition a
+transition :: (Eq a) => [Mapping a] -> Transition a
 transition arcs state alphabet =
     let result = [ f | (s, a, f) <- arcs, s == state, a == alphabet ] in
     case result of [] -> error "Transition not deinfed"
                    [x] -> x
 
-ndtransition :: (Eq a) => [(State a, Alphabet, States a)] -> NDTransition a
+ndtransition :: (Eq a) => [NDMapping a] -> NDTransition a
 ndtransition arcs state alphabet = 
     let result = [ f | (s, a, f) <- arcs, s == state, a == alphabet ] in
     case result of [] -> empty
@@ -92,6 +96,7 @@ showSet set = let list = toList set in
 
 
 
+
 instance (Show a) => Show (FA a) where
     show (DFA states alphabets transition state accepts) = dropQuote $
         "DFA" ++
@@ -130,6 +135,13 @@ negateFA :: (Ord a) => FA a -> FA a
 negateFA (DFA states a t s accepts) = DFA states a t s $ difference states accepts
 negateFA (NFA states a t s accepts) = NFA states a t s $ difference states accepts
 
+
+transition2ndtransition :: (State a -> Alphabet -> State a) -> (State a -> Alphabet -> States a)
+transition2ndtransition transition state alphabet = singleton $ transition state alphabet
+
+--dfa2nfa :: FA a -> Fa a
+--dfa2nfa (DFA s a t i f) = (NFA s a ndt i f)
+--    where ndt = 
 
 
 --(*.) :: (Ord a) => States a -> States a -> States a
