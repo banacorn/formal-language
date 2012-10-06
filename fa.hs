@@ -9,6 +9,7 @@ module FA (
     NDTransition,
     ndtransition,
     transition2ndtransition,
+    dfa2nfa,
     negateFA,
     --unionFA,
     --intersectionFA,
@@ -48,10 +49,10 @@ instance (Show a) => Show (S a) where
     show (S a) = show a
     show (a :. state) = (show a) ++ "-" ++ (show state)
 
-transition :: (Eq a) => [Mapping a] -> Transition a
+transition :: (Eq a, Show a) => [Mapping a] -> Transition a
 transition arcs state alphabet =
     let result = [ f | (s, a, f) <- arcs, s == state, a == alphabet ] in
-    case result of [] -> error "Transition not deinfed"
+    case result of [] -> error $ show state ++ ", " ++ show alphabet ++ " Transition not deinfed"
                    [x] -> x
 
 ndtransition :: (Eq a) => [NDMapping a] -> NDTransition a
@@ -84,6 +85,7 @@ machine (NFA states alphabets transition state accepts) (x:xs)
 dropQuote :: String -> String
 dropQuote [] = []
 dropQuote ('"':xs) = dropQuote xs
+dropQuote ('\\':xs) = dropQuote xs
 dropQuote ('\'':xs) = dropQuote xs
 dropQuote (x:xs) = x : dropQuote xs
 
@@ -128,6 +130,14 @@ instance (Eq a) => Eq (FA a) where
         &&  accepts0 == accepts1
         where   transitionList0 = [ transition0 state alphabet | state <- toList states0, alphabet <- toList alphabets0 ]
                 transitionList1 = [ transition1 state' alphabet' | state' <- toList states1, alphabet' <- toList alphabets1 ]
+    (==) (NFA states0 alphabets0 transition0 state0 accepts0) (NFA states1 alphabets1 transition1 state1 accepts1) = 
+            states0 == states1
+        &&  alphabets0 == alphabets1
+        &&  transitionList0 == transitionList1
+        &&  state0 == state1
+        &&  accepts0 == accepts1
+        where   transitionList0 = [ transition0 state alphabet | state <- toList states0, alphabet <- toList alphabets0 ]
+                transitionList1 = [ transition1 state' alphabet' | state' <- toList states1, alphabet' <- toList alphabets1 ]
 
 
 
@@ -136,8 +146,16 @@ negateFA (DFA states a t s accepts) = DFA states a t s $ difference states accep
 negateFA (NFA states a t s accepts) = NFA states a t s $ difference states accepts
 
 
-transition2ndtransition :: (State a -> Alphabet -> State a) -> (State a -> Alphabet -> States a)
+transition2ndtransition :: Transition a -> NDTransition a
+transition2ndtransition transition state ' ' = empty
 transition2ndtransition transition state alphabet = singleton $ transition state alphabet
+
+dfa2nfa :: FA a -> FA a
+dfa2nfa (DFA s t transition i f) = (NFA s t ndtransition i f)
+    where ndtransition = transition2ndtransition transition
+
+--ndtransition2transition :: NDTransition -> Transition
+--ndtransition2transition ndtransition state alphabet = 
 
 --dfa2nfa :: FA a -> Fa a
 --dfa2nfa (DFA s a t i f) = (NFA s a ndt i f)

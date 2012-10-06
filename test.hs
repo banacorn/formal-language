@@ -6,25 +6,37 @@ import Data.List (nubBy, groupBy, nub)
 import FA
 
 states = fromList [
-    singleton $ S 'A', 
-    singleton $ S 'B',
-    singleton $ S 'C',
-    singleton $ S 'D',
-    singleton $ S 'E',
-    singleton $ S 'F'
+    singleton $ S "A", 
+    singleton $ S "B",
+    singleton $ S "C",
+    singleton $ S "D"
     ]
-alphabets = fromList ['0', '1', '2', '3']
---transitions = ndtransition [
---    (fromList[S "A"], '0', fromList [S "B"]),
---    (S "A", ' ', fromList [S "C"]),
---    (S "B", '1', fromList [S "B", S "D"]),
---    (S "C", ' ', fromList [S "B"]),
---    (S "C", '0', fromList [S "D"]),
---    (S "D", '0', fromList [S "C"])
---    ]
---start = S "A"
---accepts = fromList [S "C", S "D"]
+alphabets = fromList ['0', '1']
 
+transitions = transition [
+    (singleton $ S "A", '1', singleton $ S "B"),
+    (singleton $ S "A", '0', singleton $ S "A"),
+    (singleton $ S "B", '1', singleton $ S "C"),
+    (singleton $ S "B", '0', singleton $ S "A"),
+    (singleton $ S "C", '1', singleton $ S "D"),
+    (singleton $ S "C", '0', singleton $ S "B"),
+    (singleton $ S "D", '1', singleton $ S "D"),
+    (singleton $ S "D", '0', singleton $ S "C")
+    ]
+
+ndtransitions = ndtransition [
+    (singleton $ S "A", '0', fromList [singleton $ S "B"]),
+    (singleton $ S "A", ' ', fromList [singleton $ S "C"]),
+    (singleton $ S "B", '1', fromList [singleton $ S "B", singleton $ S "D"]),
+    (singleton $ S "C", ' ', fromList [singleton $ S "B"]),
+    (singleton $ S "C", '0', fromList [singleton $ S "D"]),
+    (singleton $ S "D", '0', fromList [singleton $ S "C"])
+    ]
+start = singleton $ S "A"
+accepts = fromList [singleton $ S "C", singleton $ S "D"]
+
+nfa = NFA states alphabets ndtransitions start accepts
+dfa = DFA states alphabets transitions start accepts
 
 
 genStates :: Gen (States Int)
@@ -54,13 +66,13 @@ genPartialMapping states alphabets = listOf1 $ genNDArc states alphabets
                 finals <- fmap (fromList . nub) . listOf1 . elements $ toList states
                 return (start, alphabet, finals)
 
-genTransitionFunction :: (Eq a) => States a -> Alphabets -> Gen (State a -> Alphabet -> State a)
+genTransitionFunction :: (Eq a, Show a) => States a -> Alphabets -> Gen (State a -> Alphabet -> State a)
 genTransitionFunction states alphabets = (genCompleteMapping states alphabets) >>= return . transition
 
 genNDTransitionFunction :: (Eq a, Ord a) => States a -> Alphabets -> Gen (State a -> Alphabet -> States a)
 genNDTransitionFunction states alphabets = (genPartialMapping states alphabets) >>= return . ndtransition
 
-genDFA :: (Ord a) => States a -> Alphabets -> Gen (FA a)
+genDFA :: (Ord a, Show a) => States a -> Alphabets -> Gen (FA a)
 genDFA states alphabets = do
     start <- elements $ toList states
     accepts <- listOf . elements $ toList states
@@ -110,6 +122,37 @@ propTransition2NDTransition = do
                 ndmapping = [ ndtransitions state alphabet | state <- toList states, alphabet <- toList alphabets]
             in
             fmap singleton mapping == ndmapping
+        )
+
+propCompleteMapping :: Property
+propCompleteMapping = do
+    states <- genStates
+    alphabets <- genAlphabets
+    mapping <- genCompleteMapping states alphabets
+    property $ length mapping == size states * size alphabets
+
+propTransitionFunction :: Property
+propTransitionFunction = do
+    states <- genStates
+    alphabets <- genAlphabets
+    forAll (genCompleteMapping states alphabets) (\ mappings ->
+            let transitions = transition mappings in
+            and $ map (\ (state, alphabet, target) -> transitions state alphabet == target ) mappings
+        )
+
+
+
+propDFA2NFA :: Property
+propDFA2NFA = do
+    states <- genStates
+    alphabets <- genAlphabets
+    transitions <- genTransitionFunction states alphabets
+    start <- elements $ toList states
+    accepts <- fmap fromList . listOf1 . elements $ toList states
+    dfa <- return $ DFA states alphabets transitions start accepts
+    nfa <- return $ dfa2nfa dfa
+    forAll (genLanguage alphabets) (\language ->
+            machine dfa language ==> machine nfa language
         )
 
 
