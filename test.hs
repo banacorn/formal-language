@@ -13,7 +13,7 @@ states = fromList [
     ]
 alphabets = fromList ['0', '1']
 
-transitions = transition [
+mappings = Map [
     (singleton $ S "A", '1', singleton $ S "B"),
     (singleton $ S "A", '0', singleton $ S "A"),
     (singleton $ S "B", '1', singleton $ S "C"),
@@ -24,7 +24,7 @@ transitions = transition [
     (singleton $ S "D", '0', singleton $ S "C")
     ]
 
-ndtransitions = ndtransition [
+ndmappings = NDMap [
     (singleton $ S "A", '0', fromList [singleton $ S "B"]),
     (singleton $ S "A", ' ', fromList [singleton $ S "C"]),
     (singleton $ S "B", '1', fromList [singleton $ S "B", singleton $ S "D"]),
@@ -35,8 +35,8 @@ ndtransitions = ndtransition [
 start = singleton $ S "A"
 accepts = fromList [singleton $ S "C", singleton $ S "D"]
 
-nfa = NFA states alphabets ndtransitions start accepts
-dfa = DFA states alphabets transitions start accepts
+nfa = NFA states alphabets ndmappings start accepts
+dfa = DFA states alphabets mappings start accepts
 
 
 genStates :: Gen (States Int)
@@ -50,41 +50,35 @@ genLanguage :: Alphabets -> Gen Language
 genLanguage = listOf . elements . toList
 
 
-genCompleteMapping :: States a -> Alphabets -> Gen [(State a, Alphabet, State a)]
+genCompleteMapping :: States a -> Alphabets -> Gen (Map a)
 genCompleteMapping states alphabets = 
     let inits = [ (from, alphabet) | from <- toList states, alphabet <- toList alphabets] in
-    sequence $ fmap extend inits
+    fmap Map $ sequence $ fmap extend inits
     where   extend (from, alphabet) = do
                 to <- elements $ toList states
                 return (from, alphabet, to)
 
-genPartialMapping :: (Eq a, Ord a) => States a -> Alphabets -> Gen [(State a, Alphabet, States a)]
-genPartialMapping states alphabets = listOf1 $ genNDArc states alphabets
+genPartialMapping :: (Eq a, Ord a) => States a -> Alphabets -> Gen (Map a)
+genPartialMapping states alphabets = fmap NDMap $ listOf1 $ genNDArc states alphabets
     where   genNDArc states alphabets = do
                 start <- elements $ toList states
                 alphabet <- elements $ toList alphabets
                 finals <- fmap (fromList . nub) . listOf1 . elements $ toList states
                 return (start, alphabet, finals)
 
-genTransitionFunction :: (Eq a, Show a) => States a -> Alphabets -> Gen (State a -> Alphabet -> State a)
-genTransitionFunction states alphabets = (genCompleteMapping states alphabets) >>= return . transition
-
-genNDTransitionFunction :: (Eq a, Ord a) => States a -> Alphabets -> Gen (State a -> Alphabet -> States a)
-genNDTransitionFunction states alphabets = (genPartialMapping states alphabets) >>= return . ndtransition
-
 genDFA :: (Ord a, Show a) => States a -> Alphabets -> Gen (FA a)
 genDFA states alphabets = do
     start <- elements $ toList states
     accepts <- listOf . elements $ toList states
-    transitions <- fmap transition $ (genCompleteMapping states alphabets)
-    return $ DFA states alphabets transitions start (fromList accepts)
+    mappings <- genCompleteMapping states alphabets
+    return $ DFA states alphabets mappings start (fromList accepts)
 
 genNFA :: (Ord a) => States a -> Alphabets -> Gen (FA a)
 genNFA states alphabets = do
     start <- elements $ toList states
     accepts <- listOf1 . elements $ toList states
-    transitions <- fmap ndtransition $ (genPartialMapping states alphabets)
-    return $ NFA states alphabets transitions start (fromList accepts)
+    mappings <- genPartialMapping states alphabets
+    return $ NFA states alphabets mappings start (fromList accepts)
 
 propNegateTwice :: Property
 propNegateTwice =
@@ -108,35 +102,22 @@ propComplementary = do
         )
 
 
-
-propTransition2NDTransition :: Property
-propTransition2NDTransition = do
-    states <- genStates
-    alphabets <- genAlphabets
-    mappings <- genCompleteMapping states alphabets
-    forAll (return mappings) (\mappings ->
-            let 
-                transitions = transition mappings
-                ndtransitions = transition2ndtransition transitions 
-                mapping = [ transitions state alphabet | state <- toList states, alphabet <- toList alphabets]
-                ndmapping = [ ndtransitions state alphabet | state <- toList states, alphabet <- toList alphabets]
-            in
-            fmap singleton mapping == ndmapping
-        )
-
 propCompleteMapping :: Property
 propCompleteMapping = do
     states <- genStates
     alphabets <- genAlphabets
-    mapping <- genCompleteMapping states alphabets
+    (Map mapping) <- genCompleteMapping states alphabets
     property $ length mapping == size states * size alphabets
 
 propTransitionFunction :: Property
 propTransitionFunction = do
     states <- genStates
     alphabets <- genAlphabets
-    forAll (genCompleteMapping states alphabets) (\ mappings ->
-            let transitions = transition mappings in
+    forAll (genCompleteMapping states alphabets) (\ maps ->
+            let 
+                (Map mappings) = maps
+                transitions = driver maps
+            in
             and $ map (\ (state, alphabet, target) -> transitions state alphabet == target ) mappings
         )
 
@@ -146,10 +127,10 @@ propDFA2NFA :: Property
 propDFA2NFA = do
     states <- genStates
     alphabets <- genAlphabets
-    transitions <- genTransitionFunction states alphabets
+    mappings <- genCompleteMapping states alphabets
     start <- elements $ toList states
     accepts <- fmap fromList . listOf1 . elements $ toList states
-    dfa <- return $ DFA states alphabets transitions start accepts
+    dfa <- return $ DFA states alphabets mappings start accepts
     nfa <- return $ dfa2nfa dfa
     forAll (genLanguage alphabets) (\language ->
             machine dfa language ==> machine nfa language
