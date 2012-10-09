@@ -12,13 +12,11 @@ Proofs Constructed
  * Negation
  * Union
  * Intersection
-
 * NFA
-
 * DFA → NFA
 * DFA ← NFA
 
-Proofs to be Construced
+Proofs to be Constructed
 ===
 
 I'm so fucked :D
