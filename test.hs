@@ -156,10 +156,7 @@ propDFA2NFA :: Property
 propDFA2NFA = do
     states <- genStates
     alphabets <- genAlphabets
-    mappings <- genCompleteMapping states alphabets
-    start <- elements $ toList states
-    accepts <- fmap fromList . listOf1 . elements $ toList states
-    dfa <- return $ DFA states alphabets mappings start accepts
+    dfa <- genDFA states alphabets
     nfa <- return $ dfa2nfa dfa
     forAll (genLanguage alphabets) (\language ->
             machine dfa language ==> machine nfa language
@@ -169,17 +166,21 @@ propNFA2DFA :: Property
 propNFA2DFA = do
     states <- genStates
     alphabets <- genAlphabets
-    mappings <- genPartialMapping states alphabets
-    start <- elements $ toList states
-    accepts <- fmap fromList . listOf1 . elements $ toList states
-    nfa <- return $ NFA states alphabets mappings start accepts
+    nfa <- genNFA states alphabets
     dfa <- return $ nfa2dfa nfa
     forAll (genLanguage alphabets) (\language ->
             let prop = machine nfa language == machine dfa language in
             printTestCase (show dfa) prop
         )
-motherfucker :: (Ord a) => FA a -> FA a
-motherfucker = dfa2nfa . nfa2dfa
-anotherfucker :: (Ord a) => FA a -> FA a
-anotherfucker = motherfucker . motherfucker
 
+propNFA2DFA2NFA :: Property
+propNFA2DFA2NFA = do
+    states <- genStates
+    alphabets <- genAlphabets
+    nfa <- genNFA states alphabets
+    forAll (genLanguage alphabets) (\ language ->
+            let
+                nfa' = dfa2nfa . nfa2dfa $ nfa
+            in
+            machine nfa' language == machine nfa language
+        )
