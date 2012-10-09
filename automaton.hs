@@ -227,7 +227,7 @@ nfa2dfa (NFA ndstates alphabets ndmappings ndstart ndaccepts) =
     DFA states alphabets mappings start accepts
     where
         transit = epsilonTransition ndmappings
-        start = flattenSet $ epsilonClosure ndmappings ndstart
+        start = epsilonClosure ndmappings ndstart
         states = collectStates ndmappings alphabets (empty, singleton start)
         mappings = Map [ (state, alphabet, transit state alphabet) | state <- toList states, alphabet <- toList alphabets ]
         accepts = Data.Set.filter (\ newState ->
@@ -238,20 +238,20 @@ flattenSet :: (Ord a) => Set (Set a) -> Set a
 flattenSet setset = Data.Set.foldl union empty setset
 
 
-epsilonClosure :: (Ord a) => Map a -> State a -> States a
-epsilonClosure mappings state = insert state epsilonTransition
+epsilonClosure :: (Ord a) => Map a -> State a -> State a
+epsilonClosure mappings state = flattenSet $ insert state epsilonTransition
     where   nddriver' = nddriver mappings
-            epsilonTransition = flattenSet $ epsilonStatesSet
+            epsilonTransition = epsilonStatesSet
             epsilonStatesSet = smap (epsilonClosure mappings) $ nddriver' state ' '
 
 
 epsilonTransition :: (Ord a) => Map a -> State a -> Alphabet -> State a
 epsilonTransition mappings state alphabet =
     let 
-        states = smap singleton $ flattenSet $ epsilonClosure mappings state 
+        states = smap singleton $ epsilonClosure mappings state 
         result = smap transit states
     in
-    flattenSet $ epsilonClosure mappings $ flattenSet $ Data.Set.foldl union empty result
+    epsilonClosure mappings $ flattenSet $ Data.Set.foldl union empty result
     where   
         transit state = (nddriver mappings) state alphabet
 
