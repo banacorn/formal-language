@@ -3,7 +3,7 @@ import Control.Applicative
 import Control.Monad
 import Data.Set hiding (map)
 import Data.List (nubBy, groupBy, nub)
-import FA
+import Automaton
 
 --states = fromList [
 --    singleton $ S "A", 

@@ -1,6 +1,6 @@
 {-# LANGUAGE UnicodeSyntax #-}
 
-module FA (
+module Automaton (
     S(S),
     Language,
     State,
