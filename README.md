@@ -1,5 +1,30 @@
 Formal Language
 ===============
 
-Curry–Howard Correspondence for fun.
+Curry–Howard Correspondence for fun!
 
+
+
+Proofs Constructed
+===
+
+* DFA
+ * Negation
+ * Union
+ * Intersection
+
+* NFA
+
+* DFA → NFA
+* DFA ← NFA
+
+Proofs to be Construced
+===
+
+I'm so fucked :D
+
+
+Agda
+===
+
+Will move to Agda someday, for better type system (dependently typed) and nifty unicode symbols :D
