@@ -184,3 +184,4 @@ propNFA2DFA2NFA = do
             in
             machine nfa' language == machine nfa language
         )
+

@@ -200,7 +200,7 @@ instance (Eq a) => Eq (FA a) where
         &&  mappings0 == mappings1
         &&  state0 == state1
         &&  accepts0 == accepts1
-    (==) (NFA states0 alphabets0 (Map mappings0) state0 accepts0) (NFA states1 alphabets1 (Map mappings1) state1 accepts1) = 
+    (==) (NFA states0 alphabets0 (NDMap mappings0) state0 accepts0) (NFA states1 alphabets1 (NDMap mappings1) state1 accepts1) = 
             states0 == states1
         &&  alphabets0 == alphabets1
         &&  mappings0 == mappings1
