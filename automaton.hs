@@ -1,7 +1,6 @@
 {-# LANGUAGE UnicodeSyntax #-}
 
 module Automaton (
-    S(S),
     Language,
     State,
     States,
@@ -16,10 +15,10 @@ module Automaton (
     nddriver,
     mapping2ndmapping,
 
-    epsilonClosure,
+    --epsilonClosure,
     flattenSet,
     dfa2nfa,
-    nfa2dfa,
+    --nfa2dfa,
 
 
     negateFA,
@@ -33,51 +32,44 @@ import Data.Set
 import qualified Data.List as List
 import Test.QuickCheck
 
-
---  States
---  * set (powerset construction)
---  * set of set (non-determinism)
---  * cartesian product (union, intersection ... )
-
-data S a = S a | a :. (S a) deriving (Ord, Eq)
-type State a = Set (S a)
-type States a = Set (State a)
+type State  = Int
+type States = Set State
 
 type Alphabet = Char
 type Language = [Alphabet]
 type Alphabets = Set Alphabet
 
-type Transition a = State a -> Alphabet -> State a
-type NDTransition a = State a -> Alphabet -> States a
+type Transition = State -> Alphabet -> State
+type NDTransition = State -> Alphabet -> States
 
-type Mapping a = (State a, Alphabet, State a)
-type NDMapping a = (State a, Alphabet, States a)
-data Map a = Map [Mapping a]
-           | NDMap [NDMapping a]
+type Mapping = (State, Alphabet, State)
+type NDMapping = (State, Alphabet, States)
+data Map = Map [Mapping]
+           | NDMap [NDMapping]
 
-data FA a = DFA (States a) Alphabets (Map a) (State a) (States a) 
-          | NFA (States a) Alphabets (Map a) (State a) (States a)
+data FA = DFA States Alphabets Map State States
+          | NFA States Alphabets Map State States
 
 smap :: (Ord a, Ord b) => (a -> b) -> (Set a) -> (Set b)
 smap = Data.Set.map
 
-instance (Show a) => Show (S a) where
-    show (S a) = show a
-    show (a :. state) = (show a) ++ "-" ++ (show state)
+--instance (Show a) => Show (S a) where
+--    show (S a) = show a
+--    show (a :. state) = (show a) ++ "-" ++ (show state)
 
-driver :: (Eq a, Show a) => Map a -> Transition a
+driver :: Map -> Transition
 driver (Map mappings) state alphabet =
     let result = [ f | (s, a, f) <- mappings, s == state, a == alphabet ] in
     case result of [] -> error $ show state ++ ", " ++ show alphabet ++ " Transition not deinfed"
                    [x] -> x
 
-nddriver :: (Eq a) => Map a -> NDTransition a
+nddriver :: Map -> NDTransition
 nddriver (NDMap mappings) state alphabet = 
     let result = [ f | (s, a, f) <- mappings, s == state, a == alphabet ] in
     case result of [] -> empty
                    (x:xs) -> x
 
-machine :: (Ord a, Show a) => FA a -> Language -> Bool
+machine :: FA -> Language -> Bool
 machine (DFA states alphabets mappings state accepts) [] = member state accepts
 machine (DFA states alphabets mappings state accepts) (x:xs)
     | notMember x alphabets = False
@@ -109,32 +101,24 @@ dropQuote ('8':'7':'0':'9':xs) = '∅' : dropQuote xs
 dropQuote (x:xs) = x : dropQuote xs
 
 
-showSet :: (Show a) => Set a -> String
-showSet set = 
-    let list = toList set in
-    case length list of 0 -> " ∅ "
-                        1 -> " " ++ show (head $ list) ++ " "
-                        n -> " " ++ (concat . List.intersperse "." . fmap show $ list) ++ " "
+--showSet :: (Show a) => Set a -> String
+--showSet set = 
+--    let list = toList set in
+--    case length list of 0 -> " ∅ "
+--                        1 -> " " ++ show (head $ list) ++ " "
+--                        n -> " " ++ (concat . List.intersperse "." . fmap show $ list) ++ " "
 
 
---states = fromList [
---    singleton $ S "A", 
---    singleton $ S "B",
---    singleton $ S "C",
---    singleton $ S "D"
---    ]
---alphabets = fromList ['0', '1']
+states = fromList [0..1]
+alphabets = fromList ['a', 'b']
 
---mappings = Map [
---    (singleton $ S "A", '1', singleton $ S "B"),
---    (singleton $ S "A", '0', singleton $ S "A"),
---    (singleton $ S "B", '1', singleton $ S "C"),
---    (singleton $ S "B", '0', singleton $ S "A"),
---    (singleton $ S "C", '1', singleton $ S "D"),
---    (singleton $ S "C", '0', singleton $ S "B"),
---    (singleton $ S "D", '1', singleton $ S "D"),
---    (singleton $ S "D", '0', singleton $ S "C")
---    ]
+mappings = Map [
+    (0, 'b', 1),
+    (0, 'a', 0),
+    (1, 'b', 1),
+    (1, 'a', 0)
+    ]
+
 
 --ndmappings = NDMap [
 --    (singleton $ S "A", '0', fromList [singleton $ S "B"]),
@@ -144,56 +128,70 @@ showSet set =
 --    (singleton $ S "C", '0', fromList [singleton $ S "D"]),
 --    (singleton $ S "D", '0', fromList [singleton $ S "C"])
 --    ]
---start = singleton $ S "A"
---accepts = fromList [singleton $ S "C", singleton $ S "D"]
+start = 0
+accepts = fromList [1]
+
+
+
+statesA = fromList [2..3]
+mappingsA = Map [
+    (2, 'b', 3),
+    (2, 'a', 2),
+    (3, 'b', 3),
+    (3, 'a', 2)
+    ]
+
+startA = 2
+acceptsA = fromList [3]
 
 --nfa = NFA states alphabets ndmappings start accepts
---dfa = DFA states alphabets mappings start accepts
+dfa = DFA states alphabets mappings start accepts
+dfaa = DFA statesA alphabets mappingsA startA acceptsA
 
-instance (Show a) => Show (Map a) where
+instance Show Map where
     show (Map mappings) = dropQuote $ 
         listMapping mappings
         where
             listMapping = concat . fmap (prefixIndent . showMap)
-            prefixIndent = (++) "\n       "
+            prefixIndent = (++) "\n        "
             showMap (s, a, t) = 
-                showSet s ++ 
-                "× " ++ 
+                show s ++ 
+                "  ×  " ++ 
                 show a ++ 
-                " → " ++ 
-                (show . showSet $ t)
+                "  →  " ++ 
+                show t
     show (NDMap mappings) = dropQuote $
         listMapping mappings
         where
             listMapping = concat . fmap (prefixIndent . showMap)
-            prefixIndent = (++) "\n       "
+            prefixIndent = (++) "\n        "
             showMap (s, a, t) = 
-                showSet s ++ 
-                "× " ++ 
+                show s ++ 
+                "  ×  " ++ 
                 show a ++ 
-                " → " ++ 
-                (show . fmap showSet . toList $ t)
+                "  →  " ++ 
+                (show . toList $ t)
 
-instance (Show a) => Show (FA a) where
+instance Show FA where
     show (DFA states alphabets mappings state accepts) = dropQuote $
         "DFA" ++
-        "\n    Q   " ++ (show . fmap showSet . toList $ states) ++ 
+        "\n    Q   " ++ (show . toList $ states) ++ 
         "\n    Σ   " ++ (show $ toList alphabets) ++
         "\n    δ   " ++ (show mappings) ++
-        "\n    q   " ++ (show . showSet $ state) ++ 
-        "\n    F   " ++ (show . fmap showSet . toList $ accepts) ++
+        "\n    q   " ++ (show state) ++ 
+        "\n    F   " ++ (show . toList $ accepts) ++
         "\n"
     show (NFA states alphabets mappings state accepts) = dropQuote $ 
         "NFA" ++
-        "\n    Q   " ++ (show . fmap showSet . toList $ states) ++ 
+        "\n    Q   " ++ (show . toList $ states) ++ 
         "\n    Σ   " ++ (show $ toList alphabets) ++
         "\n    δ   " ++ (show mappings) ++
-        "\n    q   " ++ (show . showSet $ state) ++ 
-        "\n    F   " ++ (show . fmap showSet . toList $ accepts) ++
+        "\n    q   " ++ (show state) ++ 
+        "\n    F   " ++ (show . toList $ accepts) ++
         "\n"
 
 
-instance (Eq a) => Eq (FA a) where
+instance Eq FA where
     (==) (DFA states0 alphabets0 (Map mappings0) state0 accepts0) (DFA states1 alphabets1 (Map mappings1) state1 accepts1) = 
             states0 == states1
         &&  alphabets0 == alphabets1
@@ -209,60 +207,60 @@ instance (Eq a) => Eq (FA a) where
 
 
 
-negateFA :: (Ord a) => FA a -> FA a
+--negateFA :: (Ord a) => FA a -> FA a
 negateFA (DFA states a m s accepts) = DFA states a m s $ difference states accepts
 negateFA (NFA states a m s accepts) = NFA states a m s $ difference states accepts
 
-mapping2ndmapping :: Mapping a -> NDMapping a
+--mapping2ndmapping :: Mapping a -> NDMapping a
 mapping2ndmapping (state, alphabet, target) = (state, alphabet, singleton target)
 
 
-dfa2nfa :: FA a -> FA a
+--dfa2nfa :: FA a -> FA a
 dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (NDMap ndmappings) i f)
     where ndmappings = fmap mapping2ndmapping mappings
 
 
-nfa2dfa :: (Ord a) => FA a -> FA a
-nfa2dfa (NFA ndstates alphabets ndmappings ndstart ndaccepts) = 
-    DFA states alphabets mappings start accepts
-    where
-        transit = epsilonTransition ndmappings
-        start = epsilonClosure ndmappings ndstart
-        states = collectStates ndmappings alphabets (empty, singleton start)
-        mappings = Map [ (state, alphabet, transit state alphabet) | state <- toList states, alphabet <- toList alphabets ]
-        accepts = Data.Set.filter (\ newState ->
-                not . and . toList $ Data.Set.map (\ acceptState -> Data.Set.null $ acceptState `intersection` newState ) ndaccepts
-            ) states
+--nfa2dfa :: (Ord a) => FA a -> FA a
+--nfa2dfa (NFA ndstates alphabets ndmappings ndstart ndaccepts) = 
+--    DFA states alphabets mappings start accepts
+--    where
+--        transit = epsilonTransition ndmappings
+--        start = epsilonClosure ndmappings ndstart
+--        states = collectStates ndmappings alphabets (empty, singleton start)
+--        mappings = Map [ (state, alphabet, transit state alphabet) | state <- toList states, alphabet <- toList alphabets ]
+--        accepts = Data.Set.filter (\ newState ->
+--                not . and . toList $ Data.Set.map (\ acceptState -> Data.Set.null $ acceptState `intersection` newState ) ndaccepts
+--            ) states
 
-flattenSet :: (Ord a) => Set (Set a) -> Set a
+--flattenSet :: (Ord a) => Set (Set a) -> Set a
 flattenSet setset = Data.Set.foldl union empty setset
 
 
-epsilonClosure :: (Ord a) => Map a -> State a -> State a
-epsilonClosure mappings state = flattenSet $ insert state epsilonTransition
-    where   nddriver' = nddriver mappings
-            epsilonTransition = epsilonStatesSet
-            epsilonStatesSet = smap (epsilonClosure mappings) $ nddriver' state ' '
+--epsilonClosure :: (Ord a) => Map a -> State a -> State a
+--epsilonClosure mappings state = flattenSet $ insert state epsilonTransition
+--    where   nddriver' = nddriver mappings
+--            epsilonTransition = epsilonStatesSet
+--            epsilonStatesSet = smap (epsilonClosure mappings) $ nddriver' state ' '
 
 
-epsilonTransition :: (Ord a) => Map a -> State a -> Alphabet -> State a
-epsilonTransition mappings state alphabet =
-    let 
-        states = smap singleton $ epsilonClosure mappings state 
-        result = smap transit states
-    in
-    epsilonClosure mappings $ flattenSet $ Data.Set.foldl union empty result
-    where   
-        transit state = (nddriver mappings) state alphabet
+----epsilonTransition :: (Ord a) => Map a -> State a -> Alphabet -> State a
+--epsilonTransition mappings state alphabet =
+--    let 
+--        states = smap singleton $ epsilonClosure mappings state 
+--        result = smap transit states
+--    in
+--    epsilonClosure mappings $ flattenSet $ Data.Set.foldl union empty result
+--    where   
+--        transit state = (nddriver mappings) state alphabet
 
-collectStates mappings alphabets (old, new)
-    | emptied || reapeated  = collected
-    | otherwise             = collectStates mappings alphabets (collected, newTransisions)
-    where   transit state   = smap (\a -> epsilonTransition mappings state a) alphabets
-            newTransisions  = flattenSet $ smap transit new
-            collected       = union old new
-            emptied         = Data.Set.null newTransisions
-            reapeated       = newTransisions `isSubsetOf` old
+--collectStates mappings alphabets (old, new)
+--    | emptied || reapeated  = collected
+--    | otherwise             = collectStates mappings alphabets (collected, newTransisions)
+--    where   transit state   = smap (\a -> epsilonTransition mappings state a) alphabets
+--            newTransisions  = flattenSet $ smap transit new
+--            collected       = union old new
+--            emptied         = Data.Set.null newTransisions
+--            reapeated       = newTransisions `isSubsetOf` old
 
 
 --(*.) :: (Ord a) => States a -> States a -> States a
