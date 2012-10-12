@@ -142,7 +142,7 @@ acceptsA = fromList [3]
 dfa = DFA states alphabets mappings start accepts
 dfaa = DFA statesA alphabets mappingsA startA acceptsA
 
---u = dfa `unionFA` dfaa
+u = dfa `unionFA` dfaa
 
 instance Show Map where
     show (Map mappings) = dropQuote $ 
@@ -227,16 +227,37 @@ encodePair (setA, setB) (a, b) = index
                                                     Nothing -> 0
 
 
---unionFA :: FA -> FA -> FA
---unionFA (DFA states0 alphabets transition0 start0 accepts0) (DFA states1 _ transition1 start1 accepts1) =
---    DFA states alphabets transition0 start0 accepts0
---    where
---        stateSpace = size states0 * size states1
+unionFA :: FA -> FA -> FA
+unionFA (DFA states0 alphabets mappings0 start0 accepts0) (DFA states1 _ mappings1 start1 accepts1) =
+    DFA states alphabets mappings start accepts
+    where
+        stateSpace = size states0 * size states1
+        encode = encodePair (states0, states1)
+        driver0 = driver mappings0
+        driver1 = driver mappings1
+
+        states = fromList [0 .. stateSpace - 1]
+        mappings = Map [ (encode (s0, s1), a, encode (driver0 s0 a, driver1 s1 a)) | a <- toList alphabets , s0 <- toList states0, s1 <- toList states1 ]
+        start = encode (start0, start1)
+        accepts = fromList $ concat [ prod0 a | a <- toList accepts0 ] ++ concat [ prod1 a | a <- toList accepts1 ]
+            where prod0 a = [ encode (a, s) | s <- toList states1 ]
+                  prod1 a = [ encode (s, a) | s <- toList states0 ]
 
 
---        states = fromList [0 .. stateSpace - 1]
 
+--intersectionFA :: FA -> FA -> FA
+intersectionFA (DFA states0 alphabets mappings0 start0 accepts0) (DFA states1 _ mappings1 start1 accepts1) =
+    DFA states alphabets mappings start accepts
+    where
+        stateSpace = size states0 * size states1
+        encode = encodePair (states0, states1)
+        driver0 = driver mappings0
+        driver1 = driver mappings1
 
+        states = fromList [0 .. stateSpace - 1]
+        mappings = Map [ (encode (s0, s1), a, encode (driver0 s0 a, driver1 s1 a)) | a <- toList alphabets , s0 <- toList states0, s1 <- toList states1 ]
+        start = encode (start0, start1)
+        accepts = fromList [ encode (a0, a1) | a0 <- toList accepts0, a1 <- toList accepts1 ]
 
 --nfa2dfa :: (Ord a) => FA a -> FA a
 --nfa2dfa (NFA ndstates alphabets ndmappings ndstart ndaccepts) = 
