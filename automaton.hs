@@ -29,6 +29,7 @@ module Automaton (
 ) where
 
 import Data.Set 
+import Control.Applicative hiding (empty)
 import qualified Data.List as List
 import Test.QuickCheck
 
@@ -100,15 +101,6 @@ dropQuote ('\'':xs) = dropQuote xs
 dropQuote ('8':'7':'0':'9':xs) = '∅' : dropQuote xs
 dropQuote (x:xs) = x : dropQuote xs
 
-
---showSet :: (Show a) => Set a -> String
---showSet set = 
---    let list = toList set in
---    case length list of 0 -> " ∅ "
---                        1 -> " " ++ show (head $ list) ++ " "
---                        n -> " " ++ (concat . List.intersperse "." . fmap show $ list) ++ " "
-
-
 states = fromList [0..1]
 alphabets = fromList ['a', 'b']
 
@@ -144,9 +136,13 @@ mappingsA = Map [
 startA = 2
 acceptsA = fromList [3]
 
+
+
 --nfa = NFA states alphabets ndmappings start accepts
 dfa = DFA states alphabets mappings start accepts
 dfaa = DFA statesA alphabets mappingsA startA acceptsA
+
+--u = dfa `unionFA` dfaa
 
 instance Show Map where
     show (Map mappings) = dropQuote $ 
@@ -218,6 +214,28 @@ mapping2ndmapping (state, alphabet, target) = (state, alphabet, singleton target
 --dfa2nfa :: FA a -> FA a
 dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (NDMap ndmappings) i f)
     where ndmappings = fmap mapping2ndmapping mappings
+
+
+encodePair :: (Eq a1, Eq a) => (Set a, Set a1) -> (a, a1) -> Int
+encodePair (setA, setB) (a, b) = index
+    where   listA = toList setA
+            listB = toList setB
+            indexA = List.elemIndex a listA
+            indexB = List.elemIndex b listB
+            base = fmap (* size setB) indexA 
+            index = case (+) <$> base <*> indexB of Just a -> a
+                                                    Nothing -> 0
+
+
+--unionFA :: FA -> FA -> FA
+--unionFA (DFA states0 alphabets transition0 start0 accepts0) (DFA states1 _ transition1 start1 accepts1) =
+--    DFA states alphabets transition0 start0 accepts0
+--    where
+--        stateSpace = size states0 * size states1
+
+
+--        states = fromList [0 .. stateSpace - 1]
+
 
 
 --nfa2dfa :: (Ord a) => FA a -> FA a
