@@ -14,12 +14,13 @@ import Automaton
 --alphabets = fromList ['0', '1']
 
 mappings = Map [
-    (singleton $ S "1", 'b', singleton $ S "2"),
-    (singleton $ S "1", 'a', singleton $ S "1"),
-    (singleton $ S "2", 'b', singleton $ S "3"),
-    (singleton $ S "2", 'a', singleton $ S "1"),
-    (singleton $ S "3", 'b', singleton $ S "3"),
-    (singleton $ S "3", 'a', singleton $ S "2")
+
+    (0, 'b', 1),
+    (0, 'a', 0),
+    (1, 'b', 2),
+    (1, 'a', 0),
+    (2, 'b', 2),
+    (2, 'a', 1)
     ]
 
 --ndmappings = NDMap [
@@ -33,43 +34,38 @@ mappings = Map [
 --start = singleton $ S "A"
 --accepts = fromList [singleton $ S "C", singleton $ S "D"]
 
-states = fromList [
-    singleton $ S "1", 
-    singleton $ S "2",
-    singleton $ S "3"
-    ]
-alphabets = fromList ['a', 'b']
+states = fromList [0..2]
+alphabets = fromList ['a' .. 'b']
 
 ndmappings = NDMap [
-    (singleton $ S "1", ' ', fromList [singleton $ S "3"]),
-    (singleton $ S "1", 'b', fromList [singleton $ S "2"]),
-    (singleton $ S "2", 'a', fromList [singleton $ S "2", singleton $ S "3"]),
-    (singleton $ S "2", 'b', fromList [singleton $ S "3"]),
-    (singleton $ S "3", 'a', fromList [singleton $ S "1"])
+    (0, ' ', fromList [2]),
+    (0, 'b', fromList [1]),
+    (1, 'a', fromList [1, 2]),
+    (1, 'b', fromList [2]),
+    (2, 'a', fromList [0])
     ]
 
-start = singleton $ S "1"
-accepts = fromList [singleton $ S "1"]
+start = 0
+accepts = fromList [0]
 
 nfa = NFA states alphabets ndmappings start accepts
 dfa = DFA states alphabets mappings start accepts
 
 
-ss = singleton . S
 
-statesA = fromList [
-    ss "1"
-    ]
-alphabetsA = fromList ['a']
-ndmappingsA = NDMap [
-    (ss "1", 'a', fromList [ss "1"])
-    ]
-startA = ss "1"
-acceptsA = fromList [ss "1"]
-nfaA = NFA statesA alphabetsA ndmappingsA startA acceptsA
+--statesA = fromList [
+--    ss "1"
+--    ]
+--alphabetsA = fromList ['a']
+--ndmappingsA = NDMap [
+--    (ss "1", 'a', fromList [ss "1"])
+--    ]
+--startA = ss "1"
+--acceptsA = fromList [ss "1"]
+--nfaA = NFA statesA alphabetsA ndmappingsA startA acceptsA
 
-genStates :: Gen (States Int)
-genStates = fromList <$> fmap singleton <$> fmap S <$> listOf1 seed
+genStates :: Gen States
+genStates = fromList <$> listOf1 seed
     where seed = choose (0, 100) :: Gen Int
 
 genAlphabets :: Gen Alphabets
@@ -79,7 +75,7 @@ genLanguage :: Alphabets -> Gen Language
 genLanguage = listOf . elements . toList
 
 
-genCompleteMapping :: States a -> Alphabets -> Gen (Map a)
+genCompleteMapping :: States -> Alphabets -> Gen Map
 genCompleteMapping states alphabets = 
     let inits = [ (from, alphabet) | from <- toList states, alphabet <- toList alphabets] in
     fmap Map $ sequence $ fmap extend inits
@@ -87,7 +83,7 @@ genCompleteMapping states alphabets =
                 to <- elements $ toList states
                 return (from, alphabet, to)
 
-genPartialMapping :: (Eq a, Ord a) => States a -> Alphabets -> Gen (Map a)
+genPartialMapping :: States -> Alphabets -> Gen Map
 genPartialMapping states alphabets = fmap NDMap $ listOf1 $ genNDArc states alphabets
     where   genNDArc states alphabets = do
                 start <- elements $ toList states
@@ -95,14 +91,14 @@ genPartialMapping states alphabets = fmap NDMap $ listOf1 $ genNDArc states alph
                 finals <- fmap (fromList . nub) . listOf1 . elements $ toList states
                 return (start, alphabet, finals)
 
-genDFA :: (Ord a, Show a) => States a -> Alphabets -> Gen (FA a)
+genDFA :: States -> Alphabets -> Gen FA
 genDFA states alphabets = do
     start <- elements $ toList states
     accepts <- listOf . elements $ toList states
     mappings <- genCompleteMapping states alphabets
     return $ DFA states alphabets mappings start (fromList accepts)
 
-genNFA :: (Ord a) => States a -> Alphabets -> Gen (FA a)
+genNFA :: States -> Alphabets -> Gen FA
 genNFA states alphabets = do
     start <- elements $ toList states
     accepts <- listOf1 . elements $ toList states
@@ -162,26 +158,26 @@ propDFA2NFA = do
             machine dfa language ==> machine nfa language
         )
 
-propNFA2DFA :: Property
-propNFA2DFA = do
-    states <- genStates
-    alphabets <- genAlphabets
-    nfa <- genNFA states alphabets
-    dfa <- return $ nfa2dfa nfa
-    forAll (genLanguage alphabets) (\language ->
-            let prop = machine nfa language == machine dfa language in
-            printTestCase (show dfa) prop
-        )
+--propNFA2DFA :: Property
+--propNFA2DFA = do
+--    states <- genStates
+--    alphabets <- genAlphabets
+--    nfa <- genNFA states alphabets
+--    dfa <- return $ nfa2dfa nfa
+--    forAll (genLanguage alphabets) (\language ->
+--            let prop = machine nfa language == machine dfa language in
+--            printTestCase (show dfa) prop
+--        )
 
-propNFA2DFA2NFA :: Property
-propNFA2DFA2NFA = do
-    states <- genStates
-    alphabets <- genAlphabets
-    nfa <- genNFA states alphabets
-    forAll (genLanguage alphabets) (\ language ->
-            let
-                nfa' = dfa2nfa . nfa2dfa $ nfa
-            in
-            machine nfa' language == machine nfa language
-        )
+--propNFA2DFA2NFA :: Property
+--propNFA2DFA2NFA = do
+--    states <- genStates
+--    alphabets <- genAlphabets
+--    nfa <- genNFA states alphabets
+--    forAll (genLanguage alphabets) (\ language ->
+--            let
+--                nfa' = dfa2nfa . nfa2dfa $ nfa
+--            in
+--            machine nfa' language == machine nfa language
+--        )
 
