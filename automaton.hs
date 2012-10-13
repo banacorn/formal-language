@@ -30,11 +30,11 @@ module Automaton (
 
 
 import Data.Set 
-import Data.Bits (bit)
+import Data.Bits (testBit)
 import Control.Applicative hiding (empty)
 import Control.Monad
 import qualified Data.List as List
-import Test.QuickCheck
+--import Test.QuickCheck
 
 type State  = Int
 type States = Set State
@@ -100,7 +100,7 @@ dropQuote ('\'':xs) = dropQuote xs
 dropQuote ('8':'7':'0':'9':xs) = '∅' : dropQuote xs
 dropQuote (x:xs) = x : dropQuote xs
 
-states = fromList [0..1]
+states = fromList [0..2]
 alphabets = fromList ['a', 'b']
 
 mappings = Map [
@@ -111,15 +111,14 @@ mappings = Map [
     ]
 
 
+ndmappings = NDMap [
+    (0, ' ', fromList [2]),
+    (0, 'b', fromList [1]),
+    (1, 'a', fromList [1, 2]),
+    (1, 'b', fromList [2]),
+    (2, 'a', fromList [0])
+    ]
 
---ndmappings = NDMap [
---    (singleton $ S "A", '0', fromList [singleton $ S "B"]),
---    (singleton $ S "A", ' ', fromList [singleton $ S "C"]),
---    (singleton $ S "B", '1', fromList [singleton $ S "B", singleton $ S "D"]),
---    (singleton $ S "C", ' ', fromList [singleton $ S "B"]),
---    (singleton $ S "C", '0', fromList [singleton $ S "D"]),
---    (singleton $ S "D", '0', fromList [singleton $ S "C"])
---    ]
 start = 0
 accepts = fromList [1]
 
@@ -138,7 +137,7 @@ acceptsA = fromList [3]
 
 
 
---nfa = NFA states alphabets ndmappings start accepts
+nfa = NFA states alphabets ndmappings start accepts
 dfa = DFA states alphabets mappings start accepts
 dfaa = DFA statesA alphabets mappingsA startA acceptsA
 
@@ -228,19 +227,16 @@ encodePair' (setA, setB) (a, b) = index
             index = case (+) <$> base <*> indexB of Just a -> a
                                                     Nothing -> 0
 
-tq = fromList [0 .. 2]
-ta = fromList [0]
-encodePowerset universe set = case mapM (power <=< indices) list of Just a -> sum a
-                                                                    Nothing -> 0
-    where   list = toList set
-            uni = toList universe
-            indices = flip List.elemIndex uni
-            power a = Just $ 2 ^ a
+tq = fromList [0 .. 3]
+ta = fromList [0, 2, 3]
 
 
-
-
-a = encodePowerset tq ta
+encodePowerset = sum . fmap ((^) 2) . toList
+decodePowerset = fromList . List.elemIndices 1 . bits 
+    where   bits 0 = [0]
+            bits 1 = [1]
+            bits n = (mod n 2) : bits (div n 2)
+ofPowerset e n = testBit n e
 
 unionFA :: FA -> FA -> FA
 unionFA (DFA a b c d e) (DFA g h i j k) =
@@ -290,6 +286,8 @@ formalize (DFA states alphabets (Map mappings) start accepts) =
             replace x = case List.elemIndex x (toList states) of Just a -> a
                                                                  Nothing -> 0
 
+
+
 --nfa2dfa :: (Ord a) => FA a -> FA a
 --nfa2dfa (NFA ndstates alphabets ndmappings ndstart ndaccepts) = 
 --    DFA states alphabets mappings start accepts
@@ -306,7 +304,7 @@ flattenSet :: (Ord a) => Set (Set a) -> Set a
 flattenSet setset = Data.Set.foldl union empty setset
 
 
---epsilonClosure :: (Ord a) => Map a -> State a -> State a
+--epsilonClosure :: Map -> State -> State
 --epsilonClosure mappings state = flattenSet $ insert state epsilonTransition
 --    where   nddriver' = nddriver mappings
 --            epsilonTransition = epsilonStatesSet
