@@ -217,7 +217,7 @@ dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (NDMap ndmappings) i f)
 
 encodePair size (a, b) = a * size + b
 
-encodePair' :: (Eq a1, Eq a) => (Set a, Set a1) -> (a, a1) -> Int
+encodePair' :: (Eq a1, Eq a) => (Set a, Set a1) -> (a, a1) -> State
 encodePair' (setA, setB) (a, b) = index
     where   listA = toList setA
             listB = toList setB
@@ -230,8 +230,9 @@ encodePair' (setA, setB) (a, b) = index
 tq = fromList [0 .. 3]
 ta = fromList [0, 2, 3]
 
-
+encodePowerset :: States -> State
 encodePowerset = sum . fmap ((^) 2) . toList
+decodePowerset :: State -> States
 decodePowerset = fromList . List.elemIndices 1 . bits 
     where   bits 0 = [0]
             bits 1 = [1]
@@ -302,6 +303,11 @@ formalize (DFA states alphabets (Map mappings) start accepts) =
 
 flattenSet :: (Ord a) => Set (Set a) -> Set a
 flattenSet setset = Data.Set.foldl union empty setset
+
+epsilonClosure :: Map -> State -> State
+epsilonClosure mappings state = encodePowerset $ epsilonClosure' mappings state
+    where   epsilonClosure' mappings state = insert state $ flattenSet $ smap (epsilonClosure' mappings) (drive state ' ')
+            drive = nddriver mappings
 
 
 --epsilonClosure :: Map -> State -> State
