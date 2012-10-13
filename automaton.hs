@@ -28,8 +28,11 @@ module Automaton (
     machine 
 ) where
 
+
 import Data.Set 
+import Data.Bits (bit)
 import Control.Applicative hiding (empty)
+import Control.Monad
 import qualified Data.List as List
 import Test.QuickCheck
 
@@ -53,10 +56,6 @@ data FA = DFA States Alphabets Map State States
 
 smap :: (Ord a, Ord b) => (a -> b) -> (Set a) -> (Set b)
 smap = Data.Set.map
-
---instance (Show a) => Show (S a) where
---    show (S a) = show a
---    show (a :. state) = (show a) ++ "-" ++ (show state)
 
 driver :: Map -> Transition
 driver (Map mappings) state alphabet =
@@ -110,6 +109,7 @@ mappings = Map [
     (1, 'b', 1),
     (1, 'a', 0)
     ]
+
 
 
 --ndmappings = NDMap [
@@ -203,21 +203,23 @@ instance Eq FA where
 
 
 
---negateFA :: (Ord a) => FA a -> FA a
+negateFA :: FA -> FA
 negateFA (DFA states a m s accepts) = DFA states a m s $ difference states accepts
 negateFA (NFA states a m s accepts) = NFA states a m s $ difference states accepts
 
---mapping2ndmapping :: Mapping a -> NDMapping a
+mapping2ndmapping :: Mapping -> NDMapping
 mapping2ndmapping (state, alphabet, target) = (state, alphabet, singleton target)
 
 
---dfa2nfa :: FA a -> FA a
+dfa2nfa :: FA -> FA
 dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (NDMap ndmappings) i f)
     where ndmappings = fmap mapping2ndmapping mappings
 
 
-encodePair :: (Eq a1, Eq a) => (Set a, Set a1) -> (a, a1) -> Int
-encodePair (setA, setB) (a, b) = index
+encodePair size (a, b) = a * size + b
+
+encodePair' :: (Eq a1, Eq a) => (Set a, Set a1) -> (a, a1) -> Int
+encodePair' (setA, setB) (a, b) = index
     where   listA = toList setA
             listB = toList setB
             indexA = List.elemIndex a listA
@@ -226,13 +228,29 @@ encodePair (setA, setB) (a, b) = index
             index = case (+) <$> base <*> indexB of Just a -> a
                                                     Nothing -> 0
 
+tq = fromList [0 .. 2]
+ta = fromList [0]
+encodePowerset universe set = case mapM (power <=< indices) list of Just a -> sum a
+                                                                    Nothing -> 0
+    where   list = toList set
+            uni = toList universe
+            indices = flip List.elemIndex uni
+            power a = Just $ 2 ^ a
+
+
+
+
+a = encodePowerset tq ta
 
 unionFA :: FA -> FA -> FA
-unionFA (DFA states0 alphabets mappings0 start0 accepts0) (DFA states1 _ mappings1 start1 accepts1) =
+unionFA (DFA a b c d e) (DFA g h i j k) =
     DFA states alphabets mappings start accepts
     where
+        DFA states0 alphabets mappings0 start0 accepts0 = formalize (DFA a b c d e)
+        DFA states1 _ mappings1 start1 accepts1 = formalize (DFA g h i j k)
+        
         stateSpace = size states0 * size states1
-        encode = encodePair (states0, states1)
+        encode = encodePair $ size states1
         driver0 = driver mappings0
         driver1 = driver mappings1
 
@@ -245,12 +263,15 @@ unionFA (DFA states0 alphabets mappings0 start0 accepts0) (DFA states1 _ mapping
 
 
 
---intersectionFA :: FA -> FA -> FA
-intersectionFA (DFA states0 alphabets mappings0 start0 accepts0) (DFA states1 _ mappings1 start1 accepts1) =
+intersectionFA :: FA -> FA -> FA
+intersectionFA (DFA a b c d e) (DFA g h i j k) =
     DFA states alphabets mappings start accepts
     where
+        DFA states0 alphabets mappings0 start0 accepts0 = formalize (DFA a b c d e)
+        DFA states1 _ mappings1 start1 accepts1 = formalize (DFA g h i j k)
+
         stateSpace = size states0 * size states1
-        encode = encodePair (states0, states1)
+        encode = encodePair $ size states1
         driver0 = driver mappings0
         driver1 = driver mappings1
 
@@ -258,6 +279,16 @@ intersectionFA (DFA states0 alphabets mappings0 start0 accepts0) (DFA states1 _ 
         mappings = Map [ (encode (s0, s1), a, encode (driver0 s0 a, driver1 s1 a)) | a <- toList alphabets , s0 <- toList states0, s1 <- toList states1 ]
         start = encode (start0, start1)
         accepts = fromList [ encode (a0, a1) | a0 <- toList accepts0, a1 <- toList accepts1 ]
+
+formalize :: FA -> FA
+formalize (DFA states alphabets (Map mappings) start accepts) = 
+    DFA states' alphabets (Map mappings') start' accepts'
+    where   states' = fromList [0 .. size states - 1]
+            mappings' = fmap (\ (s, a, f) -> (replace s, a, replace f)) mappings
+            start' = replace start
+            accepts' = smap (replace) accepts
+            replace x = case List.elemIndex x (toList states) of Just a -> a
+                                                                 Nothing -> 0
 
 --nfa2dfa :: (Ord a) => FA a -> FA a
 --nfa2dfa (NFA ndstates alphabets ndmappings ndstart ndaccepts) = 
@@ -271,7 +302,7 @@ intersectionFA (DFA states0 alphabets mappings0 start0 accepts0) (DFA states1 _ 
 --                not . and . toList $ Data.Set.map (\ acceptState -> Data.Set.null $ acceptState `intersection` newState ) ndaccepts
 --            ) states
 
---flattenSet :: (Ord a) => Set (Set a) -> Set a
+flattenSet :: (Ord a) => Set (Set a) -> Set a
 flattenSet setset = Data.Set.foldl union empty setset
 
 
