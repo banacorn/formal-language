@@ -16,6 +16,16 @@ tests = [
     ]
 
 
+
+------------------------------------------------------------------------
+-- test data
+
+q0 = [1..5]
+a = ['a' .. 'd']
+
+
+
+
 ------------------------------------------------------------------------
 -- generators
 
@@ -34,7 +44,7 @@ genCompleteMapping :: States -> Alphabets -> Gen Map
 genCompleteMapping states alphabets = 
     fmap Map $ sequence $ map extend pairs
     where   pair a b = (a, b)
-            pairs = pair <$> states <*> alphabets
+            pairs = nub $ (pair <$> states <*> alphabets)
             extend (a, b) = do
                 c <- elements states
                 return (a, b, c)
@@ -52,7 +62,7 @@ genPartialMapping states alphabets =
 genDFA :: States -> Alphabets -> Gen DFA
 genDFA states alphabets = do
     start <- elements states
-    accepts <- listOf . elements $ states
+    accepts <- fmap nub . listOf . elements $ states
     mappings <- genCompleteMapping states alphabets
     return $ DFA states alphabets mappings start accepts
 
@@ -60,7 +70,7 @@ genDFA states alphabets = do
 genNFA :: States -> Alphabets -> Gen NFA
 genNFA states alphabets = do
     start <- elements states
-    accepts <- listOf . elements $ states
+    accepts <- fmap nub . listOf . elements $ states
     mappings <- genPartialMapping states alphabets
     return $ NFA states alphabets mappings start accepts
 
