@@ -15,6 +15,8 @@ module Automaton.Type (
 ) where
 
 
+--------------------------------------------------------------
+
 
 
 type State  = Int

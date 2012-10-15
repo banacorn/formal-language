@@ -16,32 +16,34 @@ module Automaton (
     --machine 
 ) where
 
+--------------------------------------------------------------
 
 import Automaton.Instances
 import Automaton.Type
 
-
---import Data.Set 
 import Data.Bits (testBit)
 import Control.Applicative hiding (empty)
 import Control.Monad
 import Data.List
---import qualified Data.List as List
---import Test.QuickCheck
 
 
+--------------------------------------------------------------
+
+-- make mappings a function
 driver :: Map -> Transition
 driver (Map mappings) state alphabet =
     let result = [ f | (s, a, f) <- mappings, s == state, a == alphabet ] in
     case result of [] -> error $ show state ++ ", " ++ show alphabet ++ " Transition not deinfed"
                    [x] -> x
 
+-- make mappings a function
 nddriver :: Map -> NDTransition
 nddriver (NDMap mappings) state alphabet = 
     let result = [ f | (s, a, f) <- mappings, s == state, a == alphabet ] in
     case result of [] -> []
                    (x:xs) -> x
 
+-- the automaton
 machine :: FA -> Language -> Bool
 machine (DFA states alphabets mappings state accepts) [] = elem state accepts
 machine (DFA states alphabets mappings state accepts) (x:xs)
@@ -109,44 +111,10 @@ dfa = DFA states alphabets mappings start accepts
 
 --u = dfa `unionFA` dfaa
 
---instance Show FA where
---    show (DFA states alphabets mappings state accepts) = dropQuote $
---        "DFA" ++
---        "\n    Q   " ++ (show . toList $ states) ++ 
---        "\n    Σ   " ++ (show $ toList alphabets) ++
---        "\n    δ   " ++ (show mappings) ++
---        "\n    q   " ++ (show state) ++ 
---        "\n    F   " ++ (show . toList $ accepts) ++
---        "\n"
---    show (NFA states alphabets mappings state accepts) = dropQuote $ 
---        "NFA" ++
---        "\n    Q   " ++ (show . toList $ states) ++ 
---        "\n    Σ   " ++ (show $ toList alphabets) ++
---        "\n    δ   " ++ (show mappings) ++
---        "\n    q   " ++ (show state) ++ 
---        "\n    F   " ++ (show . toList $ accepts) ++
---        "\n"
 
-
---instance Eq FA where
---    (==) (DFA states0 alphabets0 (Map mappings0) state0 accepts0) (DFA states1 alphabets1 (Map mappings1) state1 accepts1) = 
---            states0 == states1
---        &&  alphabets0 == alphabets1
---        &&  mappings0 == mappings1
---        &&  state0 == state1
---        &&  accepts0 == accepts1
---    (==) (NFA states0 alphabets0 (NDMap mappings0) state0 accepts0) (NFA states1 alphabets1 (NDMap mappings1) state1 accepts1) = 
---            states0 == states1
---        &&  alphabets0 == alphabets1
---        &&  mappings0 == mappings1
---        &&  state0 == state1
---        &&  accepts0 == accepts1
-
-
-
---negateFA :: FA -> FA
---negateFA (DFA states a m s accepts) = DFA states a m s $ difference states accepts
---negateFA (NFA states a m s accepts) = NFA states a m s $ difference states accepts
+negateFA :: FA -> FA
+negateFA (DFA states a m s accepts) = DFA states a m s (states \\ accepts)
+negateFA (NFA states a m s accepts) = NFA states a m s (states \\ accepts)
 
 --mapping2ndmapping :: Mapping -> NDMapping
 --mapping2ndmapping (state, alphabet, target) = (state, alphabet, singleton target)

@@ -3,6 +3,8 @@ module Automaton.Instances (Show(..)) where
 import Automaton.Type
 
 
+--------------------------------------------------------------
+
 
 dropQuote :: String -> String
 dropQuote [] = []
