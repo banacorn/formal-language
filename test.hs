@@ -158,16 +158,16 @@ propDFA2NFA = do
             machine dfa language ==> machine nfa language
         )
 
---propNFA2DFA :: Property
---propNFA2DFA = do
---    states <- genStates
---    alphabets <- genAlphabets
---    nfa <- genNFA states alphabets
---    dfa <- return $ nfa2dfa nfa
---    forAll (genLanguage alphabets) (\language ->
---            let prop = machine nfa language == machine dfa language in
---            printTestCase (show dfa) prop
---        )
+propNFA2DFA :: Property
+propNFA2DFA = do
+    states <- genStates
+    alphabets <- genAlphabets
+    nfa <- genNFA states alphabets
+    dfa <- return $ nfa2dfa nfa
+    forAll (genLanguage alphabets) (\language ->
+            let prop = machine nfa language == machine dfa language in
+            printTestCase (show dfa) prop
+        )
 
 --propNFA2DFA2NFA :: Property
 --propNFA2DFA2NFA = do
