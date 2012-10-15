@@ -41,7 +41,7 @@ instance Show Map where
                 show t
 
 
-instance Show FA where
+instance Show DFA where
     show (DFA states alphabets mappings state accepts) = dropQuote $
         "DFA" ++
         "\n    Q   " ++ (show states) ++ 
@@ -50,6 +50,7 @@ instance Show FA where
         "\n    q   " ++ (show state) ++ 
         "\n    F   " ++ (show accepts) ++
         "\n"
+instance Show NFA where
     show (NFA states alphabets mappings state accepts) = dropQuote $ 
         "NFA" ++
         "\n    Q   " ++ (show states) ++ 

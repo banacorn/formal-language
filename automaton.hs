@@ -1,19 +1,10 @@
 module Automaton (
-    --driver,
-    --nddriver,
-    --mapping2ndmapping,
-
-    --epsilonClosure,
-    --flattenSet,
-    --dfa2nfa,
-    ----nfa2dfa,
-
-
-    --negateFA,
-    ----unionFA,
-    ----intersectionFA,
-    FA(..),
-    --machine 
+    State,
+    States,
+    Alphabet,
+    Alphabets,
+    Language,
+    Map(..),
 ) where
 
 --------------------------------------------------------------
@@ -44,22 +35,22 @@ nddriver (NDMap mappings) state alphabet =
                    (x:xs) -> x
 
 -- the automaton
-machine :: FA -> Language -> Bool
-machine (DFA states alphabets mappings state accepts) [] = elem state accepts
-machine (DFA states alphabets mappings state accepts) (x:xs)
+automaton :: DFA -> Language -> Bool
+automaton (DFA states alphabets mappings state accepts) [] = elem state accepts
+automaton (DFA states alphabets mappings state accepts) (x:xs)
     | notElem x alphabets = False
-    | otherwise = machine (DFA states alphabets mappings nextState accepts) xs
+    | otherwise = automaton (DFA states alphabets mappings nextState accepts) xs
     where   nextState = (driver mappings) state x
 
 
-machine (NFA states alphabets mappings state accepts) [] = or [accepted, epsilon]
+automatonN (NFA states alphabets mappings state accepts) [] = or [accepted, epsilon]
     where   accepted = elem state accepts 
             epsilon  = or . map (flip elem accepts) $ (nddriver mappings) state ' '
 
-machine (NFA states alphabets mappings state accepts) (x:xs)
+automatonN (NFA states alphabets mappings state accepts) (x:xs)
     | not . null $ transit state ' ' = True
     | notElem x alphabets = False
-    | otherwise = or $ map (\next -> machine (NFA states alphabets mappings next accepts) xs ) nextState
+    | otherwise = or $ map (\next -> automatonN (NFA states alphabets mappings next accepts) xs ) nextState
     where   
         transit     = nddriver mappings
         nextState   = union alphabet epsilon
@@ -117,7 +108,7 @@ dfa = DFA states alphabets mappings start accepts
 
 
 -- transform DFA to NFA
-dfa2nfa :: FA -> FA
+dfa2nfa :: DFA -> NFA
 dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (NDMap ndmappings) i f)
     where   ndmappings = fmap mapping2ndmapping mappings
             mapping2ndmapping (state, alphabet, target) = (state, alphabet, [target])
@@ -125,13 +116,14 @@ dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (NDMap ndmappings) i f)
 
 
 -- negation on FA
-negateFA :: FA -> FA
-negateFA (DFA states a m s accepts) = DFA states a m s (states \\ accepts)
-negateFA (NFA states a m s accepts) = NFA states a m s (states \\ accepts)
+negateDFA :: DFA -> DFA
+negateDFA (DFA states a m s accepts) = DFA states a m s (states \\ accepts)
+negateNFA :: NFA -> NFA
+negateNFA (NFA states a m s accepts) = NFA states a m s (states \\ accepts)
 
 
-unionFA :: FA -> FA -> FA
-unionFA (DFA a b c d e) (DFA g h i j k) =
+unionDFA :: DFA -> DFA -> DFA
+unionDFA (DFA a b c d e) (DFA g h i j k) =
     DFA states alphabets mappings start accepts
     where
         DFA states0 alphabets mappings0 start0 accepts0 = formalize (DFA a b c d e)
@@ -151,7 +143,7 @@ unionFA (DFA a b c d e) (DFA g h i j k) =
 
 
 -- helper function
-formalize :: FA -> FA
+formalize :: DFA -> DFA
 formalize (DFA states alphabets (Map mappings) start accepts) = 
     DFA states' alphabets (Map mappings') start' accepts'
     where   states' = [0 .. length states - 1]
