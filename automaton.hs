@@ -5,6 +5,8 @@ module Automaton (
     Alphabets,
     Language,
     Map(..),
+    DFA(..),
+    NFA(..)
 ) where
 
 --------------------------------------------------------------

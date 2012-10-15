@@ -33,19 +33,14 @@ genPartialMapping states alphabets =
                 c <- fmap nub . listOf1 . elements $ states
                 return (a, b, c)
 
---genDFA :: States -> Alphabets -> Gen FA
---genDFA states alphabets = do
---    start <- elements $ toList states
---    accepts <- listOf . elements $ toList states
---    mappings <- genCompleteMapping states alphabets
---    return $ DFA states alphabets mappings start (fromList accepts)
 
---genNFA :: States -> Alphabets -> Gen FA
---genNFA states alphabets = do
---    start <- elements $ toList states
---    accepts <- listOf1 . elements $ toList states
---    mappings <- genPartialMapping states alphabets
---    return $ NFA states alphabets mappings start (fromList accepts)
+genDFA :: States -> Alphabets -> Gen DFA
+genDFA states alphabets = do
+    start <- elements states
+    accepts <- listOf . elements $ states
+    mappings <- genCompleteMapping states alphabets
+    return $ DFA states alphabets mappings start accepts
+
 
 --propNegateTwice :: Property
 --propNegateTwice =
