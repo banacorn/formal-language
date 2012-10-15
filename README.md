@@ -21,6 +21,13 @@ Proofs to be Constructed
 
 I'm so fucked :D
 
+Test
+===
+
+``` shell
+$ runhaskell test.hs
+```
+
 
 Agda
 ===
