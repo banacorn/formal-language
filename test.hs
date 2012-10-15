@@ -3,9 +3,23 @@ import Control.Applicative
 import Control.Monad
 import Automaton
 import Data.List
+import Text.Printf
+
+
+main  = mapM_ (\(s,a) -> printf "%-25s: " s >> a) tests
+
+
+tests = [
+    ("~~dfa == dfa", quickCheck propNegateDFATwice),
+    ("~dfa /= dfa", quickCheck propComplementary)
+    ]
+
+
+------------------------------------------------------------------------
+-- generators
 
 genStates :: Gen States
-genStates = listOf1 seed
+genStates = fmap nub . listOf1 $ seed
     where seed = choose (0, 100) :: Gen Int
 
 genAlphabets :: Gen Alphabets
@@ -49,29 +63,29 @@ genNFA states alphabets = do
     mappings <- genPartialMapping states alphabets
     return $ NFA states alphabets mappings start accepts
 
+------------------------------------------------------------------------
+-- properties
+
+propNegateDFATwice :: Property
+propNegateDFATwice = do
+    states <- genStates
+    alphabets <- genAlphabets
+    dfa <- genDFA states alphabets
+    
+    forAll (genLanguage alphabets) (\ language -> 
+            automaton dfa language == automaton (negateDFA . negateDFA $ dfa) language
+        )
 
 
+propComplementary :: Property
+propComplementary = do
+    alphabets <- genAlphabets
+    states <- genStates
+    dfa <- genDFA states alphabets
 
---propNegateTwice :: Property
---propNegateTwice =
---    forAll genDFA' (\dfa -> 
---        let __dfa = negateFA . negateFA $ dfa in
---        forAll (genAlphabets >>= genLanguage) (\language ->
---            machine dfa language == machine __dfa language
---        )
---    )
---    where genDFA' = join $ genDFA <$> genStates <*> genAlphabets
-
---propComplementary :: Property
---propComplementary = do
---    alphabets <- genAlphabets
---    states <- genStates
---    forAll (genDFA states alphabets) (\dfa ->
---            let _dfa = negateFA dfa in 
---            forAll (genLanguage alphabets) (\language ->
---                machine dfa language /= machine _dfa language
---            )
---        )
+    forAll (genLanguage alphabets) (\ language -> 
+            automaton dfa language /= automaton (negateDFA dfa) language 
+        )
 
 
 --propCompleteMapping :: Property

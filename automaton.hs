@@ -1,4 +1,7 @@
 module Automaton (
+    
+    -- types
+
     State,
     States,
     Alphabet,
@@ -6,7 +9,17 @@ module Automaton (
     Language,
     Map(..),
     DFA(..),
-    NFA(..)
+    NFA(..),
+
+    -- functions
+
+    automaton,
+    automatonN,
+
+    negateDFA
+
+
+
 ) where
 
 --------------------------------------------------------------
@@ -27,7 +40,7 @@ driver :: Map -> Transition
 driver (Map mappings) state alphabet =
     let result = [ f | (s, a, f) <- mappings, s == state, a == alphabet ] in
     case result of [] -> error $ show state ++ ", " ++ show alphabet ++ " Transition not deinfed"
-                   [x] -> x
+                   (x:xs) -> x
 
 -- make mappings a function
 nddriver :: Map -> NDTransition
