@@ -24,13 +24,14 @@ genCompleteMapping states alphabets =
                 c <- elements states
                 return (a, b, c)
 
---genPartialMapping :: States -> Alphabets -> Gen Map
---genPartialMapping states alphabets = map NDMap $ listOf1 $ genNDArc states alphabets
---    where   genNDArc states alphabets = do
---                start <- elements states
---                alphabet <- elements alphabets
---                finals <- fmap (fromList . nub) . listOf1 . elements states
---                return (start, alphabet, finals)
+genPartialMapping :: States -> Alphabets -> Gen Map
+genPartialMapping states alphabets = 
+    fmap NDMap $ sequence $ map extend pairs
+    where   pair a b = (a, b)
+            pairs = pair <$> states <*> alphabets
+            extend (a, b) = do
+                c <- fmap nub . listOf1 . elements $ states
+                return (a, b, c)
 
 --genDFA :: States -> Alphabets -> Gen FA
 --genDFA states alphabets = do
