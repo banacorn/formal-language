@@ -16,7 +16,8 @@ module Automaton (
     automaton,
     automatonN,
 
-    negateDFA
+    negateDFA,
+    unionDFA
 
 
 
