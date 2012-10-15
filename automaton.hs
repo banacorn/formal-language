@@ -171,9 +171,10 @@ intersectionDFA dfa0 dfa1 =
         driver1 = driver mappings1
 
         states = [0 .. stateSpace - 1]
-        mappings = Map [ (encode (s0, s1), a, encode (driver0 s0 a, driver1 s1 a)) | a <- alphabets , s0 <- states0, s1 <- states1 ]
+        mappings = Map $ triple <$> alphabets <*> states0 <*> states1
+            where   triple a s0 s1 = (encode (s0, s1), a, encode (driver0 s0 a, driver1 s1 a))
         start = encode (start0, start1)
-        accepts = [ encode (a0, a1) | a0 <- accepts0, a1 <- accepts1 ]
+        accepts = curry encode <$> accepts0 <*> accepts1
 
 -- helper functions
 formalize :: DFA -> DFA
