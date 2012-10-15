@@ -111,18 +111,17 @@ dfa = DFA states alphabets mappings start accepts
 
 --u = dfa `unionFA` dfaa
 
-
+-- negation on FA
 negateFA :: FA -> FA
 negateFA (DFA states a m s accepts) = DFA states a m s (states \\ accepts)
 negateFA (NFA states a m s accepts) = NFA states a m s (states \\ accepts)
 
---mapping2ndmapping :: Mapping -> NDMapping
---mapping2ndmapping (state, alphabet, target) = (state, alphabet, singleton target)
+-- transform DFA to NFA
+dfa2nfa :: FA -> FA
+dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (NDMap ndmappings) i f)
+    where   ndmappings = fmap mapping2ndmapping mappings
+            mapping2ndmapping (state, alphabet, target) = (state, alphabet, [target])
 
-
---dfa2nfa :: FA -> FA
---dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (NDMap ndmappings) i f)
---    where ndmappings = fmap mapping2ndmapping mappings
 
 
 --encodePair size (a, b) = a * size + b
