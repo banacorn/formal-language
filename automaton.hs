@@ -111,10 +111,10 @@ dfa = DFA states alphabets mappings start accepts
 
 --u = dfa `unionFA` dfaa
 
--- negation on FA
-negateFA :: FA -> FA
-negateFA (DFA states a m s accepts) = DFA states a m s (states \\ accepts)
-negateFA (NFA states a m s accepts) = NFA states a m s (states \\ accepts)
+----------------------------------------------------------------------
+-- proofs
+
+
 
 -- transform DFA to NFA
 dfa2nfa :: FA -> FA
@@ -124,7 +124,44 @@ dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (NDMap ndmappings) i f)
 
 
 
---encodePair size (a, b) = a * size + b
+-- negation on FA
+negateFA :: FA -> FA
+negateFA (DFA states a m s accepts) = DFA states a m s (states \\ accepts)
+negateFA (NFA states a m s accepts) = NFA states a m s (states \\ accepts)
+
+
+unionFA :: FA -> FA -> FA
+unionFA (DFA a b c d e) (DFA g h i j k) =
+    DFA states alphabets mappings start accepts
+    where
+        DFA states0 alphabets mappings0 start0 accepts0 = formalize (DFA a b c d e)
+        DFA states1 _ mappings1 start1 accepts1 = formalize (DFA g h i j k)
+        
+        stateSpace = length states0 * length states1
+        encode = encodePair $ length states1
+        driver0 = driver mappings0
+        driver1 = driver mappings1
+
+        states = [0 .. stateSpace - 1]
+        mappings = Map [ (encode (s0, s1), a, encode (driver0 s0 a, driver1 s1 a)) | a <- alphabets , s0 <- states0, s1 <- states1 ]
+        start = encode (start0, start1)
+        accepts = concat [ prod0 a | a <- accepts0 ] ++ concat [ prod1 a | a <- accepts1 ]
+            where prod0 a = [ encode (a, s) | s <- states1 ]
+                  prod1 a = [ encode (s, a) | s <- states0 ]
+
+
+-- helper function
+formalize :: FA -> FA
+formalize (DFA states alphabets (Map mappings) start accepts) = 
+    DFA states' alphabets (Map mappings') start' accepts'
+    where   states' = [0 .. length states - 1]
+            mappings' = map (\ (s, a, f) -> (replace s, a, replace f)) mappings
+            start' = replace start
+            accepts' = map replace accepts
+            replace x = case elemIndex x states of Just a -> a
+                                                   Nothing -> 0
+
+encodePair size (a, b) = a * size + b
 
 --encodePair' :: (Eq a1, Eq a) => (Set a, Set a1) -> (a, a1) -> State
 --encodePair' (setA, setB) (a, b) = index
@@ -148,25 +185,6 @@ dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (NDMap ndmappings) i f)
 --            bits n = (mod n 2) : bits (div n 2)
 --ofPowerset e n = testBit n e
 
---unionFA :: FA -> FA -> FA
---unionFA (DFA a b c d e) (DFA g h i j k) =
---    DFA states alphabets mappings start accepts
---    where
---        DFA states0 alphabets mappings0 start0 accepts0 = formalize (DFA a b c d e)
---        DFA states1 _ mappings1 start1 accepts1 = formalize (DFA g h i j k)
-        
---        stateSpace = size states0 * size states1
---        encode = encodePair $ size states1
---        driver0 = driver mappings0
---        driver1 = driver mappings1
-
---        states = fromList [0 .. stateSpace - 1]
---        mappings = Map [ (encode (s0, s1), a, encode (driver0 s0 a, driver1 s1 a)) | a <- toList alphabets , s0 <- toList states0, s1 <- toList states1 ]
---        start = encode (start0, start1)
---        accepts = fromList $ concat [ prod0 a | a <- toList accepts0 ] ++ concat [ prod1 a | a <- toList accepts1 ]
---            where prod0 a = [ encode (a, s) | s <- toList states1 ]
---                  prod1 a = [ encode (s, a) | s <- toList states0 ]
-
 
 
 --intersectionFA :: FA -> FA -> FA
@@ -185,16 +203,6 @@ dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (NDMap ndmappings) i f)
 --        mappings = Map [ (encode (s0, s1), a, encode (driver0 s0 a, driver1 s1 a)) | a <- toList alphabets , s0 <- toList states0, s1 <- toList states1 ]
 --        start = encode (start0, start1)
 --        accepts = fromList [ encode (a0, a1) | a0 <- toList accepts0, a1 <- toList accepts1 ]
-
---formalize :: FA -> FA
---formalize (DFA states alphabets (Map mappings) start accepts) = 
---    DFA states' alphabets (Map mappings') start' accepts'
---    where   states' = fromList [0 .. size states - 1]
---            mappings' = fmap (\ (s, a, f) -> (replace s, a, replace f)) mappings
---            start' = replace start
---            accepts' = smap (replace) accepts
---            replace x = case List.elemIndex x (toList states) of Just a -> a
---                                                                 Nothing -> 0
 
 --formalize (NFA states alphabets (NDMap mappings) start accepts) = 
 --    NFA states' alphabets (NDMap mappings') start' accepts'
