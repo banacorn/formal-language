@@ -17,7 +17,8 @@ module Automaton (
     automatonN,
 
     negateDFA,
-    unionDFA
+    unionDFA,
+    intersectionDFA
 
 
 
@@ -157,22 +158,22 @@ unionDFA dfa0 dfa1 =
 
 
 
---intersectionDFA :: DFA -> DFA -> DFA
---intersectionDFA dfa0 dfa1 =
---    DFA states alphabets mappings start accepts
---    where
---        DFA states0 alphabets mappings0 start0 accepts0 = formalize dfa0
---        DFA states1 _ mappings1 start1 accepts1 = formalize dfa1
+intersectionDFA :: DFA -> DFA -> DFA
+intersectionDFA dfa0 dfa1 =
+    DFA states alphabets mappings start accepts
+    where
+        DFA states0 alphabets mappings0 start0 accepts0 = formalize dfa0
+        DFA states1 _ mappings1 start1 accepts1 = formalize dfa1
 
---        stateSpace = length states0 * length states1
---        encode = encodePair $ length states1
---        driver0 = driver mappings0
---        driver1 = driver mappings1
+        stateSpace = length states0 * length states1
+        encode = encodePair $ length states1
+        driver0 = driver mappings0
+        driver1 = driver mappings1
 
---        states = [0 .. stateSpace - 1]
---        mappings = Map [ (encode (s0, s1), a, encode (driver0 s0 a, driver1 s1 a)) | a <- alphabets , s0 <- states0, s1 <- states1 ]
---        start = encode (start0, start1)
---        accepts = [ encode (a0, a1) | a0 <- accepts0, a1 <- accepts1 ]
+        states = [0 .. stateSpace - 1]
+        mappings = Map [ (encode (s0, s1), a, encode (driver0 s0 a, driver1 s1 a)) | a <- alphabets , s0 <- states0, s1 <- states1 ]
+        start = encode (start0, start1)
+        accepts = [ encode (a0, a1) | a0 <- accepts0, a1 <- accepts1 ]
 
 -- helper functions
 formalize :: DFA -> DFA

@@ -12,7 +12,8 @@ main  = mapM_ (\(s,a) -> printf "%-25s: " s >> a) tests
 tests = [
     ("~~dfa == dfa", quickCheck propNegateDFATwice),
     ("~dfa /= dfa", quickCheck propComplementary),
-    ("union dfa", quickCheck propUnionDFA)
+    ("dfa union", quickCheck propUnionDFA),
+    ("dfa intersection", quickCheck propIntersectionDFA)
     ]
 
 
@@ -113,6 +114,24 @@ propUnionDFA = do
             let dfa = dfa0 `unionDFA` dfa1 in
             automaton dfa0 language == automaton dfa language ||
             automaton dfa1 language == automaton dfa language
+        )
+
+
+
+propIntersectionDFA :: Property
+propIntersectionDFA = do
+    alphabets <- genAlphabets
+    -- DFA 0
+    states0 <- genStates
+    dfa0 <- genDFA states0 alphabets
+    -- DFA 1
+    states1 <- genStates
+    dfa1 <- genDFA states1 alphabets
+
+    forAll (genLanguage alphabets) (\ language -> 
+            let dfa = dfa0 `intersectionDFA` dfa1 in
+            automaton dfa language ==> automaton dfa0 language &&
+            automaton dfa language ==> automaton dfa1 language
         )
 
 --propTransitionFunction :: Property
