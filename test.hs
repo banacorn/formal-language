@@ -42,6 +42,16 @@ genDFA states alphabets = do
     return $ DFA states alphabets mappings start accepts
 
 
+genNFA :: States -> Alphabets -> Gen NFA
+genNFA states alphabets = do
+    start <- elements states
+    accepts <- listOf . elements $ states
+    mappings <- genPartialMapping states alphabets
+    return $ NFA states alphabets mappings start accepts
+
+
+
+
 --propNegateTwice :: Property
 --propNegateTwice =
 --    forAll genDFA' (\dfa -> 
