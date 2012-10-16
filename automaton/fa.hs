@@ -109,8 +109,8 @@ intersectionDFA :: DFA -> DFA -> DFA
 intersectionDFA dfa0 dfa1 =
     DFA states alphabets mappings start accepts
     where
-        DFA states0 alphabets mappings0 start0 accepts0 = formalize dfa0
-        DFA states1 _ mappings1 start1 accepts1 = formalize dfa1
+        DFA states0 alphabets mappings0 start0 accepts0 = formalize $ trimUnreachableStates dfa0
+        DFA states1 _ mappings1 start1 accepts1 = formalize $ trimUnreachableStates dfa1
 
         stateSpace = length states0 * length states1
         encode = encodePair $ length states1
@@ -140,7 +140,8 @@ encodePair size (a, b) = a * size + b
 
 
 minimizeDFA dfa =
-    formalize (DFA states' alphabets (Map mappings') start' accepts')
+    (DFA states' alphabets (Map mappings') start' accepts')
+    --formalize (DFA states' alphabets (Map mappings') start' accepts')
     where   -- input
             (DFA states alphabets (Map mappings) start accepts) = trimUnreachableStates dfa
             -- init data
@@ -175,10 +176,12 @@ minimizeDFA dfa =
 
 trimUnreachableStates :: DFA -> DFA
 trimUnreachableStates (DFA states alphabets (Map mappings) start accepts) = 
-    (DFA states' alphabets (Map mappings') start accepts)
-    where   states' = collectState (Map mappings) alphabets ([], [start])
+    (DFA states' alphabets (Map mappings') start accepts')
+    where   states' = collectState (Map mappings) alphabets ([start], [start])
+            trimmedStates = states \\ states'
             mappings' = filter (reachable states') mappings
                 where reachable states (a, b, c) = elem a states && elem c states
+            accepts' = accepts \\ trimmedStates
 
 collectState :: Map -> Alphabets -> (States, States) -> States
 collectState mappings alphabets (old, new) 
@@ -191,9 +194,6 @@ collectState mappings alphabets (old, new)
             repeated       = newStates `isSubsetOf` old
                                 where isSubsetOf elements list = and $ (flip elem list <$> elements)
             emptied        = null newStates
-
---isSubsetOf elements list = and $ (flip elem list <$> elements)
-
 
 
 
