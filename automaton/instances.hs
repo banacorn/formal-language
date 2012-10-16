@@ -3,6 +3,8 @@ module Automaton.Instances (Show(..), Eq(..)) where
 import Automaton.Type
 import Automaton.FA
 
+import Data.List
+
 
 --------------------------------------------------------------
 
@@ -64,8 +66,11 @@ instance Show NFA where
 
 
 instance Eq DFA where
-    (==) dfa0 dfa1 = null accepts
+    (==) dfa0 dfa1 = alphabetDFA0 == alphabetDFA1 && null accepts
         where   (DFA _ _ _ _ accepts) = trimUnreachableStates wtf
                 wtf   = (dfa0 `intersectionDFA` _dfa1) `unionDFA` (_dfa0 `intersectionDFA` dfa1)
                 _dfa0 = negateDFA dfa0
                 _dfa1 = negateDFA dfa1
+                alphabet (DFA _ a _ _ _) = a
+                alphabetDFA0 = sort $ alphabet dfa0
+                alphabetDFA1 = sort $ alphabet dfa1

@@ -32,7 +32,7 @@ mappingsMin = Map [
     (1, '0', 6),
     (1, '1', 2),
     (2, '0', 0),
-    (2, '1', 3),
+    (2, '1', 2),
     (3, '0', 2),
     (3, '1', 6),
     (4, '0', 7),
@@ -50,12 +50,29 @@ acceptsMin = [2]
 dfaMin = DFA statesMin alphabetsMin mappingsMin startMin acceptsMin
 
 m = minimizeDFA dfaMin
+_m = negateDFA m
 
-e dfa0 dfa1 = formalize $ trimUnreachableStates wtf
+------------
+
+statesEq = [0 .. 1]
+alphabetsEq = ['1', '0']
+mappingsEq = Map [
+    (0, '0', 0),
+    (0, '1', 0)
+    ]
+startEq = 0
+acceptsEq = [0]
+e = DFA statesEq alphabetsEq mappingsEq startEq acceptsEq
+_e = negateDFA e
+
+ie = e `intersectionDFA` _e
+ue = e `unionDFA` _e
+
+eq dfa0 dfa1 = formalize $ minimizeDFA wtf
     where   wtf = (dfa0 `intersectionDFA` _dfa1) `unionDFA` (_dfa0 `intersectionDFA` dfa1)
             _dfa0 = negateDFA dfa0
             _dfa1 = negateDFA dfa1
-ee = e m m 
+ee = eq e e 
 
 
 ------------------------------------------------------------------------
@@ -115,9 +132,10 @@ propNegateDFATwice = do
     alphabets <- genAlphabets
     dfa <- genDFA states alphabets
     
-    forAll (genLanguage alphabets) (\ language -> 
-            automaton dfa language == automaton (negateDFA . negateDFA $ dfa) language
-        )
+    --forAll (genLanguage alphabets) (\ language -> 
+    --        automaton dfa language == automaton (negateDFA . negateDFA $ dfa) language
+    --    )
+    property (dfa == (negateDFA . negateDFA) dfa)
 
 
 propComplementary :: Property
@@ -161,8 +179,8 @@ propIntersectionDFA = do
 
     forAll (genLanguage alphabets) (\ language -> 
             let dfa = dfa0 `intersectionDFA` dfa1 in
-            automaton dfa language ==> automaton dfa0 language &&
-            automaton dfa language ==> automaton dfa1 language
+            automaton dfa0 language ==> automaton dfa language &&
+            automaton dfa1 language ==> automaton dfa language
         )
 
 propFormalizeDFA :: Property
@@ -176,8 +194,30 @@ propFormalizeDFA = do
         )
     where   formal (DFA states alphabets mappings start accepts) = 
                 states == [0 .. (length states - 1)]
-                
 
+propTrimStatesDFA :: Property
+propTrimStatesDFA = do
+    states      <- genStates
+    alphabets   <- genAlphabets
+    dfa         <- genDFA states alphabets
+    dfa'        <- return (trimUnreachableStates dfa)
+    forAll (genLanguage alphabets) (\ language ->
+            let prop = automaton dfa language == automaton dfa' language in
+            printTestCase (show dfa ++ "\n" ++ show dfa') prop
+        )
+
+
+propMinimizeDFA :: Property
+propMinimizeDFA = do
+    states      <- genStates
+    alphabets   <- genAlphabets
+    dfa         <- genDFA states alphabets
+    dfa'        <- return (minimizeDFA dfa)
+    forAll (genLanguage alphabets) (\ language ->
+            let prop = automaton dfa language == automaton dfa' language in
+            let dfa'' = trimUnreachableStates dfa in
+            printTestCase (show dfa ++ "\n" ++ show dfa'' ++ "\n" ++ show dfa') prop
+        )
 --propTransitionFunction :: Property
 --propTransitionFunction = do
 --    states <- genStates

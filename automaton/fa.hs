@@ -90,8 +90,8 @@ unionDFA :: DFA -> DFA -> DFA
 unionDFA dfa0 dfa1 =
     DFA states alphabets mappings start accepts
     where
-        DFA states0 alphabets mappings0 start0 accepts0 = formalize dfa0
-        DFA states1 _ mappings1 start1 accepts1 = formalize dfa1
+        DFA states0 alphabets mappings0 start0 accepts0 = formalize $ trimUnreachableStates dfa0
+        DFA states1 _ mappings1 start1 accepts1 = formalize $ trimUnreachableStates dfa1
 
         stateSpace = length states0 * length states1
         encode = encodePair $ length states1
