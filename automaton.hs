@@ -16,7 +16,9 @@ module Automaton (
     automaton,
     automatonN,
 
+    trimUnreachableStates,
     minimizeDFA,
+    formalize,
 
 
     negateDFA,

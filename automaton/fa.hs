@@ -3,7 +3,10 @@ module Automaton.FA (
     automaton,
     automatonN,
 
+
+    trimUnreachableStates,
     minimizeDFA,
+    formalize,
 
     negateDFA,
     unionDFA,
@@ -125,9 +128,9 @@ formalize :: DFA -> DFA
 formalize (DFA states alphabets (Map mappings) start accepts) = 
     DFA states' alphabets (Map mappings') start' accepts'
     where   states' = [0 .. length states - 1]
-            mappings' = map (\ (s, a, f) -> (replace s, a, replace f)) mappings
+            mappings' = nub $ map (\ (s, a, f) -> (replace s, a, replace f)) mappings
             start' = replace start
-            accepts' = map replace accepts
+            accepts' = nub $ map replace accepts
             replace x = case elemIndex x states of Just a -> a
                                                    Nothing -> 0
 

@@ -63,8 +63,9 @@ instance Show NFA where
 
 
 
---instance Eq DFA where
---    (==) dfa0 dfa1 = case wtf of (DFA _ _ _ _ accepts) -> null accepts
---        where   wtf   = (dfa0 `intersectionDFA` _dfa1) `unionDFA` (_dfa0 `intersectionDFA` dfa1)
---                _dfa0 = negateDFA dfa0
---                _dfa1 = negateDFA dfa1
+instance Eq DFA where
+    (==) dfa0 dfa1 = null accepts
+        where   (DFA _ _ _ _ accepts) = trimUnreachableStates wtf
+                wtf   = (dfa0 `intersectionDFA` _dfa1) `unionDFA` (_dfa0 `intersectionDFA` dfa1)
+                _dfa0 = negateDFA dfa0
+                _dfa1 = negateDFA dfa1

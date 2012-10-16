@@ -51,10 +51,11 @@ dfaMin = DFA statesMin alphabetsMin mappingsMin startMin acceptsMin
 
 m = minimizeDFA dfaMin
 
---e dfa0 dfa1 = (dfa0 `intersectionDFA` _dfa1) `unionDFA` (_dfa0 `intersectionDFA` dfa1)
---    where   _dfa0 = negateDFA dfa0
---            _dfa1 = negateDFA dfa1
-
+e dfa0 dfa1 = formalize $ trimUnreachableStates wtf
+    where   wtf = (dfa0 `intersectionDFA` _dfa1) `unionDFA` (_dfa0 `intersectionDFA` dfa1)
+            _dfa0 = negateDFA dfa0
+            _dfa1 = negateDFA dfa1
+ee = e m m 
 
 
 ------------------------------------------------------------------------
@@ -164,6 +165,18 @@ propIntersectionDFA = do
             automaton dfa language ==> automaton dfa1 language
         )
 
+propFormalizeDFA :: Property
+propFormalizeDFA = do
+    states      <- genStates
+    alphabets   <- genAlphabets
+    dfa         <- genDFA states alphabets
+    dfa'        <- return (formalize dfa)
+    forAll (genLanguage alphabets) (\ language ->
+            automaton dfa language == automaton dfa' language && formal dfa' 
+        )
+    where   formal (DFA states alphabets mappings start accepts) = 
+                states == [0 .. (length states - 1)]
+                
 
 --propTransitionFunction :: Property
 --propTransitionFunction = do
