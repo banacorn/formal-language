@@ -1,6 +1,7 @@
-module Automaton.Instances (Show(..)) where
+module Automaton.Instances (Show(..), Eq(..)) where
 
 import Automaton.Type
+import Automaton.FA
 
 
 --------------------------------------------------------------
@@ -59,3 +60,11 @@ instance Show NFA where
         "\n    q   " ++ (show state) ++ 
         "\n    F   " ++ (show accepts) ++
         "\n"
+
+
+
+--instance Eq DFA where
+--    (==) dfa0 dfa1 = case wtf of (DFA _ _ _ _ accepts) -> null accepts
+--        where   wtf   = (dfa0 `intersectionDFA` _dfa1) `unionDFA` (_dfa0 `intersectionDFA` dfa1)
+--                _dfa0 = negateDFA dfa0
+--                _dfa1 = negateDFA dfa1

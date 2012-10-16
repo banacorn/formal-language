@@ -21,9 +21,39 @@ tests = [
 ------------------------------------------------------------------------
 -- test data
 
-q0 = [1..5]
-a = ['a' .. 'd']
 
+-- dfa minimization test data
+statesMin = [0..7]
+alphabetsMin = ['0', '1']
+
+mappingsMin = Map [
+    (0, '0', 1),
+    (0, '1', 5),
+    (1, '0', 6),
+    (1, '1', 2),
+    (2, '0', 0),
+    (2, '1', 3),
+    (3, '0', 2),
+    (3, '1', 6),
+    (4, '0', 7),
+    (4, '1', 5),
+    (5, '0', 2),
+    (5, '1', 6),
+    (6, '0', 6),
+    (6, '1', 4),
+    (7, '0', 6),
+    (7, '1', 2)
+    ]
+
+startMin = 0
+acceptsMin = [2]
+dfaMin = DFA statesMin alphabetsMin mappingsMin startMin acceptsMin
+
+m = minimizeDFA dfaMin
+
+--e dfa0 dfa1 = (dfa0 `intersectionDFA` _dfa1) `unionDFA` (_dfa0 `intersectionDFA` dfa1)
+--    where   _dfa0 = negateDFA dfa0
+--            _dfa1 = negateDFA dfa1
 
 
 
@@ -133,6 +163,7 @@ propIntersectionDFA = do
             automaton dfa language ==> automaton dfa0 language &&
             automaton dfa language ==> automaton dfa1 language
         )
+
 
 --propTransitionFunction :: Property
 --propTransitionFunction = do
