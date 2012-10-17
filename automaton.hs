@@ -23,7 +23,12 @@ module Automaton (
 
     negateDFA,
     unionDFA,
-    intersectionDFA
+    intersectionDFA,
+
+    -- NFA
+    epsilonClosure,
+    
+
 
 
 ) where
@@ -95,17 +100,6 @@ import Automaton.FA
 --    flattenSet $ smap (epsilonClosure mappings) (Data.Set.foldl union empty result)
 --    where
 --        transit state = (nddriver mappings) state alphabet
-
---collectStates :: Map -> Alphabets -> (Set States, Set States) -> Set States
---collectStates mappings alphabets (old, new)
---    | emptied || reapeated  = collected
---    | otherwise             = collectStates mappings alphabets (collected, newTransisions)
---    where   transit states   = smap (\a -> smap (\state -> epsilonTransition mappings state a) states) alphabets
---            newTransisions  = flattenSet . flattenSet $ smap transit new
---            collected       = union old new
---            emptied         = Data.Set.null newTransisions
---            reapeated       = newTransisions `isSubsetOf` old
-
 
 --(*.) :: (Ord a) => States a -> States a -> States a
 --s0 *. s1 = 

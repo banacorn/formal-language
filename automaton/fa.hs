@@ -13,6 +13,9 @@ module Automaton.FA (
     intersectionDFA,
 
 
+    -- NFA
+    epsilonClosure,
+
 
 ) where
 
@@ -52,21 +55,25 @@ automaton (DFA states alphabets mappings state accepts) (x:xs)
     | otherwise = automaton (DFA states alphabets mappings nextState accepts) xs
     where   nextState = (driver mappings) state x
 
+automatonN :: NFA -> Language -> Bool
+automatonN (NFA states alphabets mappings state accepts) [] = or $ closure state >>= accept
+    where   closure state = epsilonClosure mappings state
+            accept state = return $ elem state accepts
 
-automatonN (NFA states alphabets mappings state accepts) [] = or [accepted, epsilon]
-    where   accepted = elem state accepts 
-            epsilon  = or . map (flip elem accepts) $ (driverN mappings) state ' '
+automatonN (NFA states alphabets mappings state accepts) language
+    | head language `notElem` alphabets = False
+    | otherwise = or $ consume language state
+    where   closure state = epsilonClosure mappings state
+            jump x state = driverN mappings state x
+            accept state = return $ elem state accepts
+            consume [] state = closure state >>= accept
+            consume (x:xs) state = closure state >>= jump x >>= consume xs
 
-automatonN (NFA states alphabets mappings state accepts) (x:xs)
-    | not . null $ transit state ' ' = True
-    | notElem x alphabets = False
-    | otherwise = or $ map (\next -> automatonN (NFA states alphabets mappings next accepts) xs ) nextState
-    where   
-        transit     = driverN mappings
-        nextState   = union alphabet epsilon
-        alphabet    = transit state x
-        epsilon     = transit state ' '
-        extendedAlphabets = insert ' ' alphabets
+epsilonClosure :: Map -> State -> States
+epsilonClosure mappings state = nub . insert state . join $ epsilonClosure mappings <$> transit state ' '
+    where   transit = driverN mappings
+
+
 
 ----------------------------------------------------------------------
 -- proofs
@@ -200,6 +207,18 @@ collectState mappings alphabets (old, new)
 
 
 
+-----------------
+
+
+--collectStates :: Map -> Alphabets -> (States, States) -> States
+--collectStates mappings alphabets (old, new)
+--    | emptied || reapeated  = collected
+--    | otherwise             = collectStates mappings alphabets (collected, newTransisions)
+--    where   transit states   = fmap (\a -> fmap (\state -> epsilonTransition mappings state a) states) alphabets
+--            newTransisions  = join . join $ fmap transit new
+--            collected       = nub $ union old new
+--            emptied         = null newTransisions
+--            reapeated       = newTransisions `isSubsetOf` old
 
 
 

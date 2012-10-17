@@ -74,6 +74,22 @@ eq dfa0 dfa1 = formalize $ minimizeDFA wtf
             _dfa1 = negateDFA dfa1
 ee = eq e e 
 
+---------
+
+statesN = [0 .. 2]
+alphabetsN = ['a', 'b']
+mappingsN = NDMap [
+    (0, ' ', [2]),
+    (0, 'b', [1]),
+    (1, 'a', [1, 2]),
+    (1, 'b', [2]),
+    (2, 'a', [0])
+    ]
+startN = 0
+acceptsN = [0]
+
+nfa = NFA statesN alphabetsN mappingsN startN acceptsN
+
 
 ------------------------------------------------------------------------
 -- generators
