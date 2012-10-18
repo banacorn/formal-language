@@ -177,14 +177,11 @@ formalizeDFA dfa = replaceStatesDFA function dfa
                                                 Nothing -> 0
 
 formalizeNFA :: NFA -> NFA
-formalizeNFA (NFA states alphabets (MapN mappings) start accepts) = 
-    NFA states' alphabets (MapN mappings') start' accepts'
-    where   states' = [0 .. length states - 1]
-            mappings' = nub $ map (\ (s, a, f) -> (replace s, a, replace <$> f)) mappings
-            start' = replace start
-            accepts' = nub $ map replace accepts
-            replace x = case elemIndex x states of Just a -> a
-                                                   Nothing -> 0
+formalizeNFA nfa = replaceStatesNFA function nfa
+    where   getStates (NFA s _ _ _ _) = s
+            table = zip (getStates nfa) [0..]
+            function s = case lookup s table of Just a -> a
+                                                Nothing -> 0
 
 encodePair size (a, b) = a * size + b
 
@@ -313,12 +310,12 @@ replaceStatesDFA table (DFA states alphabets (Map mappings) start accepts) =
 
 
 
---replaceStatesNFA :: (State -> State) -> NFA -> NFA
---replaceStatesNFA table (NFA states alphabets (MapN mappings) start accepts) = 
---    NFA states' alphabets (MapN mappings') start' accepts'
---    where   states'     = table <$> states
---            mappings'   = replaceMapping <$> mappings
---                where replaceMapping (s, a, t) = (table s, a, table t)
---            start'      = table start
---            accepts'    = table <$> accepts
+replaceStatesNFA :: (State -> State) -> NFA -> NFA
+replaceStatesNFA table (NFA states alphabets (MapN mappings) start accepts) = 
+    NFA states' alphabets (MapN mappings') start' accepts'
+    where   states'     = table <$> states
+            mappings'   = replaceMapping <$> mappings
+                where replaceMapping (s, a, t) = (table s, a, table <$> t)
+            start'      = table start
+            accepts'    = table <$> accepts
 
