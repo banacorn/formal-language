@@ -19,7 +19,8 @@ module Automaton.FA (
     epsilonClosure,
     formalizeNFA,
 
-    unionNFA
+    unionNFA,
+    intersectNFA
 
 ) where
 
@@ -269,6 +270,13 @@ unionNFA nfa0 nfa1 =
         states = start `insert` (states0 `union` states1)
         mappings = MapN $ mappings0 `union` mappings1 `union` [(start, ' ', [start0, start1])]
         accepts = accepts0 `union` accepts1
+
+intersectNFA :: NFA -> NFA -> NFA
+intersectNFA nfa0 nfa1 = dfa2nfa dfaIntersection
+    where   dfa0 = nfa2dfa nfa0
+            dfa1 = nfa2dfa nfa1
+            dfaIntersection = minimizeDFA $ dfa0 `intersectDFA` dfa1
+
 
 
 statesMin = [0..7]

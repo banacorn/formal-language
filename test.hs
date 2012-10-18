@@ -19,6 +19,9 @@ bana test = replicateM_ 10 (quickCheck test)
 
 main = quickCheck propNFA2DFA
 
+q :: Testable prop => prop -> IO ()
+q = quickCheck
+
 ------------------------------------------------------------------------
 -- test data
 
@@ -92,14 +95,14 @@ acceptsM = [1]
 
 nfam = NFA statesM alphabetsM mappingsM startM acceptsM
 
-u = unionNFA nfa nfam
+i = intersectNFA nfa nfa
 
 ------------------------------------------------------------------------
 -- generators
 
 genStates :: Gen States
 genStates = fmap nub . listOf1 $ seed
-    where seed = choose (0, 100) :: Gen Int
+    where seed = choose (0, 1000) :: Gen Int
 
 genAlphabets :: Gen Alphabets
 genAlphabets =  nub <$> (listOf1 $ elements ['a' .. 'z'])
@@ -144,6 +147,11 @@ genNFA states alphabets = do
 
 ------------------------------------------------------------------------
 -- properties
+
+propGenStates :: Property
+propGenStates = do
+    states <- genStates
+    property $ states == nub states
 
 
 
@@ -264,6 +272,25 @@ propUnionNFA = do
             automatonN nfa0 language == automatonN nfa language ||
             automatonN nfa1 language == automatonN nfa language
         )
+
+
+propIntersectNFA :: Property
+propIntersectNFA = do
+    alphabets <- genAlphabets
+    -- NFA 0
+    states0 <- genStates
+    nfa0 <- genNFA states0 alphabets
+    -- NFA 1
+    states1 <- genStates
+    nfa1 <- genNFA states1 alphabets
+
+    forAll (genLanguage alphabets) (\ language -> 
+            let nfa = nfa0 `intersectNFA` nfa1 in
+            automatonN nfa0 language == automatonN nfa language &&
+            automatonN nfa1 language == automatonN nfa language
+        )
+
+
 --propTransitionFunction :: Property
 --propTransitionFunction = do
 --    states <- genStates
