@@ -12,7 +12,12 @@ Proofs Constructed
  * Negation
  * Union
  * Intersection
+ * Equivalance Relation
+ * Minimization
+
 * NFA
+ * Union
+
 * DFA → NFA
 * DFA ← NFA
 
