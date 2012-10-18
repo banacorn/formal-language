@@ -18,7 +18,7 @@ tests = [
 
 bana test = replicateM_ 10 (quickCheck test)
 
-main = quickCheck propMinimizeDFA
+main = quickCheck propNFA2DFA
 
 ------------------------------------------------------------------------
 -- test data
@@ -261,14 +261,14 @@ propDFA2NFA = do
 
 
 
---propNFA2DFA :: Property
---propNFA2DFA = do
---    states <- genStates
---    alphabets <- genAlphabets
---    nfa <- genNFA states alphabets
---    dfa <- return $ nfa2dfa nfa
---    forAll (genLanguage alphabets) (\language ->
---            let prop = machine nfa language == machine dfa language in
---            printTestCase (show dfa) prop
---        )
+propNFA2DFA :: Property
+propNFA2DFA = do
+    states <- genStates
+    alphabets <- genAlphabets
+    nfa <- genNFA states alphabets
+    dfa <- return $ nfa2dfa nfa
+    forAll (genLanguage alphabets) (\language ->
+            let prop = automatonN nfa language == automaton dfa language in
+            printTestCase (show dfa) prop
+        )
 
