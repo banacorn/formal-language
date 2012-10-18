@@ -33,6 +33,7 @@ module Automaton (
     -- NFA
     epsilonClosure,
     formalizeNFA,
+    collectStates
 
 
 

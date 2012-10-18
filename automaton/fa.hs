@@ -18,6 +18,7 @@ module Automaton.FA (
     -- NFA
     epsilonClosure,
     formalizeNFA,
+    collectStates
 
 ) where
 
@@ -87,17 +88,39 @@ dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (NDMap ndmappings) i f)
     where   ndmappings = fmap mapping2ndmapping mappings
             mapping2ndmapping (state, alphabet, target) = (state, alphabet, [target])
 
+
+
+
+encodePowerset :: States -> State
+encodePowerset = sum . fmap ((^) 2)
+decodePowerset :: State -> States
+decodePowerset = elemIndices 1 . bits 
+    where   bits 0 = [0]
+            bits 1 = [1]
+            bits n = (mod n 2) : bits (div n 2)
+            
+ofPowerset e n = testBit n e
+
+
 -- transform FFA to DFA
---nfa2dfa :: NFA -> DFA
-nfa2dfa nfa = 4
-    --states
-    ----DFA sta alphabets mappings startN acceptsN
-    --where
-    --    NFA statesN alphabets mappingsN startN acceptsN = formalizeNFA nfa
+nfa2dfa :: NFA -> DFA
+nfa2dfa nfa =
+    formalizeDFA $ DFA states' alphabets (Map mappings') start' accepts'
+    where
+        NFA statesN alphabets mappingsN startN acceptsN = formalizeNFA nfa
+        transit = driverN mappingsN
 
-    --    start = epsilonClosure mappingsN startN
-    --    states = collectState mappingsN alphabets ([], start)
+        start = epsilonClosure mappingsN startN
+        states = collectStates mappingsN alphabets startN
+        mappings = [ ( state, alphabet, nub $ join ( (flip transit alphabet) <$> state) >>=  epsilonClosure mappingsN ) | state <- states, alphabet <- alphabets ]
+        accepts = filter acceptable states
+            where acceptable = any (flip elem acceptsN)
 
+        states' = encodePowerset <$> states
+        mappings' = encodeMapping <$> mappings
+            where encodeMapping (s, a, t) = (encodePowerset s, a, encodePowerset t)
+        start' = encodePowerset start
+        accepts' = encodePowerset <$> accepts
 
 -- negation on FA
 negateDFA :: DFA -> DFA
@@ -167,8 +190,6 @@ formalizeNFA (NFA states alphabets (NDMap mappings) start accepts) =
 encodePair size (a, b) = a * size + b
 
 
-
-
 minimizeDFA dfa =
     (DFA states' alphabets (Map mappings') start' accepts')
     --formalize (DFA states' alphabets (Map mappings') start' accepts')
@@ -220,7 +241,7 @@ collectState mappings alphabets start = collect next ([start], [start])
 collectStates :: Map -> Alphabets -> State -> [States]
 collectStates mappings alphabets start = collect next (start', start')
     where   bana alphabet state = driverN mappings state alphabet >>= closure
-            next states = (\ alphabet -> states >>= bana alphabet) <$> alphabets
+            next states = (\ alphabet -> nub . sort $ states >>= bana alphabet) <$> alphabets
             start' = return $ closure start 
             closure state = epsilonClosure mappings state
 
@@ -229,7 +250,7 @@ collect :: Eq a => (a -> [a]) -> ([a], [a]) -> [a]
 collect next (old, new)
     | emptied   = old
     | reapeated = old
-    | otherwise = collect next (old', new')
+    | otherwise = nub $ collect next (old', new')
     where   new' = old >>= next
             old' = nub (old `union` new)
             emptied = null new'
