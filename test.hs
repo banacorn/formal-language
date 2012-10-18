@@ -248,6 +248,22 @@ propDFA2NFA = do
     forAll (genLanguage alphabets) (\language ->
             automaton dfa language == automatonN nfa language
         )
+
+propUnionNFA :: Property
+propUnionNFA = do
+    alphabets <- genAlphabets
+    -- NFA 0
+    states0 <- genStates
+    nfa0 <- genNFA states0 alphabets
+    -- NFA 1
+    states1 <- genStates
+    nfa1 <- genNFA states1 alphabets
+
+    forAll (genLanguage alphabets) (\ language -> 
+            let nfa = nfa0 `unionNFA` nfa1 in
+            automatonN nfa0 language == automatonN nfa language ||
+            automatonN nfa1 language == automatonN nfa language
+        )
 --propTransitionFunction :: Property
 --propTransitionFunction = do
 --    states <- genStates
