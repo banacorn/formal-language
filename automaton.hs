@@ -18,16 +18,22 @@ module Automaton (
 
     trimUnreachableStates,
     minimizeDFA,
-    formalize,
+    formalizeDFA,
 
 
     negateDFA,
     unionDFA,
     intersectionDFA,
 
+
+    dfa2nfa,
+    nfa2dfa,
+
+
     -- NFA
     epsilonClosure,
-    
+    formalizeNFA,
+
 
 
 

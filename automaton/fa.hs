@@ -6,16 +6,18 @@ module Automaton.FA (
 
     trimUnreachableStates,
     minimizeDFA,
-    formalize,
+    formalizeDFA,
 
     negateDFA,
     unionDFA,
     intersectionDFA,
 
+    dfa2nfa,
+    nfa2dfa,
 
     -- NFA
     epsilonClosure,
-
+    formalizeNFA,
 
 ) where
 
@@ -73,6 +75,7 @@ epsilonClosure :: Map -> State -> States
 epsilonClosure mappings state = nub . insert state . join $ epsilonClosure mappings <$> transit state ' '
     where   transit = driverN mappings
 
+--epsilonTransition
 
 
 ----------------------------------------------------------------------
@@ -84,6 +87,16 @@ dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (NDMap ndmappings) i f)
     where   ndmappings = fmap mapping2ndmapping mappings
             mapping2ndmapping (state, alphabet, target) = (state, alphabet, [target])
 
+-- transform FFA to DFA
+--nfa2dfa :: NFA -> DFA
+nfa2dfa nfa = 4
+    --states
+    ----DFA sta alphabets mappings startN acceptsN
+    --where
+    --    NFA statesN alphabets mappingsN startN acceptsN = formalizeNFA nfa
+
+    --    start = epsilonClosure mappingsN startN
+    --    states = collectState mappingsN alphabets ([], start)
 
 
 -- negation on FA
@@ -97,8 +110,8 @@ unionDFA :: DFA -> DFA -> DFA
 unionDFA dfa0 dfa1 =
     DFA states alphabets mappings start accepts
     where
-        DFA states0 alphabets mappings0 start0 accepts0 = formalize $ trimUnreachableStates dfa0
-        DFA states1 _ mappings1 start1 accepts1 = formalize $ trimUnreachableStates dfa1
+        DFA states0 alphabets mappings0 start0 accepts0 = formalizeDFA $ trimUnreachableStates dfa0
+        DFA states1 _ mappings1 start1 accepts1 = formalizeDFA $ trimUnreachableStates dfa1
 
         stateSpace = length states0 * length states1
         encode = encodePair $ length states1
@@ -116,8 +129,8 @@ intersectionDFA :: DFA -> DFA -> DFA
 intersectionDFA dfa0 dfa1 =
     DFA states alphabets mappings start accepts
     where
-        DFA states0 alphabets mappings0 start0 accepts0 = formalize $ trimUnreachableStates dfa0
-        DFA states1 _ mappings1 start1 accepts1 = formalize $ trimUnreachableStates dfa1
+        DFA states0 alphabets mappings0 start0 accepts0 = formalizeDFA $ trimUnreachableStates dfa0
+        DFA states1 _ mappings1 start1 accepts1 = formalizeDFA $ trimUnreachableStates dfa1
 
         stateSpace = length states0 * length states1
         encode = encodePair $ length states1
@@ -131,11 +144,21 @@ intersectionDFA dfa0 dfa1 =
         accepts = curry encode <$> accepts0 <*> accepts1
 
 -- helper functions
-formalize :: DFA -> DFA
-formalize (DFA states alphabets (Map mappings) start accepts) = 
+formalizeDFA :: DFA -> DFA
+formalizeDFA (DFA states alphabets (Map mappings) start accepts) = 
     DFA states' alphabets (Map mappings') start' accepts'
     where   states' = [0 .. length states - 1]
             mappings' = nub $ map (\ (s, a, f) -> (replace s, a, replace f)) mappings
+            start' = replace start
+            accepts' = nub $ map replace accepts
+            replace x = case elemIndex x states of Just a -> a
+                                                   Nothing -> 0
+
+formalizeNFA :: NFA -> NFA
+formalizeNFA (NFA states alphabets (NDMap mappings) start accepts) = 
+    NFA states' alphabets (NDMap mappings') start' accepts'
+    where   states' = [0 .. length states - 1]
+            mappings' = nub $ map (\ (s, a, f) -> (replace s, a, replace <$> f)) mappings
             start' = replace start
             accepts' = nub $ map replace accepts
             replace x = case elemIndex x states of Just a -> a
@@ -184,41 +207,96 @@ minimizeDFA dfa =
 trimUnreachableStates :: DFA -> DFA
 trimUnreachableStates (DFA states alphabets (Map mappings) start accepts) = 
     (DFA states' alphabets (Map mappings') start accepts')
-    where   states' = collectState (Map mappings) alphabets ([start], [start])
+    where   states' = collectState (Map mappings) alphabets start
             trimmedStates = states \\ states'
             mappings' = filter (reachable states') mappings
                 where reachable states (a, b, c) = elem a states && elem c states
             accepts' = accepts \\ trimmedStates
 
-collectState :: Map -> Alphabets -> (States, States) -> States
-collectState mappings alphabets (old, new) 
-    | emptied = old
-    | repeated = old
-    | otherwise = collectState mappings alphabets (collected, newStates)
-    where   transit states = driver mappings <$> states <*> alphabets
-            newStates      = transit new
-            collected      = old `union` newStates
-            repeated       = newStates `isSubsetOf` old
-                                where isSubsetOf elements list = and $ (flip elem list <$> elements)
-            emptied        = null newStates
+collectState :: Map -> Alphabets -> State -> States
+collectState mappings alphabets start = collect next ([start], [start])
+    where next state = driver mappings state <$> alphabets
+
+collectStates :: Map -> Alphabets -> State -> [States]
+collectStates mappings alphabets start = collect next (start', start')
+    where   bana alphabet state = driverN mappings state alphabet >>= closure
+            next states = (\ alphabet -> states >>= bana alphabet) <$> alphabets
+            start' = return $ closure start 
+            closure state = epsilonClosure mappings state
+--collect next ([start'], [start'])
+
+    --where   mapState alphabet state = driverN mappings state alphabet
+            --next state = nub . join $ (\alphabet -> state >>= (mapState alphabet)) <$> alphabets
+
+            --mapAlphabet al = 
+            --transit states = (mapAlphabet <$> alphabets) states
+            --next states = (transit <$> alphabets) <$> alphabets
+            --closure states = states >>= epsilonClosure mappings
+            --start' = closure [start]
+    --        jump states = driverN mappings <$> states <*> alphabets >>= closure
+    --        next states = return states >>= jump >>= closure
 
 
+---------
 
+statesN = [0 .. 3]
+alphabetsN = ['0', '1']
+mappingsN = NDMap [
+    (0, '0', [1]),
+    (0, ' ', [2]),
+    (1, '1', [1, 3]),
+    (2, ' ', [1]),
+    (2, '0', [3]),
+    (3, '0', [2])
+    ]
+startN = 0
+acceptsN = [2, 3]
+
+nfa = NFA statesN alphabetsN mappingsN startN acceptsN
+
+
+--collectStates :: Map -> Alphabets -> ([States], [States]) -> [States]
+--collectStates mappings alphabets (old, new) = old
+
+collect :: Eq a => (a -> [a]) -> ([a], [a]) -> [a]
+collect next (old, new)
+    | emptied   = old
+    | reapeated = old
+    | otherwise = collect next (old', new')
+    where   new' = old >>= next
+            old' = nub (old `union` new)
+            emptied = null new'
+            reapeated = new' `subsetOf` old
+            subsetOf elems list = and (flip elem list <$> elems)
+
+
+    --where   
+    -- --| emptied || reapeated  = collected
+    -- --| otherwise             = collectStates mappings alphabets (collected, newTransisions)
+    --where   transit states   = fmap (\a -> fmap (\state -> epsilonTransition mappings state a) states) alphabets
+    --        newTransisions  = join . join $ fmap transit new
+    --        collected       = nub $ union old new
+    --        emptied         = null newTransisions
+    --        reapeated       = newTransisions `isSubsetOf` old
+    --        isSubsetOf elements list = and $ (flip elem list <$> elements)
+
+
+--collectState :: Map -> Alphabets -> (States, States) -> States
+--collectState mappings alphabets (old, new) 
+--    | emptied = old
+--    | repeated = old
+--    | otherwise = collectState mappings alphabets (collected, newStates)
+--    where   transit states = driver mappings <$> states <*> alphabets
+--            newStates      = transit new
+--            collected      = old `union` newStates
+--            repeated       = newStates `isSubsetOf` old
+--                                where isSubsetOf elements list = and $ (flip elem list <$> elements)
+--            emptied        = null newStates
 
 
 
 -----------------
 
-
---collectStates :: Map -> Alphabets -> (States, States) -> States
---collectStates mappings alphabets (old, new)
---    | emptied || reapeated  = collected
---    | otherwise             = collectStates mappings alphabets (collected, newTransisions)
---    where   transit states   = fmap (\a -> fmap (\state -> epsilonTransition mappings state a) states) alphabets
---            newTransisions  = join . join $ fmap transit new
---            collected       = nub $ union old new
---            emptied         = null newTransisions
---            reapeated       = newTransisions `isSubsetOf` old
 
 
 
