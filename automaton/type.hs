@@ -18,7 +18,10 @@ module Automaton.Type (
 
 --------------------------------------------------------------
 
+--import qualified Data.IntMap as IntMap
 
+
+--------------------------------------------------------------
 
 type State  = Int
 type States = [State]
@@ -32,6 +35,7 @@ type NDTransition = State -> Alphabet -> States
 
 type Mapping = (State, Alphabet, State)
 type NDMapping = (State, Alphabet, States)
+
 
 data Map = Map [Mapping]
          | NDMap [NDMapping]

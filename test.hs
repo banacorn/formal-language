@@ -51,8 +51,6 @@ startMin = 0
 acceptsMin = [2]
 dfaMin = DFA statesMin alphabetsMin mappingsMin startMin acceptsMin
 
-m = minimizeDFA dfaMin
-_m = negateDFA m
 
 ------------
 
@@ -65,16 +63,6 @@ mappingsEq = Map [
 startEq = 0
 acceptsEq = [0]
 e = DFA statesEq alphabetsEq mappingsEq startEq acceptsEq
-_e = negateDFA e
-
-ie = e `intersectionDFA` _e
-ue = e `unionDFA` _e
-
-eq dfa0 dfa1 = formalizeDFA $ minimizeDFA wtf
-    where   wtf = (dfa0 `intersectionDFA` _dfa1) `unionDFA` (_dfa0 `intersectionDFA` dfa1)
-            _dfa0 = negateDFA dfa0
-            _dfa1 = negateDFA dfa1
-ee = eq e e 
 
 ---------
 
@@ -92,6 +80,20 @@ acceptsN = [0]
 
 nfa = NFA statesN alphabetsN mappingsN startN acceptsN
 
+
+statesM = [0 .. 1]
+alphabetsM = ['a', 'b']
+mappingsM = NDMap [
+    (0, ' ', [1]),
+    (0, 'b', [1]),
+    (1, 'a', [0])
+    ]
+startM = 0
+acceptsM = [1]
+
+nfam = NFA statesM alphabetsM mappingsM startM acceptsM
+
+u = unionNFA nfa nfam
 
 ------------------------------------------------------------------------
 -- generators

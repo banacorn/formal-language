@@ -18,7 +18,8 @@ module Automaton.FA (
     -- NFA
     epsilonClosure,
     formalizeNFA,
-    collectStates
+
+    unionNFA
 
 ) where
 
@@ -30,6 +31,7 @@ import Data.Bits (testBit)
 import Control.Applicative hiding (empty)
 import Control.Monad
 import Data.List
+import qualified Data.IntMap as IntMap
 
 
 --------------------------------------------------------------
@@ -98,7 +100,7 @@ decodePowerset = elemIndices 1 . bits
     where   bits 0 = [0]
             bits 1 = [1]
             bits n = (mod n 2) : bits (div n 2)
-            
+
 ofPowerset e n = testBit n e
 
 
@@ -258,9 +260,58 @@ collect next (old, new)
             subsetOf elems list = and (flip elem list <$> elems)
 
 
+----------------------------------------------------------------------
 
+--unionNFA :: NFA -> NFA -> NFA
+unionNFA nfa0 nfa1 = 4
+--    newState
+--    --NFA states alphabets mappings start accepts
+--    where
+--        NFA states0 alphabets mappings0 start0 accepts0 = nfa0
+--        NFA states1 _ mappings1 start1 accepts1 = nfa1
+        
+--        newState = minimum states0 - 1
+--        offset = maximum states0 
 
+--
+--statesMin = [0..7]
+--alphabetsMin = ['0', '1']
 
+--mappingsMin = Map [
+--    (0, '0', 1),
+--    (0, '1', 5),
+--    (1, '0', 6),
+--    (1, '1', 2),
+--    (2, '0', 0),
+--    (2, '1', 2),
+--    (3, '0', 2),
+--    (3, '1', 6),
+--    (4, '0', 7),
+--    (4, '1', 5),
+--    (5, '0', 2),
+--    (5, '1', 6),
+--    (6, '0', 6),
+--    (6, '1', 4),
+--    (7, '0', 6),
+--    (7, '1', 2)
+--    ]
 
+--startMin = 0
+--acceptsMin = [2]
+--dfaMin = DFA statesMin alphabetsMin mappingsMin startMin acceptsMin
+
+----
+
+--r = replaceStatesDFA table dfaMin
+--    where table = (+2) 
+
+--replaceStatesDFA :: (State -> State) -> DFA -> DFA
+replaceStatesDFA table (DFA states alphabets (Map mappings) start accepts) = 
+    DFA states' alphabets (Map mappings') start' accepts'
+    where   states'     = table <$> states
+            mappings'   = replaceMapping <$> mappings
+                where replaceMapping (s, a, t) = (table s, a, table t)
+            start'      = table start
+            accepts'    = table <$> accepts
 
 
