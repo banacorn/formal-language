@@ -223,40 +223,7 @@ collectStates mappings alphabets start = collect next (start', start')
             next states = (\ alphabet -> states >>= bana alphabet) <$> alphabets
             start' = return $ closure start 
             closure state = epsilonClosure mappings state
---collect next ([start'], [start'])
 
-    --where   mapState alphabet state = driverN mappings state alphabet
-            --next state = nub . join $ (\alphabet -> state >>= (mapState alphabet)) <$> alphabets
-
-            --mapAlphabet al = 
-            --transit states = (mapAlphabet <$> alphabets) states
-            --next states = (transit <$> alphabets) <$> alphabets
-            --closure states = states >>= epsilonClosure mappings
-            --start' = closure [start]
-    --        jump states = driverN mappings <$> states <*> alphabets >>= closure
-    --        next states = return states >>= jump >>= closure
-
-
----------
-
-statesN = [0 .. 3]
-alphabetsN = ['0', '1']
-mappingsN = NDMap [
-    (0, '0', [1]),
-    (0, ' ', [2]),
-    (1, '1', [1, 3]),
-    (2, ' ', [1]),
-    (2, '0', [3]),
-    (3, '0', [2])
-    ]
-startN = 0
-acceptsN = [2, 3]
-
-nfa = NFA statesN alphabetsN mappingsN startN acceptsN
-
-
---collectStates :: Map -> Alphabets -> ([States], [States]) -> [States]
---collectStates mappings alphabets (old, new) = old
 
 collect :: Eq a => (a -> [a]) -> ([a], [a]) -> [a]
 collect next (old, new)
@@ -270,32 +237,6 @@ collect next (old, new)
             subsetOf elems list = and (flip elem list <$> elems)
 
 
-    --where   
-    -- --| emptied || reapeated  = collected
-    -- --| otherwise             = collectStates mappings alphabets (collected, newTransisions)
-    --where   transit states   = fmap (\a -> fmap (\state -> epsilonTransition mappings state a) states) alphabets
-    --        newTransisions  = join . join $ fmap transit new
-    --        collected       = nub $ union old new
-    --        emptied         = null newTransisions
-    --        reapeated       = newTransisions `isSubsetOf` old
-    --        isSubsetOf elements list = and $ (flip elem list <$> elements)
-
-
---collectState :: Map -> Alphabets -> (States, States) -> States
---collectState mappings alphabets (old, new) 
---    | emptied = old
---    | repeated = old
---    | otherwise = collectState mappings alphabets (collected, newStates)
---    where   transit states = driver mappings <$> states <*> alphabets
---            newStates      = transit new
---            collected      = old `union` newStates
---            repeated       = newStates `isSubsetOf` old
---                                where isSubsetOf elements list = and $ (flip elem list <$> elements)
---            emptied        = null newStates
-
-
-
------------------
 
 
 
