@@ -12,7 +12,7 @@ tests = [
     ("~~dfa == dfa", quickCheck propNegateDFATwice),
     ("~dfa /= dfa", quickCheck propComplementary),
     ("dfa union", quickCheck propUnionDFA),
-    ("dfa intersection", quickCheck propIntersectionDFA)
+    ("dfa intersect", quickCheck propIntersectDFA)
     ]
 
 bana test = replicateM_ 10 (quickCheck test)
@@ -187,8 +187,8 @@ propUnionDFA = do
 
 
 
-propIntersectionDFA :: Property
-propIntersectionDFA = do
+propIntersectDFA :: Property
+propIntersectDFA = do
     alphabets <- genAlphabets
     -- DFA 0
     states0 <- genStates
@@ -198,7 +198,7 @@ propIntersectionDFA = do
     dfa1 <- genDFA states1 alphabets
 
     forAll (genLanguage alphabets) (\ language -> 
-            let dfa = dfa0 `intersectionDFA` dfa1 in
+            let dfa = dfa0 `intersectDFA` dfa1 in
             automaton dfa0 language ==> automaton dfa language &&
             automaton dfa1 language ==> automaton dfa language
         )

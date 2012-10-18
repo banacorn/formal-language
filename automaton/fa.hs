@@ -10,7 +10,7 @@ module Automaton.FA (
 
     negateDFA,
     unionDFA,
-    intersectionDFA,
+    intersectDFA,
 
     dfa2nfa,
     nfa2dfa,
@@ -150,8 +150,8 @@ unionDFA dfa0 dfa1 =
 
 
 
-intersectionDFA :: DFA -> DFA -> DFA
-intersectionDFA dfa0 dfa1 =
+intersectDFA :: DFA -> DFA -> DFA
+intersectDFA dfa0 dfa1 =
     DFA states alphabets mappings start accepts
     where
         DFA states0 alphabets mappings0 start0 accepts0 = formalizeDFA $ trimUnreachableStates dfa0

@@ -23,7 +23,7 @@ module Automaton (
 
     negateDFA,
     unionDFA,
-    intersectionDFA,
+    intersectDFA,
 
 
     dfa2nfa,
@@ -125,8 +125,8 @@ import Automaton.FA
 --            start = singleton start0 :. S start1
 --            accepts = union (states0 *. accepts1) (accepts0 *. states1)
 
---intersectionFA :: (Ord a) => FA a -> FA a -> FA a
---intersectionFA (DFA states0 alphabets0 transition0 (S start0) accepts0) (DFA states1 alphabets1 transition1 (S start1) accepts1) =
+--intersectFA :: (Ord a) => FA a -> FA a -> FA a
+--intersectFA (DFA states0 alphabets0 transition0 (S start0) accepts0) (DFA states1 alphabets1 transition1 (S start1) accepts1) =
 --    DFA states alphabets0 transition start accepts
 --    where   states = states0 *. states1
 --            transition (s0 :. S s1) a = next0 :. S next1
