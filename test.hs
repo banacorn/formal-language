@@ -3,7 +3,6 @@ import Control.Applicative
 import Control.Monad
 import Automaton
 import Data.List
-import Text.Printf
 
 
 --main  = mapM_ (\(s,a) -> printf "%-25s: " s >> a) tests
@@ -204,17 +203,17 @@ propIntersectionDFA = do
             automaton dfa1 language ==> automaton dfa language
         )
 
---propFormalizeDFA :: Property
---propFormalizeDFA = do
---    states      <- genStates
---    alphabets   <- genAlphabets
---    dfa         <- genDFA states alphabets
---    dfa'        <- return (formalize dfa)
---    forAll (genLanguage alphabets) (\ language ->
---            automaton dfa language == automaton dfa' language && formal dfa' 
---        )
---    where   formal (DFA states alphabets mappings start accepts) = 
---                states == [0 .. (length states - 1)]
+propFormalizeDFA :: Property
+propFormalizeDFA = do
+    states      <- genStates
+    alphabets   <- genAlphabets
+    dfa         <- genDFA states alphabets
+    dfa'        <- return (formalizeDFA dfa)
+    forAll (genLanguage alphabets) (\ language ->
+            automaton dfa language == automaton dfa' language && formal dfa' 
+        )
+    where   formal (DFA states alphabets mappings start accepts) = 
+                states == [0 .. (length states - 1)]
 
 propTrimStatesDFA :: Property
 propTrimStatesDFA = do

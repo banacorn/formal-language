@@ -31,7 +31,7 @@ import Data.Bits (testBit)
 import Control.Applicative hiding (empty)
 import Control.Monad
 import Data.List
-import qualified Data.IntMap as IntMap
+--import qualified Data.IntMap as IntMap
 
 
 --------------------------------------------------------------
@@ -170,14 +170,20 @@ intersectionDFA dfa0 dfa1 =
 
 -- helper functions
 formalizeDFA :: DFA -> DFA
-formalizeDFA (DFA states alphabets (Map mappings) start accepts) = 
-    DFA states' alphabets (Map mappings') start' accepts'
-    where   states' = [0 .. length states - 1]
-            mappings' = nub $ map (\ (s, a, f) -> (replace s, a, replace f)) mappings
-            start' = replace start
-            accepts' = nub $ map replace accepts
-            replace x = case elemIndex x states of Just a -> a
-                                                   Nothing -> 0
+formalizeDFA dfa = replaceStatesDFA function dfa
+    where   getStates (DFA s _ _ _ _) = s
+            table = zip (getStates dfa) [0..]
+            function s = case lookup s table of Just a -> a
+                                                Nothing -> 0
+
+
+    --DFA states' alphabets (Map mappings') start' accepts'
+    --where   states' = [0 .. length states - 1]
+    --        mappings' = nub $ map (\ (s, a, f) -> (replace s, a, replace f)) mappings
+    --        start' = replace start
+    --        accepts' = nub $ map replace accepts
+    --        replace x = case elemIndex x states of Just a -> a
+                                                   --Nothing -> 0
 
 formalizeNFA :: NFA -> NFA
 formalizeNFA (NFA states alphabets (NDMap mappings) start accepts) = 
@@ -305,7 +311,7 @@ unionNFA nfa0 nfa1 = 4
 --r = replaceStatesDFA table dfaMin
 --    where table = (+2) 
 
---replaceStatesDFA :: (State -> State) -> DFA -> DFA
+replaceStatesDFA :: (State -> State) -> DFA -> DFA
 replaceStatesDFA table (DFA states alphabets (Map mappings) start accepts) = 
     DFA states' alphabets (Map mappings') start' accepts'
     where   states'     = table <$> states
