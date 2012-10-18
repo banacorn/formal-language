@@ -111,8 +111,8 @@ genLanguage :: Alphabets -> Gen Language
 genLanguage = listOf . elements
 
 
-genCompleteMapping :: States -> Alphabets -> Gen Map
-genCompleteMapping states alphabets = 
+genMapping :: States -> Alphabets -> Gen Map
+genMapping states alphabets = 
     fmap Map $ sequence $ map extend pairs
     where   pair a b = (a, b)
             pairs = (pair <$> states <*> alphabets)
@@ -120,8 +120,8 @@ genCompleteMapping states alphabets =
                 c <- elements states
                 return (a, b, c)
 
-genPartialMapping :: States -> Alphabets -> Gen Map
-genPartialMapping states alphabets = 
+genMappingN :: States -> Alphabets -> Gen Map
+genMappingN states alphabets = 
     fmap MapN $ sequence $ map extend pairs
     where   pair a b = (a, b)
             pairs = pair <$> states <*> alphabets
@@ -134,7 +134,7 @@ genDFA :: States -> Alphabets -> Gen DFA
 genDFA states alphabets = do
     start <- elements states
     accepts <- fmap nub . listOf . elements $ states
-    mappings <- genCompleteMapping states alphabets
+    mappings <- genMapping states alphabets
     return $ DFA states alphabets mappings start accepts
 
 
@@ -142,7 +142,7 @@ genNFA :: States -> Alphabets -> Gen NFA
 genNFA states alphabets = do
     start <- elements states
     accepts <- fmap nub . listOf . elements $ states
-    mappings <- genPartialMapping states alphabets
+    mappings <- genMappingN states alphabets
     return $ NFA states alphabets mappings start accepts
 
 ------------------------------------------------------------------------
@@ -295,7 +295,7 @@ propIntersectNFA = do
 --propTransitionFunction = do
 --    states <- genStates
 --    alphabets <- genAlphabets
---    forAll (genCompleteMapping states alphabets) (\ maps ->
+--    forAll (genMapping states alphabets) (\ maps ->
 --            let 
 --                (Map mappings) = maps
 --                transitions = driver maps
