@@ -45,7 +45,7 @@ driver (Map mappings) state alphabet =
 
 -- make mappings a function
 driverN :: Map -> NDTransition
-driverN (NDMap mappings) state alphabet = 
+driverN (MapN mappings) state alphabet = 
     let result = [ f | (s, a, f) <- mappings, s == state, a == alphabet ] in
     case result of [] -> []
                    (x:xs) -> x
@@ -86,7 +86,7 @@ epsilonClosure mappings state = nub . insert state . join $ epsilonClosure mappi
 
 -- transform DFA to NFA
 dfa2nfa :: DFA -> NFA
-dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (NDMap ndmappings) i f)
+dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (MapN ndmappings) i f)
     where   ndmappings = fmap mapping2ndmapping mappings
             mapping2ndmapping (state, alphabet, target) = (state, alphabet, [target])
 
@@ -176,18 +176,9 @@ formalizeDFA dfa = replaceStatesDFA function dfa
             function s = case lookup s table of Just a -> a
                                                 Nothing -> 0
 
-
-    --DFA states' alphabets (Map mappings') start' accepts'
-    --where   states' = [0 .. length states - 1]
-    --        mappings' = nub $ map (\ (s, a, f) -> (replace s, a, replace f)) mappings
-    --        start' = replace start
-    --        accepts' = nub $ map replace accepts
-    --        replace x = case elemIndex x states of Just a -> a
-                                                   --Nothing -> 0
-
 formalizeNFA :: NFA -> NFA
-formalizeNFA (NFA states alphabets (NDMap mappings) start accepts) = 
-    NFA states' alphabets (NDMap mappings') start' accepts'
+formalizeNFA (NFA states alphabets (MapN mappings) start accepts) = 
+    NFA states' alphabets (MapN mappings') start' accepts'
     where   states' = [0 .. length states - 1]
             mappings' = nub $ map (\ (s, a, f) -> (replace s, a, replace <$> f)) mappings
             start' = replace start
@@ -320,4 +311,14 @@ replaceStatesDFA table (DFA states alphabets (Map mappings) start accepts) =
             start'      = table start
             accepts'    = table <$> accepts
 
+
+
+--replaceStatesNFA :: (State -> State) -> NFA -> NFA
+--replaceStatesNFA table (NFA states alphabets (MapN mappings) start accepts) = 
+--    NFA states' alphabets (MapN mappings') start' accepts'
+--    where   states'     = table <$> states
+--            mappings'   = replaceMapping <$> mappings
+--                where replaceMapping (s, a, t) = (table s, a, table t)
+--            start'      = table start
+--            accepts'    = table <$> accepts
 

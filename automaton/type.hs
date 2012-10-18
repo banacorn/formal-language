@@ -12,7 +12,7 @@ module Automaton.Type (
 
     Map(..),
     Mapping,
-    NDMapping
+    MappingN
 ) where
 
 
@@ -34,11 +34,11 @@ type Transition = State -> Alphabet -> State
 type NDTransition = State -> Alphabet -> States
 
 type Mapping = (State, Alphabet, State)
-type NDMapping = (State, Alphabet, States)
+type MappingN = (State, Alphabet, States)
 
 
 data Map = Map [Mapping]
-         | NDMap [NDMapping]
+         | MapN [MappingN]
 
 data DFA = DFA States Alphabets Map State States
 data NFA = NFA States Alphabets Map State States

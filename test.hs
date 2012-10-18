@@ -67,7 +67,7 @@ e = DFA statesEq alphabetsEq mappingsEq startEq acceptsEq
 
 statesN = [0 .. 2]
 alphabetsN = ['a', 'b']
-mappingsN = NDMap [
+mappingsN = MapN [
     (0, ' ', [2]),
     (0, 'b', [1]),
     (1, 'a', [1, 2]),
@@ -82,7 +82,7 @@ nfa = NFA statesN alphabetsN mappingsN startN acceptsN
 
 statesM = [0 .. 1]
 alphabetsM = ['a', 'b']
-mappingsM = NDMap [
+mappingsM = MapN [
     (0, ' ', [1]),
     (0, 'b', [1]),
     (1, 'a', [0])
@@ -119,7 +119,7 @@ genCompleteMapping states alphabets =
 
 genPartialMapping :: States -> Alphabets -> Gen Map
 genPartialMapping states alphabets = 
-    fmap NDMap $ sequence $ map extend pairs
+    fmap MapN $ sequence $ map extend pairs
     where   pair a b = (a, b)
             pairs = pair <$> states <*> alphabets
             extend (a, b) = do

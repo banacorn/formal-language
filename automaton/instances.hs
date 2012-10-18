@@ -31,7 +31,7 @@ instance Show Map where
                 show a ++ 
                 "  →  " ++ 
                 show t
-    show (NDMap mappings) = dropQuote $
+    show (MapN mappings) = dropQuote $
         listMapping mappings
         where
             listMapping = concat . fmap (prefixIndent . showMap)
