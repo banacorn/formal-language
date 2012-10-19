@@ -307,9 +307,6 @@ dfaMin = DFA statesMin alphabetsMin mappingsMin startMin acceptsMin
 
 ----
 
---r = replaceStatesDFA table dfaMin
---    where table = (+2) 
-
 replaceStatesDFA :: (State -> State) -> DFA -> DFA
 replaceStatesDFA table (DFA states alphabets (Map mappings) start accepts) = 
     DFA states' alphabets (Map mappings') start' accepts'

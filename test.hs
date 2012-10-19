@@ -17,7 +17,8 @@ tests = [
 
 bana test = replicateM_ 10 (quickCheck test)
 
-main = quickCheck propNFA2DFA
+mains = replicateM_ 100 $ sample . join $ genMapping <$> genStates <*> genAlphabets
+main = q propIntersectNFA
 
 q :: Testable prop => prop -> IO ()
 q = quickCheck
@@ -115,7 +116,7 @@ genMapping :: States -> Alphabets -> Gen Map
 genMapping states alphabets = 
     fmap Map $ sequence $ map extend pairs
     where   pair a b = (a, b)
-            pairs = (pair <$> states <*> alphabets)
+            pairs = pair <$> states <*> alphabets
             extend (a, b) = do
                 c <- elements states
                 return (a, b, c)
@@ -153,6 +154,15 @@ propGenStates = do
     states <- genStates
     property $ states == nub states
 
+propGenMapping :: Property
+propGenMapping = do
+    Map mapping <- join $ genMapping <$> genStates <*> genAlphabets
+    property $ mapping == nub mapping 
+
+propGenMappingN :: Property
+propGenMappingN = do
+    MapN mapping <- join $ genMappingN <$> genStates <*> genAlphabets
+    property $ mapping == nub mapping
 
 
 propNegateDFATwice :: Property
@@ -160,11 +170,7 @@ propNegateDFATwice = do
     states <- genStates
     alphabets <- genAlphabets
     dfa <- genDFA states alphabets
-    forAll (genLanguage alphabets) (\ language -> 
-            automaton dfa language == automaton (negateDFA . negateDFA $ dfa) language
-        )
-    --property (dfa == (negateDFA . negateDFA) dfa)
-
+    property (dfa == (negateDFA . negateDFA) dfa)
 
 propComplementary :: Property
 propComplementary = do
@@ -285,9 +291,12 @@ propIntersectNFA = do
     nfa1 <- genNFA states1 alphabets
 
     forAll (genLanguage alphabets) (\ language -> 
-            let nfa = nfa0 `intersectNFA` nfa1 in
-            automatonN nfa0 language == automatonN nfa language &&
-            automatonN nfa1 language == automatonN nfa language
+            let 
+                nfa = nfa0 `intersectNFA` nfa1 
+                prop =  automatonN nfa0 language ==> automatonN nfa language &&
+                        automatonN nfa1 language ==> automatonN nfa language
+            in
+            printTestCase (show nfa0 ++ "\n" ++ show nfa1  ++ "\n" ++ show nfa) prop
         )
 
 
