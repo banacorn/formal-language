@@ -299,6 +299,28 @@ propIntersectNFA = do
             printTestCase (show nfa0 ++ "\n" ++ show nfa1  ++ "\n" ++ show nfa) prop
         )
 
+propConcatenateNFA :: Property
+propConcatenateNFA = do
+    alphabets <- genAlphabets
+    -- NFA 0
+    states0 <- genStates
+    nfa0 <- genNFA states0 alphabets
+    lang0 <- genLanguage alphabets
+    -- NFA 1
+    states1 <- genStates
+    nfa1 <- genNFA states1 alphabets
+    lang1 <- genLanguage alphabets
+
+    nfa <- return $ nfa0 `concatenateNFA` nfa1 
+
+    printTestCase (show nfa0 ++ "\n" ++ show nfa1  ++ "\n" ++ show nfa) (automatonN nfa0 lang0 && automatonN nfa1 lang1 ==> automatonN nfa (lang0 ++ lang1))
+    --forAll genStates (\ _ ->
+    --        let 
+    --            nfa = nfa0 `concatenateNFA` nfa1 
+    --            prop =  automatonN nfa0 lang0 && automatonN nfa1 lang1 ==> automatonN nfa (lang0 ++ lang1)
+    --        in
+    --            printTestCase (show nfa0 ++ "\n" ++ show nfa1  ++ "\n" ++ show nfa) prop
+    --    )
 
 --propTransitionFunction :: Property
 --propTransitionFunction = do

@@ -19,8 +19,10 @@ module Automaton.FA (
     epsilonClosure,
     formalizeNFA,
 
+    negateNFA,
     unionNFA,
-    intersectNFA
+    intersectNFA,
+    concatenateNFA
 
 ) where
 
@@ -84,7 +86,6 @@ epsilonClosure mappings state = nub . insert state . join $ epsilonClosure mappi
 
 ----------------------------------------------------------------------
 -- proofs
-
 -- transform DFA to NFA
 dfa2nfa :: DFA -> NFA
 dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (MapN ndmappings) i f)
@@ -277,6 +278,23 @@ intersectNFA nfa0 nfa1 = dfa2nfa dfaIntersection
             dfa1 = nfa2dfa nfa1
             dfaIntersection = minimizeDFA $ dfa0 `intersectDFA` dfa1
 
+concatenateNFA :: NFA -> NFA -> NFA
+concatenateNFA nfa0 nfa1 =
+    formalizeNFA (NFA states alphabets (MapN mappings) start0 accepts1)
+    where
+        (NFA states0 alphabets (MapN mappings0) start0 accepts0) = nfa0
+        (NFA states1 _         (MapN mappings1) start1 accepts1) = replace nfa1
+
+        offset = maximum states0 - minimum states0 + 1
+        replace = replaceStatesNFA (+ offset)
+
+        end = [ (s, ' ', t) | (s, a, t) <- mappings0, s `elem` accepts0, a == ' ' ]
+        mappings = case end of []        -> bridge `union` mappings0 `union` mappings1
+                               otherwise -> bridge' `union` (mappings0 \\ end) `union` mappings1
+            where   bridge = [ (s, ' ', [start1]) | s <- accepts0 ]
+                    bridge' = [ (s, a, start1 `insert` ts) | (s, a, ts) <- end ]
+        
+        states = states0 `union` states1
 
 
 statesMin = [0..7]

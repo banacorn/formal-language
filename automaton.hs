@@ -34,8 +34,11 @@ module Automaton (
     epsilonClosure,
     formalizeNFA,
     
+    negateNFA,
     unionNFA,
-    intersectNFA
+    intersectNFA,
+    concatenateNFA
+    
 
 
 
