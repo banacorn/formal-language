@@ -18,7 +18,7 @@ tests = [
 bana test = replicateM_ 10 (quickCheck test)
 
 mains = replicateM_ 100 $ sample . join $ genMapping <$> genStates <*> genAlphabets
-main = q propUnionDFA
+main = q propIntersectDFA
 
 q :: Testable prop => prop -> IO ()
 q = quickCheck
