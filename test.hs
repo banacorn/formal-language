@@ -18,7 +18,7 @@ tests = [
 bana test = replicateM_ 10 (quickCheck test)
 
 mains = replicateM_ 100 $ sample . join $ genMapping <$> genStates <*> genAlphabets
-main = q propIntersectNFA
+main = q propUnionDFA
 
 q :: Testable prop => prop -> IO ()
 q = quickCheck
@@ -52,12 +52,12 @@ mappingsMin = Map [
 
 startMin = 0
 acceptsMin = [2]
-dfaMin = DFA statesMin alphabetsMin mappingsMin startMin acceptsMin
+dfa = DFA statesMin alphabetsMin mappingsMin startMin acceptsMin
 
 
 ------------
 
-statesEq = [0 .. 1]
+statesEq = [0 .. 2]
 alphabetsEq = ['1', '0']
 mappingsEq = Map [
     (0, '0', 0),
@@ -65,7 +65,7 @@ mappingsEq = Map [
     ]
 startEq = 0
 acceptsEq = [0]
-e = DFA statesEq alphabetsEq mappingsEq startEq acceptsEq
+dfae = DFA statesEq alphabetsEq mappingsEq startEq acceptsEq
 
 ---------
 
@@ -97,6 +97,7 @@ acceptsM = [1]
 nfam = NFA statesM alphabetsM mappingsM startM acceptsM
 
 i = intersectNFA nfa nfa
+u = unionDFA dfae dfae
 
 ------------------------------------------------------------------------
 -- generators

@@ -133,22 +133,21 @@ negateNFA :: NFA -> NFA
 negateNFA (NFA states a m s accepts) = NFA states a m s (states \\ accepts)
 
 
-unionDFA :: DFA -> DFA -> DFA
+--unionDFA :: DFA -> DFA -> DFA
 unionDFA dfa0 dfa1 =
     DFA states alphabets mappings start accepts
     where
-        DFA states0 alphabets mappings0 start0 accepts0 = formalizeDFA $ trimUnreachableStates dfa0
-        DFA states1 _ mappings1 start1 accepts1 = formalizeDFA $ trimUnreachableStates dfa1
+        DFA states0 alphabets (Map mappings0) start0 accepts0 = formalizeDFA dfa0
+        DFA states1 _         (Map mappings1) start1 accepts1 = formalizeDFA dfa1
 
         stateSpace = length states0 * length states1
-        encode = encodePair $ length states1
-        driver0 = driver mappings0
-        driver1 = driver mappings1
+        encode (a, b) = a * length states1 + b
+
         states = [0 .. stateSpace - 1]
-        mappings = Map $ triple <$> alphabets <*> states0 <*> states1
-            where   triple a s0 s1 = (encode (s0, s1), a, encode (driver0 s0 a, driver1 s1 a))
+        mappings = Map [ (encode (s0, s1), a0, encode (t0, t1)) | (s0, a0, t0) <- mappings0, (s1, a1, t1) <- mappings1, a0 == a1]
         start = encode (start0, start1)
         accepts = [ encode (s0, s1) | s0 <- states0, s1 <- states1, elem s0 accepts0 || elem s1 accepts1 ]
+
 
 
 
