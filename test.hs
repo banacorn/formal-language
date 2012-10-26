@@ -54,6 +54,21 @@ startMin = 0
 acceptsMin = [2]
 dfa = DFA statesMin alphabetsMin mappingsMin startMin acceptsMin
 
+------------
+
+statesM' = [0 .. 2]
+alphabetsM' = ['1', '0']
+mappingsM' = Map [
+    (0, '0', 1),
+    (0, '1', 2),
+    (1, '0', 2),
+    (1, '1', 0),
+    (2, '0', 0),
+    (2, '1', 2)
+    ]
+startM' = 0
+acceptsM' = [1]
+dfam' = DFA statesM' alphabetsM' mappingsM' startM' acceptsM'
 
 ------------
 
@@ -98,12 +113,16 @@ nfam = NFA statesM alphabetsM mappingsM startM acceptsM
 
 i = intersectNFA nfa nfa
 u = unionDFA dfae dfae
-m = minimizeDFA dfa
+m = minimizeDFA dfam'
 --mm = minimizeDFA dfa
 --m = test dfa
 c = concatenateDFA dfa dfae
 
 d = undistinguishableStates dfa
+
+
+
+
 
 ------------------------------------------------------------------------
 -- generators
@@ -153,6 +172,13 @@ genNFA states alphabets = do
     mappings <- genMappingN states alphabets
     return $ NFA states alphabets mappings start accepts
 
+genReplacements :: States -> Gen [(State, State)]
+genReplacements states = do
+    replicates0 <- listOf1 . elements $ states
+    replicates1 <- listOf1 . elements $ states
+    return . filter goodPair . nub $ zip replicates0 replicates1
+    where   goodPair (a, b) = a /= b
+
 ------------------------------------------------------------------------
 -- properties
 
@@ -170,6 +196,15 @@ propGenMappingN :: Property
 propGenMappingN = do
     MapN mapping <- join $ genMappingN <$> genStates <*> genAlphabets
     property $ mapping == nub mapping
+
+--propReplaceStatesDFA :: Property
+--propReplaceStatesDFA = do
+--    states <- genStates
+--    alphabets <- genAlphabets
+--    replacements <- genReplacements
+--    dfa <- genDFA states alphabets
+--    dfa' <- 
+--    property (dfa == (negateDFA . negateDFA) dfa)
 
 
 propNegateDFATwice :: Property
@@ -256,8 +291,7 @@ propMinimizeDFA = do
     dfa'        <- return (minimizeDFA dfa)
     forAll (genLanguage alphabets) (\ language ->
             let prop = automaton dfa language == automaton dfa' language in
-            let dfa'' = trimUnreachableStates dfa in
-            printTestCase (show dfa ++ "\n" ++ show dfa'' ++ "\n" ++ show dfa') prop
+            printTestCase (show dfa ++ "\n" ++ show dfa') prop
         )
 
 propDFA2NFA :: Property

@@ -7,6 +7,8 @@ module Automaton.FA (
     trimUnreachableStates,
     minimizeDFA,
     formalizeDFA,
+    replaceStatesDFA,
+    replaceStatesNFA,
 
     negateDFA,
     unionDFA,
@@ -25,7 +27,7 @@ module Automaton.FA (
     intersectNFA,
     concatenateNFA,
 
-    undistinguishableStates
+    undistinguishableStates,
 
 ) where
 
@@ -337,8 +339,9 @@ replaceStatesDFA :: (State -> State) -> DFA -> DFA
 replaceStatesDFA table (DFA states alphabets (Map mappings) start accepts) = 
     DFA states' alphabets (Map mappings') start' accepts'
     where   states'     = nub $ table <$> states
-            mappings'   = nub $ replaceMapping <$> mappings
+            mappings'   = nubBy same $ replaceMapping <$> mappings
                 where replaceMapping (s, a, t) = (table s, a, table t)
+                      same (a, b, c) (d, e, f) = a == d && b == e
             start'      = table start
             accepts'    = nub $ table <$> accepts
 
@@ -348,7 +351,7 @@ replaceStatesNFA :: (State -> State) -> NFA -> NFA
 replaceStatesNFA table (NFA states alphabets (MapN mappings) start accepts) = 
     NFA states' alphabets (MapN mappings') start' accepts'
     where   states'     = nub $ table <$> states
-            mappings'   = nub $ replaceMapping <$> mappings
+            mappings'   = replaceMapping <$> mappings
                 where replaceMapping (s, a, t) = (table s, a, table <$> t)
             start'      = table start
             accepts'    = nub $ table <$> accepts
