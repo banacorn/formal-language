@@ -24,6 +24,7 @@ module Automaton (
     negateDFA,
     unionDFA,
     intersectDFA,
+    concatenateDFA,
 
 
     dfa2nfa,
@@ -37,10 +38,9 @@ module Automaton (
     negateNFA,
     unionNFA,
     intersectNFA,
-    concatenateNFA
-    
+    concatenateNFA,
 
-
+    undistinguishableStates
 
 
 ) where

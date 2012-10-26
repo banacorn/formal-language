@@ -18,7 +18,7 @@ tests = [
 bana test = replicateM_ 10 (quickCheck test)
 
 mains = replicateM_ 100 $ sample . join $ genMapping <$> genStates <*> genAlphabets
-main = q propIntersectDFA
+main = q propMinimizeDFA
 
 q :: Testable prop => prop -> IO ()
 q = quickCheck
@@ -98,6 +98,12 @@ nfam = NFA statesM alphabetsM mappingsM startM acceptsM
 
 i = intersectNFA nfa nfa
 u = unionDFA dfae dfae
+m = minimizeDFA dfa
+--mm = minimizeDFA dfa
+--m = test dfa
+c = concatenateDFA dfa dfae
+
+d = undistinguishableStates dfa
 
 ------------------------------------------------------------------------
 -- generators

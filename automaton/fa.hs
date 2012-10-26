@@ -11,6 +11,7 @@ module Automaton.FA (
     negateDFA,
     unionDFA,
     intersectDFA,
+    concatenateDFA,
 
     dfa2nfa,
     nfa2dfa,
@@ -22,7 +23,9 @@ module Automaton.FA (
     negateNFA,
     unionNFA,
     intersectNFA,
-    concatenateNFA
+    concatenateNFA,
+
+    undistinguishableStates
 
 ) where
 
@@ -166,6 +169,12 @@ intersectDFA dfa0 dfa1 =
         start = encode (start0, start1)
         accepts = curry encode <$> accepts0 <*> accepts1
 
+concatenateDFA :: DFA -> DFA -> DFA
+concatenateDFA dfa0 dfa1 = minimizeDFA . formalizeDFA . nfa2dfa $ nfa0 `concatenateNFA` nfa1
+    where 
+        nfa0 = dfa2nfa dfa0
+        nfa1 = dfa2nfa dfa1
+
 -- helper functions
 formalizeDFA :: DFA -> DFA
 formalizeDFA dfa = replaceStatesDFA function dfa
@@ -181,43 +190,33 @@ formalizeNFA nfa = replaceStatesNFA function nfa
             function s = case lookup s table of Just a -> a
                                                 Nothing -> 0
 
-encodePair size (a, b) = a * size + b
 
+minimizeDFA dfa = replaceStatesDFA replace dfa
+    where   undistinguishablePairs = undistinguishableStates dfa
+            replace a = case lookup a undistinguishablePairs of
+                Just b  -> b
+                Nothing -> a
 
-minimizeDFA dfa =
-    (DFA states' alphabets (Map mappings') start' accepts')
-    --formalize (DFA states' alphabets (Map mappings') start' accepts')
-    where   -- input
-            (DFA states alphabets (Map mappings) start accepts) = trimUnreachableStates dfa
-            -- init data
-            distinguished = accepts >>= de combinations
-            mixed = combinations \\ distinguished
-            -- helpers
-            transit state = driver (Map mappings) state <$> alphabets
-            de list state = filter (\ (a, b) -> a == state || b == state) list
-            combinations = filter (uncurry (<)) $ curry id <$> states <*> states
-            transitPair (a, b) = tweak <$> pairs
-                where   pairs = uncurry zip (transit b, transit a)
-                        tweak (a, b) = if a < b then (a, b) else (b, a)
-            has target test = (flip elem test) <$> target
-            partition mixed distinguished
-                | null newDistinguished = mixed
-                | otherwise = partition mixed' distinguished'
-                where   distinguishableList = or <$> has distinguished <$> transitPair <$> mixed
-                        newDistinguished = map fst $ filter snd $ zip mixed distinguishableList
-                        distinguished' = union distinguished newDistinguished
-                        mixed' = mixed \\ newDistinguished
-            sameStates = partition mixed distinguished
+undistinguishableStates dfa = 
+    combinations \\ collect' distinguishable (initialDisguindished, initialMixed)
+    where
+        (DFA states alphabets (Map mappings) start accepts) = dfa
 
-            states' = nub $ replace <$> states
-            mappings' = nub $ replaceMapping <$> mappings
-            start' = replace start
-            accepts' = nub $ replace <$> accepts
+        combinations = filter (uncurry (<)) $ curry id <$> states <*> states
+        initialDisguindished = filter distinguishable combinations
+            where distinguishable (a, b) = a `elem` accepts || b `elem` accepts
+        initialMixed = combinations \\ initialDisguindished
 
-            replace state = case lookup state sameStates of Just new -> new
-                                                            Nothing -> state
-            replaceMapping (s, a, t) = (replace s, a, replace t)
+        transitPair pair = jump pair <$> alphabets
+        jump (a, b) alphabet = (driver (Map mappings) a alphabet, driver (Map mappings) b alphabet)
 
+        distinguishable distinguished pair =
+            case or result of 
+                True -> [pair]
+                False -> []
+            where   sort (a, b) = if a < b then (a, b) else (b, a)
+                    check (a, b) = (a, b) `elem` distinguished && a /= b
+                    result = check . sort <$> transitPair pair
 
 trimUnreachableStates :: DFA -> DFA
 trimUnreachableStates (DFA states alphabets (Map mappings) start accepts) = 
@@ -251,6 +250,18 @@ collect next (old, new)
             reapeated = new' `subsetOf` old
             subsetOf elems list = and (flip elem list <$> elems)
 
+
+collect' :: Eq a => ([a] -> a -> [a]) -> ([a], [a]) -> [a]
+collect' process (collected, raw)
+    | emptied   = collected
+    | reapeated = collected
+    | otherwise = nub $ collect' process (collected', raw')
+    where   processed = raw >>= process collected
+            collected' = nub (collected `union` processed)
+            raw' = raw \\ processed
+            emptied = null raw'
+            reapeated = raw `subsetOf` raw'
+            subsetOf elems list = and (flip elem list <$> elems)
 
 ----------------------------------------------------------------------
 
@@ -293,6 +304,7 @@ concatenateNFA nfa0 nfa1 =
         states = states0 `union` states1
 
 
+
 statesMin = [0..7]
 alphabetsMin = ['0', '1']
 
@@ -324,20 +336,20 @@ dfaMin = DFA statesMin alphabetsMin mappingsMin startMin acceptsMin
 replaceStatesDFA :: (State -> State) -> DFA -> DFA
 replaceStatesDFA table (DFA states alphabets (Map mappings) start accepts) = 
     DFA states' alphabets (Map mappings') start' accepts'
-    where   states'     = table <$> states
-            mappings'   = replaceMapping <$> mappings
+    where   states'     = nub $ table <$> states
+            mappings'   = nub $ replaceMapping <$> mappings
                 where replaceMapping (s, a, t) = (table s, a, table t)
             start'      = table start
-            accepts'    = table <$> accepts
+            accepts'    = nub $ table <$> accepts
 
 
 
 replaceStatesNFA :: (State -> State) -> NFA -> NFA
 replaceStatesNFA table (NFA states alphabets (MapN mappings) start accepts) = 
     NFA states' alphabets (MapN mappings') start' accepts'
-    where   states'     = table <$> states
-            mappings'   = replaceMapping <$> mappings
+    where   states'     = nub $ table <$> states
+            mappings'   = nub $ replaceMapping <$> mappings
                 where replaceMapping (s, a, t) = (table s, a, table <$> t)
             start'      = table start
-            accepts'    = table <$> accepts
+            accepts'    = nub $ table <$> accepts
 
