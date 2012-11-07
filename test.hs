@@ -8,6 +8,7 @@ import Data.List
 --main  = mapM_ (\(s,a) -> printf "%-25s: " s >> a) tests
 
 
+
 tests = [
     ("~~dfa == dfa", quickCheck propNegateDFATwice),
     ("~dfa /= dfa", quickCheck propComplementary),
@@ -18,7 +19,7 @@ tests = [
 bana test = replicateM_ 10 (quickCheck test)
 
 mains = replicateM_ 100 $ sample . join $ genMapping <$> genStates <*> genAlphabets
-main = q propMinimizeDFA
+main = q propNFA2DFA
 
 q :: Testable prop => prop -> IO ()
 q = quickCheck
@@ -172,12 +173,15 @@ genNFA states alphabets = do
     mappings <- genMappingN states alphabets
     return $ NFA states alphabets mappings start accepts
 
-genReplacements :: States -> Gen [(State, State)]
+genReplacements :: States -> Gen (State -> State)
 genReplacements states = do
     replicates0 <- listOf1 . elements $ states
     replicates1 <- listOf1 . elements $ states
-    return . filter goodPair . nub $ zip replicates0 replicates1
+    return . toFunction . filter goodPair . nub $ zip replicates0 replicates1
     where   goodPair (a, b) = a /= b
+            toFunction pairs a = case lookup a pairs of 
+                Just b -> b
+                Nothing -> a 
 
 ------------------------------------------------------------------------
 -- properties
@@ -201,10 +205,15 @@ propGenMappingN = do
 --propReplaceStatesDFA = do
 --    states <- genStates
 --    alphabets <- genAlphabets
---    replacements <- genReplacements
+--    replacements <- genReplacements states
 --    dfa <- genDFA states alphabets
---    dfa' <- 
---    property (dfa == (negateDFA . negateDFA) dfa)
+--    forAll (genLanguage alphabets) (\ language -> 
+--            let 
+--                dfa' = replaceStatesDFA replacements dfa
+--                prop = automaton dfa language == automaton dfa' language 
+--            in
+--            printTestCase (show dfa ++ "\n" ++ show dfa') prop
+--        )
 
 
 propNegateDFATwice :: Property

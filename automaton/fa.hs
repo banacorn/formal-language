@@ -7,8 +7,8 @@ module Automaton.FA (
     trimUnreachableStates,
     minimizeDFA,
     formalizeDFA,
-    replaceStatesDFA,
-    replaceStatesNFA,
+    renameStatesDFA,
+    renameStatesNFA,
 
     negateDFA,
     unionDFA,
@@ -179,21 +179,21 @@ concatenateDFA dfa0 dfa1 = minimizeDFA . formalizeDFA . nfa2dfa $ nfa0 `concaten
 
 -- helper functions
 formalizeDFA :: DFA -> DFA
-formalizeDFA dfa = replaceStatesDFA function dfa
+formalizeDFA dfa = renameStatesDFA function dfa
     where   getStates (DFA s _ _ _ _) = s
             table = zip (getStates dfa) [0..]
             function s = case lookup s table of Just a -> a
                                                 Nothing -> 0
 
 formalizeNFA :: NFA -> NFA
-formalizeNFA nfa = replaceStatesNFA function nfa
+formalizeNFA nfa = renameStatesNFA function nfa
     where   getStates (NFA s _ _ _ _) = s
             table = zip (getStates nfa) [0..]
             function s = case lookup s table of Just a -> a
                                                 Nothing -> 0
 
 
-minimizeDFA dfa = replaceStatesDFA replace dfa
+minimizeDFA dfa = renameStatesDFA replace dfa
     where   undistinguishablePairs = undistinguishableStates dfa
             replace a = case lookup a undistinguishablePairs of
                 Just b  -> b
@@ -274,7 +274,7 @@ unionNFA nfa0 nfa1 =
         NFA states0 alphabets (MapN mappings0) start0 accepts0 = formalizeNFA nfa0
         NFA states1 _ (MapN mappings1) start1 accepts1 = replace nfa1
         
-        replace = replaceStatesNFA ((+) $ length states0)
+        replace = renameStatesNFA ((+) $ length states0)
         start = maximum states1 + 1
 
         states = start `insert` (states0 `union` states1)
@@ -295,7 +295,7 @@ concatenateNFA nfa0 nfa1 =
         (NFA states1 _         (MapN mappings1) start1 accepts1) = replace nfa1
 
         offset = maximum states0 - minimum states0 + 1
-        replace = replaceStatesNFA (+ offset)
+        replace = renameStatesNFA (+ offset)
 
         end = [ (s, ' ', t) | (s, a, t) <- mappings0, s `elem` accepts0, a == ' ' ]
         mappings = case end of []        -> bridge `union` mappings0 `union` mappings1
@@ -335,24 +335,24 @@ dfaMin = DFA statesMin alphabetsMin mappingsMin startMin acceptsMin
 
 ----
 
-replaceStatesDFA :: (State -> State) -> DFA -> DFA
-replaceStatesDFA table (DFA states alphabets (Map mappings) start accepts) = 
+renameStatesDFA :: (State -> State) -> DFA -> DFA
+renameStatesDFA table (DFA states alphabets (Map mappings) start accepts) = 
     DFA states' alphabets (Map mappings') start' accepts'
-    where   states'     = nub $ table <$> states
-            mappings'   = nubBy same $ replaceMapping <$> mappings
+    where   states'     = table <$> states
+            mappings'   = replaceMapping <$> mappings
                 where replaceMapping (s, a, t) = (table s, a, table t)
-                      same (a, b, c) (d, e, f) = a == d && b == e
+                      --same (a, b, c) (d, e, f) = a == d && b == e
             start'      = table start
-            accepts'    = nub $ table <$> accepts
+            accepts'    = table <$> accepts
 
 
 
-replaceStatesNFA :: (State -> State) -> NFA -> NFA
-replaceStatesNFA table (NFA states alphabets (MapN mappings) start accepts) = 
+renameStatesNFA :: (State -> State) -> NFA -> NFA
+renameStatesNFA table (NFA states alphabets (MapN mappings) start accepts) = 
     NFA states' alphabets (MapN mappings') start' accepts'
-    where   states'     = nub $ table <$> states
+    where   states'     = table <$> states
             mappings'   = replaceMapping <$> mappings
                 where replaceMapping (s, a, t) = (table s, a, table <$> t)
             start'      = table start
-            accepts'    = nub $ table <$> accepts
+            accepts'    = table <$> accepts
 
