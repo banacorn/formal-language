@@ -19,8 +19,8 @@ module Automaton (
     trimUnreachableStates,
     minimizeDFA,
     formalizeDFA,    
-    renameStatesDFA,
-    renameStatesNFA,
+    replaceStatesDFA,
+    replaceStatesNFA,
 
 
 

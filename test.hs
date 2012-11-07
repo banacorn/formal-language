@@ -173,15 +173,16 @@ genNFA states alphabets = do
     mappings <- genMappingN states alphabets
     return $ NFA states alphabets mappings start accepts
 
-genReplacements :: States -> Gen (State -> State)
-genReplacements states = do
-    replicates0 <- listOf1 . elements $ states
-    replicates1 <- listOf1 . elements $ states
-    return . toFunction . filter goodPair . nub $ zip replicates0 replicates1
-    where   goodPair (a, b) = a /= b
-            toFunction pairs a = case lookup a pairs of 
-                Just b -> b
-                Nothing -> a 
+--genReplacements :: States -> Gen (State -> State)
+--genReplacements states = do
+
+    --replicates0 <- listOf1 . elements $ states
+    --replicates1 <- listOf1 . elements $ states
+    --return . filter goodPair . nub $ zip replicates0 replicates1
+    --where   goodPair (a, b) = a /= b
+            --toFunction pairs a = case lookup a pairs of 
+                --Just b -> b
+                --Nothing -> a 
 
 ------------------------------------------------------------------------
 -- properties
@@ -396,4 +397,5 @@ propNFA2DFA = do
             let prop = automatonN nfa language == automaton dfa language in
             printTestCase (show dfa) prop
         )
+
 
