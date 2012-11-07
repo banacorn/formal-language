@@ -131,11 +131,25 @@ nfa2dfa nfa =
         start' = encodePowerset start
         accepts' = encodePowerset <$> accepts
 
--- negation on FA
+
+----------------------------
+--
+--  Negation
+--
+----------------------------
+
+
 negateDFA :: DFA -> DFA
 negateDFA (DFA states a m s accepts) = DFA states a m s (states \\ accepts)
 negateNFA :: NFA -> NFA
 negateNFA (NFA states a m s accepts) = NFA states a m s (states \\ accepts)
+
+
+----------------------------
+--
+--  Union
+--
+----------------------------
 
 
 unionDFA :: DFA -> DFA -> DFA
@@ -154,6 +168,13 @@ unionDFA dfa0 dfa1 =
         accepts = [ encode (s0, s1) | s0 <- states0, s1 <- states1, elem s0 accepts0 || elem s1 accepts1 ]
 
 
+----------------------------
+--
+--  Intersection
+--
+----------------------------
+
+
 
 
 intersectDFA :: DFA -> DFA -> DFA
@@ -170,6 +191,12 @@ intersectDFA dfa0 dfa1 =
         mappings = Map [ (encode (s0, s1), a0, encode (t0, t1)) | (s0, a0, t0) <- mappings0, (s1, a1, t1) <- mappings1, a0 == a1]
         start = encode (start0, start1)
         accepts = curry encode <$> accepts0 <*> accepts1
+
+----------------------------
+--
+--  Concatenation
+--
+----------------------------
 
 concatenateDFA :: DFA -> DFA -> DFA
 concatenateDFA dfa0 dfa1 = minimizeDFA . formalizeDFA . nfa2dfa $ nfa0 `concatenateNFA` nfa1
