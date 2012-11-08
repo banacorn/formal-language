@@ -60,3 +60,4 @@ module Automaton (
 import Automaton.Instances
 import Automaton.Type
 import Automaton.FA
+import Automaton.RE
