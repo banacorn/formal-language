@@ -259,7 +259,7 @@ concatenateNFA nfa0 nfa1 =
 ----------------------------
 
 
-kleeneStarNFA :: NFA -> NFA -> NFA
+kleeneStarNFA :: NFA -> NFA
 kleeneStarNFA (NFA states alphabets (MapN mappings) start accepts) =
     normalizeNFA (NFA states' alphabets (MapN mappings') start' accepts')
     where
