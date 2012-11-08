@@ -19,6 +19,7 @@ module Automaton.FA (
     unionDFA,
     intersectDFA,
     concatenateDFA,
+    kleeneStarDFA,
 
 
     dfa2nfa,
@@ -257,6 +258,11 @@ concatenateNFA nfa0 nfa1 =
 --  Kleene Star
 --
 ----------------------------
+
+
+
+kleeneStarDFA :: DFA -> DFA
+kleeneStarDFA = nfa2dfa . kleeneStarNFA . dfa2nfa
 
 
 kleeneStarNFA :: NFA -> NFA

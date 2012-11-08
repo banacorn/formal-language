@@ -33,7 +33,7 @@ module Automaton (
     unionDFA,
     intersectDFA,
     concatenateDFA,
-
+    kleeneStarDFA,
 
     dfa2nfa,
     nfa2dfa,
