@@ -12,6 +12,7 @@ Proofs Constructed
  * Negation
  * Union
  * Intersection
+ * Concatenation
  * Equivalance Relation
  * Minimization
 
@@ -19,6 +20,9 @@ Proofs Constructed
  * Negation
  * Union
  * Intersection
+ * Concatenation
+ * Kleene Star
+
 
 * DFA ↔ NFA
 
