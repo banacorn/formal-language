@@ -325,7 +325,8 @@ nubStatesNFA (NFA states alphabets (MapN mappings) start accepts) =
 
             sameMapping (s, a, t) (s', a', t') = s == s' && a == a'
             glue mappings = case glue' mappings $ head mappings of
-                (s, a, ts) -> (s, a, delete s (nub ts))
+                (s, ' ', ts) -> (s, a, delete s (nub ts))
+                (s, a, ts) -> (s, a, nub ts)
             glue' [] result = result
             glue' ((_, _, t):rest) (s, a, ts) = glue' rest (s, a, t ++ ts) 
 
