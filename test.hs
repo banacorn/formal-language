@@ -29,7 +29,7 @@ q = quickCheck
 
 
 -- dfa minimization test data
-statesMin = [0..7]
+statesMin = 100:101:[0..7]
 alphabetsMin = ['0', '1']
 
 mappingsMin = Map [
@@ -92,7 +92,8 @@ mappingsN = MapN [
     (0, 'b', [1]),
     (1, 'a', [1, 2]),
     (1, 'b', [2]),
-    (2, 'a', [0])
+    (2, 'a', [0]),
+    (2, 'a', [2])
     ]
 startN = 0
 acceptsN = [0]

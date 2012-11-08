@@ -9,6 +9,8 @@ module Automaton.FA (
     formalizeDFA,
     replaceStatesDFA,
     replaceStatesNFA,
+    nubStatesDFA,
+    nubStatesNFA,
 
     negateDFA,
     unionDFA,
@@ -258,10 +260,58 @@ concatenateNFA nfa0 nfa1 =
 --
 ----------------------------
 
+-- replace states with given SURJECTIVE function
+replaceStatesDFA :: (State -> State) -> DFA -> DFA
+replaceStatesDFA table (DFA states alphabets (Map mappings) start accepts) = 
+    DFA states' alphabets (Map mappings') start' accepts'
+    where   states'     = table <$> states
+            mappings'   = replaceMapping <$> mappings
+                where replaceMapping (s, a, t) = (table s, a, table t)
+            start'      = table start
+            accepts'    = table <$> accepts
+
+
+
+replaceStatesNFA :: (State -> State) -> NFA -> NFA
+replaceStatesNFA table (NFA states alphabets (MapN mappings) start accepts) = 
+    NFA states' alphabets (MapN mappings') start' accepts'
+    where   states'     = table <$> states
+            mappings'   = replaceMapping <$> mappings
+                where replaceMapping (s, a, t) = (table s, a, table <$> t)
+            start'      = table start
+            accepts'    = table <$> accepts
+
+-- nub the states
+nubStatesDFA :: DFA -> DFA
+nubStatesDFA (DFA states alphabets (Map mappings) start accepts) = 
+    DFA states' alphabets (Map mappings') start accepts'
+    where   states' = nub states
+            mappings' = nub mappings
+            accepts' = nub accepts
+
+nubStatesNFA :: NFA -> NFA
+nubStatesNFA (NFA states alphabets (MapN mappings) start accepts) = 
+    NFA states' alphabets (MapN mappings') start accepts'
+    where   states' = nub states
+            mappings' = glue <$> (groupBy sameMapping $ sort mappings)
+            accepts' = nub accepts
+
+            sameMapping (s, a, t) (s', a', t') = s == s' && a == a'
+            glue mappings = case glue' mappings $ head mappings of
+                (s, a, ts) -> (s, a, nub ts)
+            glue' [] result = result
+            glue' ((_, _, t):rest) (s, a, ts) = glue' rest (s, a, t ++ ts)
+
+
+-- nub and replace states with natural numbers
 formalizeDFA :: DFA -> DFA
-formalizeDFA dfa = replaceStatesDFA function dfa
-    where   getStates (DFA s _ _ _ _) = s
-            table = zip (getStates dfa) [0..]
+formalizeDFA (DFA states alphabets (Map mappings) start accepts) = 
+    replaceStatesDFA function (DFA states' alphabets (Map mappings') start accepts')
+    where   states' = nub states
+            mappings' = nub mappings
+            accepts' = nub accepts
+
+            table = zip states [0..]
             function s = case lookup s table of Just a -> a
                                                 Nothing -> 0
 
@@ -271,6 +321,7 @@ formalizeNFA nfa = replaceStatesNFA function nfa
             table = zip (getStates nfa) [0..]
             function s = case lookup s table of Just a -> a
                                                 Nothing -> 0
+
 
 
 minimizeDFA dfa = replaceStatesDFA replace dfa
@@ -344,27 +395,4 @@ collect' process (collected, raw)
             emptied = null raw'
             reapeated = raw `subsetOf` raw'
             subsetOf elems list = and (flip elem list <$> elems)
-
--- replace
-
-replaceStatesDFA :: (State -> State) -> DFA -> DFA
-replaceStatesDFA table (DFA states alphabets (Map mappings) start accepts) = 
-    DFA states' alphabets (Map mappings') start' accepts'
-    where   states'     = table <$> states
-            mappings'   = replaceMapping <$> mappings
-                where replaceMapping (s, a, t) = (table s, a, table t)
-                      --same (a, b, c) (d, e, f) = a == d && b == e
-            start'      = table start
-            accepts'    = table <$> accepts
-
-
-
-replaceStatesNFA :: (State -> State) -> NFA -> NFA
-replaceStatesNFA table (NFA states alphabets (MapN mappings) start accepts) = 
-    NFA states' alphabets (MapN mappings') start' accepts'
-    where   states'     = table <$> states
-            mappings'   = replaceMapping <$> mappings
-                where replaceMapping (s, a, t) = (table s, a, table <$> t)
-            start'      = table start
-            accepts'    = table <$> accepts
 

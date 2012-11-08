@@ -21,6 +21,8 @@ module Automaton (
     formalizeDFA,    
     replaceStatesDFA,
     replaceStatesNFA,
+    nubStatesDFA,
+    nubStatesNFA,
 
 
 
