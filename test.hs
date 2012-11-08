@@ -192,17 +192,8 @@ genNFA states alphabets = do
     mappings <- genMappingN states alphabets
     return $ NFA states alphabets mappings start accepts
 
---genReplacements :: States -> Gen (State -> State)
---genReplacements states = do
-
-    --replicates0 <- listOf1 . elements $ states
-    --replicates1 <- listOf1 . elements $ states
-    --return . filter goodPair . nub $ zip replicates0 replicates1
-    --where   goodPair (a, b) = a /= b
-            --toFunction pairs a = case lookup a pairs of 
-                --Just b -> b
-                --Nothing -> a 
-
+------------------------------------------------------------------------
+------------------------------------------------------------------------
 ------------------------------------------------------------------------
 -- properties
 
@@ -368,6 +359,32 @@ propIntersectNFA = do
             in
             printTestCase (show nfa0 ++ "\n" ++ show nfa1  ++ "\n" ++ show nfa) prop
         )
+
+
+
+
+----------------------------
+--
+--  Concatenation
+--
+----------------------------
+
+propConcatenateDFA :: Property
+propConcatenateDFA = do
+    alphabets <- take 3 <$> genAlphabets
+    -- DFA 0
+    states0 <- take 6 <$> genStates
+    dfa0 <- genDFA states0 alphabets
+    lang0 <- genLanguage alphabets
+    -- DFA 1
+    states1 <- take 6 <$> genStates
+    dfa1 <- genDFA states1 alphabets
+    lang1 <- genLanguage alphabets
+
+    dfa <- return $ dfa0 `concatenateDFA` dfa1
+
+    printTestCase (show dfa0 ++ "\n" ++ show dfa1  ++ "\n" ++ show dfa) (automaton dfa0 lang0 && automaton dfa1 lang1 ==> automaton dfa (lang0 ++ lang1))
+
 
 propConcatenateNFA :: Property
 propConcatenateNFA = do
