@@ -410,6 +410,31 @@ propConcatenateNFA = do
 
 ----------------------------
 --
+--  Kleene Star
+--
+----------------------------
+
+propKleeneStarNFA :: Property
+propKleeneStarNFA = do
+    states      <- take 4 <$> genStates
+    alphabets   <- take 2 <$> genAlphabets
+    nfa         <- genNFA states alphabets
+    forAll (take 5 <$> genLanguage alphabets) (\ language ->
+            let
+                nfaS                = kleeneStarNFA nfa
+                repeatedLanguages   = take 5 $ iterate (++ language) ""
+                results             = automatonN nfaS <$> repeatedLanguages
+                none                = head results
+                once                = head $ tail results
+                moreTimes           = tail $ tail results
+                prop                = none && once ==> (and moreTimes == or moreTimes)
+            in
+            printTestCase (show nfa ++ "\n" ++ show nfaS  ++ "\n" ++ show repeatedLanguages ++ "\n" ++ show results) prop
+        )
+
+
+----------------------------
+--
 --  DFA <=> NFA
 --
 ----------------------------
