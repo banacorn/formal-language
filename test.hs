@@ -9,12 +9,12 @@ import Debug.Trace
 
 
 
-tests = [
-    ("~~dfa == dfa", quickCheck propNegateDFATwice),
-    ("~dfa /= dfa", quickCheck propComplementary),
-    ("dfa union", quickCheck propUnionDFA),
-    ("dfa intersect", quickCheck propIntersectDFA)
-    ]
+--tests = [
+--    ("~~dfa == dfa", quickCheck propNegateDFATwice),
+--    ("~dfa /= dfa", quickCheck propComplementary),
+--    ("dfa union", quickCheck propUnionDFA),
+--    ("dfa intersect", quickCheck propIntersectDFA)
+--    ]
 
 bana test = replicateM_ 10 (quickCheck test)
 
@@ -212,72 +212,7 @@ propGenMappingN = do
     MapN mapping <- join $ genMappingN <$> genStates <*> genAlphabets
     property $ mapping == nub mapping
 
---propReplaceStatesDFA :: Property
---propReplaceStatesDFA = do
---    states <- genStates
---    alphabets <- genAlphabets
---    replacements <- genReplacements states
---    dfa <- genDFA states alphabets
---    forAll (genLanguage alphabets) (\ language -> 
---            let 
---                dfa' = replaceStatesDFA replacements dfa
---                prop = automaton dfa language == automaton dfa' language 
---            in
---            printTestCase (show dfa ++ "\n" ++ show dfa') prop
---        )
 
-
-propNegateDFATwice :: Property
-propNegateDFATwice = do
-    states <- genStates
-    alphabets <- genAlphabets
-    dfa <- genDFA states alphabets
-    property (dfa == (negateDFA . negateDFA) dfa)
-
-propComplementary :: Property
-propComplementary = do
-    alphabets <- genAlphabets
-    states <- genStates
-    dfa <- genDFA states alphabets
-
-    forAll (genLanguage alphabets) (\ language -> 
-            automaton dfa language /= automaton (negateDFA dfa) language 
-        )
-
-
-propUnionDFA :: Property
-propUnionDFA = do
-    alphabets <- genAlphabets
-    -- DFA 0
-    states0 <- genStates
-    dfa0 <- genDFA states0 alphabets
-    -- DFA 1
-    states1 <- genStates
-    dfa1 <- genDFA states1 alphabets
-
-    forAll (genLanguage alphabets) (\ language -> 
-            let dfa = dfa0 `unionDFA` dfa1 in
-            automaton dfa0 language == automaton dfa language ||
-            automaton dfa1 language == automaton dfa language
-        )
-
-
-
-propIntersectDFA :: Property
-propIntersectDFA = do
-    alphabets <- genAlphabets
-    -- DFA 0
-    states0 <- genStates
-    dfa0 <- genDFA states0 alphabets
-    -- DFA 1
-    states1 <- genStates
-    dfa1 <- genDFA states1 alphabets
-
-    forAll (genLanguage alphabets) (\ language -> 
-            let dfa = dfa0 `intersectDFA` dfa1 in
-            automaton dfa0 language ==> automaton dfa language &&
-            automaton dfa1 language ==> automaton dfa language
-        )
 
 propFormalizeDFA :: Property
 propFormalizeDFA = do
@@ -324,6 +259,57 @@ propDFA2NFA = do
             automaton dfa language == automatonN nfa language
         )
 
+
+----------------------------
+--
+--  Negation
+--
+----------------------------
+
+
+
+propNegateDFATwice :: Property
+propNegateDFATwice = do
+    states <- genStates
+    alphabets <- genAlphabets
+    dfa <- genDFA states alphabets
+    property (dfa == (negateDFA . negateDFA) dfa)
+
+propNegateDFA :: Property
+propNegateDFA = do
+    alphabets <- genAlphabets
+    states <- genStates
+    dfa <- genDFA states alphabets
+
+    forAll (genLanguage alphabets) (\ language -> 
+            automaton dfa language /= automaton (negateDFA dfa) language 
+        )
+
+----------------------------
+--
+--  Union
+--
+----------------------------
+
+
+
+propUnionDFA :: Property
+propUnionDFA = do
+    alphabets <- genAlphabets
+    -- DFA 0
+    states0 <- genStates
+    dfa0 <- genDFA states0 alphabets
+    -- DFA 1
+    states1 <- genStates
+    dfa1 <- genDFA states1 alphabets
+
+    forAll (genLanguage alphabets) (\ language -> 
+            let dfa = dfa0 `unionDFA` dfa1 in
+            automaton dfa0 language == automaton dfa language ||
+            automaton dfa1 language == automaton dfa language
+        )
+
+
 propUnionNFA :: Property
 propUnionNFA = do
     alphabets <- genAlphabets
@@ -340,6 +326,31 @@ propUnionNFA = do
             automatonN nfa1 language == automatonN nfa language
         )
 
+
+
+----------------------------
+--
+--  Intersection
+--
+----------------------------
+
+
+
+propIntersectDFA :: Property
+propIntersectDFA = do
+    alphabets <- genAlphabets
+    -- DFA 0
+    states0 <- genStates
+    dfa0 <- genDFA states0 alphabets
+    -- DFA 1
+    states1 <- genStates
+    dfa1 <- genDFA states1 alphabets
+
+    forAll (genLanguage alphabets) (\ language -> 
+            let dfa = dfa0 `intersectDFA` dfa1 in
+            automaton dfa0 language ==> automaton dfa language &&
+            automaton dfa1 language ==> automaton dfa language
+        )
 
 propIntersectNFA :: Property
 propIntersectNFA = do
@@ -359,7 +370,6 @@ propIntersectNFA = do
             in
             printTestCase (show nfa0 ++ "\n" ++ show nfa1  ++ "\n" ++ show nfa) prop
         )
-
 
 
 
