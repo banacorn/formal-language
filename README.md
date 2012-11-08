@@ -16,10 +16,11 @@ Proofs Constructed
  * Minimization
 
 * NFA
+ * Negation
  * Union
+ * Intersection
 
-* DFA → NFA
-* DFA ← NFA
+* DFA ↔ NFA
 
 Proofs to be Constructed
 ===
