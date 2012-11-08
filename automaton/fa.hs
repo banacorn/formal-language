@@ -91,28 +91,12 @@ automatonN (NFA states alphabets mappings state accepts) language
             consume [] state = closure state >>= accept
             consume (x:xs) state = closure state >>= jump x >>= consume xs
 
-epsilonClosure :: Map -> State -> States
-epsilonClosure mappings state = nub . insert state . join $ epsilonClosure mappings <$> transit state ' '
-    where   transit = driverN mappings
 
---epsilonTransition
 
 
 ----------------------------------------------------------------------
--- proofs
--- transform DFA to NFA
 
 
-
-encodePowerset :: States -> State
-encodePowerset = sum . fmap ((^) 2)
-decodePowerset :: State -> States
-decodePowerset = elemIndices 1 . bits 
-    where   bits 0 = [0]
-            bits 1 = [1]
-            bits n = (mod n 2) : bits (div n 2)
-
-ofPowerset e n = testBit n e
 
 ----------------------------
 --
@@ -272,6 +256,16 @@ concatenateNFA nfa0 nfa1 =
 --  Helper Functions
 --
 ----------------------------
+
+
+encodePowerset :: States -> State
+encodePowerset = sum . fmap ((^) 2)
+
+
+
+epsilonClosure :: Map -> State -> States
+epsilonClosure mappings state = nub . insert state . join $ epsilonClosure mappings <$> transit state ' '
+    where   transit = driverN mappings
 
 -- replace states with given SURJECTIVE function
 replaceStatesDFA :: (State -> State) -> DFA -> DFA
