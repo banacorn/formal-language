@@ -20,6 +20,7 @@ module Automaton.FA (
     intersectDFA,
     concatenateDFA,
 
+
     dfa2nfa,
     nfa2dfa,
 
@@ -31,6 +32,7 @@ module Automaton.FA (
     unionNFA,
     intersectNFA,
     concatenateNFA,
+    kleeneStarNFA,
 
     undistinguishableStates,
 
@@ -250,6 +252,24 @@ concatenateNFA nfa0 nfa1 =
         states = states0 `union` states1
 
 
+----------------------------
+--
+--  Kleene Star
+--
+----------------------------
+
+
+kleeneStarNFA :: NFA -> NFA -> NFA
+kleeneStarNFA (NFA states alphabets (MapN mappings) start accepts) =
+    normalizeNFA (NFA states' alphabets (MapN mappings') start' accepts')
+    where
+        start' = maximum states + 1
+        states' = start' `insert` states
+        accepts' = start' `insert` accepts
+        mappings' = mappings ++ (backToTheStart <$> (start':accepts))
+
+        backToTheStart state = (state, ' ', [start])
+
 
 ----------------------------
 --
@@ -305,9 +325,9 @@ nubStatesNFA (NFA states alphabets (MapN mappings) start accepts) =
 
             sameMapping (s, a, t) (s', a', t') = s == s' && a == a'
             glue mappings = case glue' mappings $ head mappings of
-                (s, a, ts) -> (s, a, nub ts)
+                (s, a, ts) -> (s, a, delete s (nub ts))
             glue' [] result = result
-            glue' ((_, _, t):rest) (s, a, ts) = glue' rest (s, a, t ++ ts)
+            glue' ((_, _, t):rest) (s, a, ts) = glue' rest (s, a, t ++ ts) 
 
 
 -- nub and replace states with natural numbers (states not minimized!!)

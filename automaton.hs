@@ -47,6 +47,7 @@ module Automaton (
     unionNFA,
     intersectNFA,
     concatenateNFA,
+    kleeneStarNFA,
 
     undistinguishableStates
 
