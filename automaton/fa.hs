@@ -320,12 +320,15 @@ nubStatesNFA :: NFA -> NFA
 nubStatesNFA (NFA states alphabets (MapN mappings) start accepts) = 
     NFA states' alphabets (MapN mappings') start accepts'
     where   states' = nub states
-            mappings' = glue <$> (groupBy sameMapping $ sort mappings)
+            mappings' = filter validTransition $ glue <$> (groupBy sameMapping $ sort mappings)
             accepts' = nub accepts
+
+            validTransition (_, _, []) = False
+            validTransition (_, _, _) = True
 
             sameMapping (s, a, t) (s', a', t') = s == s' && a == a'
             glue mappings = case glue' mappings $ head mappings of
-                (s, ' ', ts) -> (s, a, delete s (nub ts))
+                (s, ' ', ts) -> (s, ' ', delete s (nub ts))
                 (s, a, ts) -> (s, a, nub ts)
             glue' [] result = result
             glue' ((_, _, t):rest) (s, a, ts) = glue' rest (s, a, t ++ ts) 
