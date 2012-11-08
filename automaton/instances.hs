@@ -74,3 +74,7 @@ instance Eq DFA where
                 alphabet (DFA _ a _ _ _) = a
                 alphabetDFA0 = sort $ alphabet dfa0
                 alphabetDFA1 = sort $ alphabet dfa1
+
+
+instance Eq NFA where
+    (==) nfa0 nfa1 = nfa2dfa nfa0 == nfa2dfa nfa1
