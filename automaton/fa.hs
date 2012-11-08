@@ -6,11 +6,14 @@ module Automaton.FA (
 
     trimUnreachableStates,
     minimizeDFA,
-    formalizeDFA,
+    normalizeDFA,
     replaceStatesDFA,
     replaceStatesNFA,
     nubStatesDFA,
     nubStatesNFA,
+    collectState,
+    collectStates,
+    collect,
 
     negateDFA,
     unionDFA,
@@ -22,7 +25,7 @@ module Automaton.FA (
 
     -- NFA
     epsilonClosure,
-    formalizeNFA,
+    normalizeNFA,
 
     negateNFA,
     unionNFA,
@@ -41,6 +44,8 @@ import Data.Bits (testBit)
 import Control.Applicative hiding (empty)
 import Control.Monad
 import Data.List
+import Debug.Trace
+
 --import qualified Data.IntMap as IntMap
 
 
@@ -64,6 +69,7 @@ driverN (MapN mappings) state alphabet =
 
 -- the automaton
 automaton :: DFA -> Language -> Bool
+automaton (DFA states alphabets mappings state []) _ = False
 automaton (DFA states alphabets mappings state accepts) [] = elem state accepts
 automaton (DFA states alphabets mappings state accepts) (x:xs)
     | notElem x alphabets = False
@@ -71,6 +77,7 @@ automaton (DFA states alphabets mappings state accepts) (x:xs)
     where   nextState = (driver mappings) state x
 
 automatonN :: NFA -> Language -> Bool
+automatonN (NFA states alphabets mappings state []) _ = False
 automatonN (NFA states alphabets mappings state accepts) [] = or $ closure state >>= accept
     where   closure state = epsilonClosure mappings state
             accept state = return $ elem state accepts
@@ -94,11 +101,6 @@ epsilonClosure mappings state = nub . insert state . join $ epsilonClosure mappi
 ----------------------------------------------------------------------
 -- proofs
 -- transform DFA to NFA
-dfa2nfa :: DFA -> NFA
-dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (MapN ndmappings) i f)
-    where   ndmappings = fmap mapping2ndmapping mappings
-            mapping2ndmapping (state, alphabet, target) = (state, alphabet, [target])
-
 
 
 
@@ -112,13 +114,24 @@ decodePowerset = elemIndices 1 . bits
 
 ofPowerset e n = testBit n e
 
+----------------------------
+--
+--  DFA <=> NFA
+--
+----------------------------
 
--- transform FFA to DFA
+
+dfa2nfa :: DFA -> NFA
+dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (MapN ndmappings) i f)
+    where   ndmappings = mapping2ndmapping <$> mappings
+            mapping2ndmapping (state, alphabet, target) = (state, alphabet, [target])
+
+
 nfa2dfa :: NFA -> DFA
 nfa2dfa nfa =
-    formalizeDFA $ DFA states' alphabets (Map mappings') start' accepts'
+    nubStatesDFA $ DFA states' alphabets (Map mappings') start' accepts'
     where
-        NFA statesN alphabets mappingsN startN acceptsN = formalizeNFA nfa
+        NFA statesN alphabets mappingsN startN acceptsN = normalizeNFA nfa
         transit = driverN mappingsN
 
         start = epsilonClosure mappingsN startN
@@ -160,8 +173,8 @@ unionDFA :: DFA -> DFA -> DFA
 unionDFA dfa0 dfa1 =
     DFA states alphabets mappings start accepts
     where
-        DFA states0 alphabets (Map mappings0) start0 accepts0 = formalizeDFA dfa0
-        DFA states1 _         (Map mappings1) start1 accepts1 = formalizeDFA dfa1
+        DFA states0 alphabets (Map mappings0) start0 accepts0 = normalizeDFA dfa0
+        DFA states1 _         (Map mappings1) start1 accepts1 = normalizeDFA dfa1
 
         stateSpace = length states0 * length states1
         encode (a, b) = a * length states1 + b
@@ -176,7 +189,7 @@ unionNFA :: NFA -> NFA -> NFA
 unionNFA nfa0 nfa1 =
     NFA states alphabets mappings start accepts
     where
-        NFA states0 alphabets (MapN mappings0) start0 accepts0 = formalizeNFA nfa0
+        NFA states0 alphabets (MapN mappings0) start0 accepts0 = normalizeNFA nfa0
         NFA states1 _ (MapN mappings1) start1 accepts1 = replace nfa1
         
         replace = replaceStatesNFA ((+) $ length states0)
@@ -201,8 +214,8 @@ intersectDFA :: DFA -> DFA -> DFA
 intersectDFA dfa0 dfa1 =
     DFA states alphabets mappings start accepts
     where
-        DFA states0 alphabets (Map mappings0) start0 accepts0 = formalizeDFA dfa0
-        DFA states1 _         (Map mappings1) start1 accepts1 = formalizeDFA dfa1
+        DFA states0 alphabets (Map mappings0) start0 accepts0 = normalizeDFA dfa0
+        DFA states1 _         (Map mappings1) start1 accepts1 = normalizeDFA dfa1
 
         stateSpace = length states0 * length states1
         encode (a, b) = a * length states1 + b
@@ -228,7 +241,7 @@ intersectNFA nfa0 nfa1 = dfa2nfa dfaIntersection
 ----------------------------
 
 concatenateDFA :: DFA -> DFA -> DFA
-concatenateDFA dfa0 dfa1 = minimizeDFA . formalizeDFA . nfa2dfa $ nfa0 `concatenateNFA` nfa1
+concatenateDFA dfa0 dfa1 = minimizeDFA . normalizeDFA . nfa2dfa $ nfa0 `concatenateNFA` nfa1
     where 
         nfa0 = dfa2nfa dfa0
         nfa1 = dfa2nfa dfa1
@@ -236,7 +249,7 @@ concatenateDFA dfa0 dfa1 = minimizeDFA . formalizeDFA . nfa2dfa $ nfa0 `concaten
 
 concatenateNFA :: NFA -> NFA -> NFA
 concatenateNFA nfa0 nfa1 =
-    formalizeNFA (NFA states alphabets (MapN mappings) start0 accepts1)
+    normalizeNFA (NFA states alphabets (MapN mappings) start0 accepts1)
     where
         (NFA states0 alphabets (MapN mappings0) start0 accepts0) = nfa0
         (NFA states1 _         (MapN mappings1) start1 accepts1) = replace nfa1
@@ -303,33 +316,30 @@ nubStatesNFA (NFA states alphabets (MapN mappings) start accepts) =
             glue' ((_, _, t):rest) (s, a, ts) = glue' rest (s, a, t ++ ts)
 
 
--- nub and replace states with natural numbers
-formalizeDFA :: DFA -> DFA
-formalizeDFA (DFA states alphabets (Map mappings) start accepts) = 
-    replaceStatesDFA function (DFA states' alphabets (Map mappings') start accepts')
-    where   states' = nub states
-            mappings' = nub mappings
-            accepts' = nub accepts
-
-            table = zip states [0..]
+-- nub and replace states with natural numbers (states not minimized!!)
+normalizeDFA :: DFA -> DFA
+normalizeDFA dfa = replaceStatesDFA function . nubStatesDFA $ dfa
+    where   getStates (DFA states _ _ _ _) = states
+            table = zip (getStates dfa) [0..]
             function s = case lookup s table of Just a -> a
                                                 Nothing -> 0
 
-formalizeNFA :: NFA -> NFA
-formalizeNFA nfa = replaceStatesNFA function nfa
+normalizeNFA :: NFA -> NFA
+normalizeNFA nfa = replaceStatesNFA function . nubStatesNFA $ nfa
     where   getStates (NFA s _ _ _ _) = s
             table = zip (getStates nfa) [0..]
             function s = case lookup s table of Just a -> a
                                                 Nothing -> 0
 
 
-
-minimizeDFA dfa = replaceStatesDFA replace dfa
+minimizeDFA :: DFA -> DFA
+minimizeDFA dfa = nubStatesDFA $ replaceStatesDFA replace dfa
     where   undistinguishablePairs = undistinguishableStates dfa
             replace a = case lookup a undistinguishablePairs of
                 Just b  -> b
                 Nothing -> a
 
+undistinguishableStates :: DFA -> [(State, State)]
 undistinguishableStates dfa = 
     combinations \\ collect' distinguishable (initialDisguindished, initialMixed)
     where
@@ -371,13 +381,12 @@ collectStates mappings alphabets start = collect next (start', start')
             start' = return $ closure start 
             closure state = epsilonClosure mappings state
 
-
-collect :: Eq a => (a -> [a]) -> ([a], [a]) -> [a]
+collect :: (Show a, Eq a) => (a -> [a]) -> ([a], [a]) -> [a]
 collect next (old, new)
     | emptied   = old
     | reapeated = old
-    | otherwise = nub $ collect next (old', new')
-    where   new' = old >>= next
+    | otherwise = (nub $ collect next (old', new'))
+    where   new' = nub $ old >>= next
             old' = nub (old `union` new)
             emptied = null new'
             reapeated = new' `subsetOf` old
@@ -395,4 +404,6 @@ collect' process (collected, raw)
             emptied = null raw'
             reapeated = raw `subsetOf` raw'
             subsetOf elems list = and (flip elem list <$> elems)
+
+
 

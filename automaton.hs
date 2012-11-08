@@ -18,11 +18,14 @@ module Automaton (
 
     trimUnreachableStates,
     minimizeDFA,
-    formalizeDFA,    
+    normalizeDFA,    
     replaceStatesDFA,
     replaceStatesNFA,
     nubStatesDFA,
     nubStatesNFA,
+    collectState,
+    collectStates,
+    collect,
 
 
 
@@ -38,7 +41,7 @@ module Automaton (
 
     -- NFA
     epsilonClosure,
-    formalizeNFA,
+    normalizeNFA,
     
     negateNFA,
     unionNFA,
