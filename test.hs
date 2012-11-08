@@ -214,8 +214,8 @@ propGenMappingN = do
 
 
 
-propFormalizeDFA :: Property
-propFormalizeDFA = do
+propNormalizeDFA :: Property
+propNormalizeDFA = do
     states      <- genStates
     alphabets   <- genAlphabets
     dfa         <- genDFA states alphabets
@@ -237,6 +237,11 @@ propTrimStatesDFA = do
             printTestCase (show dfa ++ "\n" ++ show dfa') prop
         )
 
+----------------------------
+--
+--  Minimize DFA
+--
+----------------------------
 
 propMinimizeDFA :: Property
 propMinimizeDFA = do
@@ -248,17 +253,6 @@ propMinimizeDFA = do
             let prop = automaton dfa language == automaton dfa' language in
             printTestCase (show dfa ++ "\n" ++ show dfa') prop
         )
-
-propDFA2NFA :: Property
-propDFA2NFA = do
-    states <- genStates
-    alphabets <- genAlphabets
-    dfa <- genDFA states alphabets
-    nfa <- return (dfa2nfa dfa)
-    forAll (genLanguage alphabets) (\language ->
-            automaton dfa language == automatonN nfa language
-        )
-
 
 ----------------------------
 --
@@ -413,6 +407,23 @@ propConcatenateNFA = do
     printTestCase (show nfa0 ++ "\n" ++ show nfa1  ++ "\n" ++ show nfa) (automatonN nfa0 lang0 && automatonN nfa1 lang1 ==> automatonN nfa (lang0 ++ lang1))
 
 
+
+----------------------------
+--
+--  DFA <=> NFA
+--
+----------------------------
+
+
+propDFA2NFA :: Property
+propDFA2NFA = do
+    states <- genStates
+    alphabets <- genAlphabets
+    dfa <- genDFA states alphabets
+    nfa <- return (dfa2nfa dfa)
+    forAll (genLanguage alphabets) (\language ->
+            automaton dfa language == automatonN nfa language
+        )
 
 
 propNFA2DFA :: Property
