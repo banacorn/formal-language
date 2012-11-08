@@ -13,6 +13,7 @@ Proofs Constructed
  * Union
  * Intersection
  * Concatenation
+ * Kleene Star
  * Equivalance Relation
  * Minimization
 
@@ -22,6 +23,7 @@ Proofs Constructed
  * Intersection
  * Concatenation
  * Kleene Star
+ * Equivalance Relation
 
 
 * DFA ↔ NFA
