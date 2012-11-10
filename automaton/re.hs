@@ -61,3 +61,4 @@ re2nfa (Star a) = NFA states' alphabets (MapN mappings') start' accept'
 re2nfa E = NFA [0] [' '] (MapN [(0, ' ', [0])]) 0 [0]
 
 re2nfa N = NFA [0] [] (MapN []) 0 []
+

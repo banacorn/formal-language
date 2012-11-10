@@ -37,13 +37,16 @@ type NDTransition = State -> Alphabet -> States
 
 type Mapping = (State, Alphabet, State)
 type MappingN = (State, Alphabet, States)
+type MappingRE = (State, RE, States)
 
 
 data Map = Map [Mapping]
          | MapN [MappingN]
+         | MapRE [MappingRE]
 
 data DFA = DFA States Alphabets Map State States
 data NFA = NFA States Alphabets Map State States
+data GNFA = GNFA States Alphabets Map State States
 
 
 --- RE
