@@ -25,8 +25,10 @@ Proofs Constructed
  * Kleene Star
  * Equivalance Relation
 
-
 * DFA ↔ NFA
+* RE ➞ NFA
+
+(RE also comes as an instance of Read built on top of Parsec)
 
 Proofs to be Constructed
 ===
