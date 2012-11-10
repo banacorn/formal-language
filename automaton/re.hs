@@ -58,6 +58,6 @@ re2nfa (Star a) = NFA states' alphabets (MapN mappings') start' accept'
             mappings' = mappings ++ bridges
                 where   bridges = [ (endpoint, ' ', [start]) | endpoint <- accept' ]
 
-            --accept = union accept0 accept1
+re2nfa E = NFA [0] [' '] (MapN [(0, ' ', [0])]) 0 [0]
 
-            --replaceStates = (+) (maximum states0 + 1)
+re2nfa N = NFA [0] [] (MapN []) 0 []

@@ -81,7 +81,7 @@ automaton (DFA states alphabets mappings state accepts) (x:xs)
 
 automatonN :: NFA -> Language -> Bool
 automatonN (NFA states alphabets mappings state []) _ = False
-automatonN (NFA states alphabets mappings state accepts) [] = or $ closure state >>= accept
+automatonN (NFA states alphabets mappings state accepts) [] = (state `elem` accepts) || (or $ closure state >>= accept)
     where   closure state = epsilonClosure mappings state
             accept state = return $ elem state accepts
 
