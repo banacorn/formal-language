@@ -7,6 +7,8 @@ module Automaton.Type (
     DFA(..),
     NFA(..),
 
+    RE(..),
+
     Transition,
     NDTransition,
 
@@ -42,3 +44,11 @@ data Map = Map [Mapping]
 
 data DFA = DFA States Alphabets Map State States
 data NFA = NFA States Alphabets Map State States
+
+
+--- RE
+
+infixr 5 :+
+infixr 4 :|
+data RE = A Char | N | E |  RE :| RE | RE :+ RE | Star RE
+

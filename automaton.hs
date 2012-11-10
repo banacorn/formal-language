@@ -11,6 +11,8 @@ module Automaton (
     DFA(..),
     NFA(..),
 
+    RE(..),
+
     -- functions
 
     automaton,
@@ -49,7 +51,10 @@ module Automaton (
     concatenateNFA,
     kleeneStarNFA,
 
-    undistinguishableStates
+    undistinguishableStates,
+
+    -- RE
+    re2nfa
 
 
 ) where

@@ -128,20 +128,7 @@ nfaf = NFA statesF alphabetsF mappingsF startF acceptsF
 
 ---
 
-
-
-
-i = intersectNFA nfa nfa
-u = unionDFA dfae dfae
-m = minimizeDFA dfam'
---mm = minimizeDFA dfa
---m = test dfa
-c = concatenateDFA dfa dfae
-
-d = undistinguishableStates dfa
-
-
-
+r = read "12" :: RE
 
 
 ------------------------------------------------------------------------
