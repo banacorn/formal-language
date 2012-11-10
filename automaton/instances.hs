@@ -7,6 +7,7 @@ import Text.ParserCombinators.Parsec
 
 
 import Data.List
+import Debug.Trace
 
 
 --------------------------------------------------------------
@@ -116,6 +117,13 @@ unitParser =
             <|> return (inside)
     <|> 
     do
+        char '∅'
+        do
+            char '*'
+            return (E)
+            <|> return (N)
+    <|> 
+    do
         char ' '
         do
             char '*'
@@ -140,7 +148,7 @@ concatParser :: Parser RE
 concatParser = 
     do 
         a <- many1 unitParser
-        return $ foldr1 (:+) a
+        return $ if (N `elem` a) then N else (foldr1 (:+) a)
 
 reParser :: Parser RE
 reParser =

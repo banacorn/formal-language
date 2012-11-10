@@ -128,8 +128,8 @@ nfaf = NFA statesF alphabetsF mappingsF startF acceptsF
 
 ---
 
-r = re2nfa $ read "(ab|a)*"
-run = automatonN r
+r = read "∅*1adae" :: RE
+run = automatonN $ re2nfa r
 
 
 
