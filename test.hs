@@ -128,7 +128,9 @@ nfaf = NFA statesF alphabetsF mappingsF startF acceptsF
 
 ---
 
-r = read "12" :: RE
+r = re2nfa $ read "123|45"
+run = automatonN r
+
 
 
 ------------------------------------------------------------------------

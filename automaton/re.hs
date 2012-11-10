@@ -29,3 +29,19 @@ re2nfa (a :+ b) = NFA states alphabets (MapN mappings) start accept
             accept = accept1
 
             replaceStates = (+) (maximum states0 + 1)
+
+
+
+re2nfa (a :| b) = NFA states alphabets (MapN mappings) start accept
+    where   NFA states0 alphabets0 (MapN mappings0) start0 accept0 = re2nfa a
+            NFA states1 alphabets1 (MapN mappings1) start1 accept1 = replaceStatesNFA replaceStates $ re2nfa b
+
+            start = maximum states1 + 1
+            states = start : states0 ++ states1
+            alphabets = nub $ union alphabets0 alphabets1
+
+            mappings = (start, ' ', [start0, start1]) : mappings0 ++ mappings1
+
+            accept = union accept0 accept1
+
+            replaceStates = (+) (maximum states0 + 1)
