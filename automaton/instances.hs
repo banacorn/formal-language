@@ -22,6 +22,10 @@ dropQuote ('8':'7':'0':'9':xs) = '∅' : dropQuote xs
 dropQuote (x:xs) = x : dropQuote xs
 
 
+instance Show Alphabet where
+    show (Alphabet a) = show a
+    show Epsilon = "ɛ"
+
 
 instance Show Map where
     show (Map mappings) = dropQuote $ 
@@ -66,6 +70,7 @@ instance Show NFA where
         "\n    q   " ++ (show state) ++ 
         "\n    F   " ++ (show accepts) ++
         "\n"
+
 
 
 

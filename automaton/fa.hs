@@ -54,13 +54,15 @@ import Debug.Trace
 
 --------------------------------------------------------------
 
+
 -- make mappings a function
 driver :: Map -> Transition
 driver (Map mappings) state alphabet =
     let result = [ f | (s, a, f) <- mappings, s == state, a == alphabet ] in
-    case result of [] -> error $ show state ++ ", " ++ show alphabet ++ " Transition not deinfed"
+    case result of [] -> error $ show state ++ ", " ++ showAlphabet alphabet ++ " Transition not deinfed"
                    (x:xs) -> x
-
+    where   showAlphabet Epsilon = "ɛ"
+            showAlphabet (Alphabet a) = show a
 -- make mappings a function
 driverN :: Map -> NDTransition
 driverN (MapN mappings) state alphabet = 
@@ -75,9 +77,9 @@ automaton :: DFA -> Language -> Bool
 automaton (DFA states alphabets mappings state []) _ = False
 automaton (DFA states alphabets mappings state accepts) [] = elem state accepts
 automaton (DFA states alphabets mappings state accepts) (x:xs)
-    | notElem x alphabets = False
+    | notElem (Alphabet x) alphabets = False
     | otherwise = automaton (DFA states alphabets mappings nextState accepts) xs
-    where   nextState = (driver mappings) state x
+    where   nextState = (driver mappings) state (Alphabet x)
 
 automatonN :: NFA -> Language -> Bool
 automatonN (NFA states alphabets mappings state []) _ = False
@@ -86,13 +88,13 @@ automatonN (NFA states alphabets mappings state accepts) [] = (state `elem` acce
             accept state = return $ elem state accepts
 
 automatonN (NFA states alphabets mappings state accepts) language
-    | head language `notElem` alphabets = False
+    | (Alphabet (head language)) `notElem` alphabets = False
     | otherwise = or $ consume language state
     where   closure state = epsilonClosure mappings state
             jump x state = driverN mappings state x
             accept state = return $ elem state accepts
             consume [] state = closure state >>= accept
-            consume (x:xs) state = closure state >>= jump x >>= consume xs
+            consume (   x:xs) state = closure state >>= jump (Alphabet x) >>= consume xs
 
 
 
@@ -183,7 +185,7 @@ unionNFA nfa0 nfa1 =
         start = maximum states1 + 1
 
         states = start `insert` (states0 `union` states1)
-        mappings = MapN $ mappings0 `union` mappings1 `union` [(start, ' ', [start0, start1])]
+        mappings = MapN $ mappings0 `union` mappings1 `union` [(start, Epsilon, [start0, start1])]
         accepts = accepts0 `union` accepts1
 
 
@@ -244,10 +246,10 @@ concatenateNFA nfa0 nfa1 =
         offset = maximum states0 - minimum states0 + 1
         replace = replaceStatesNFA (+ offset)
 
-        end = [ (s, ' ', t) | (s, a, t) <- mappings0, s `elem` accepts0, a == ' ' ]
+        end = [ (s, Epsilon, t) | (s, a, t) <- mappings0, s `elem` accepts0, a == Epsilon ]
         mappings = case end of []        -> bridge `union` mappings0 `union` mappings1
                                otherwise -> bridge' `union` (mappings0 \\ end) `union` mappings1
-            where   bridge = [ (s, ' ', [start1]) | s <- accepts0 ]
+            where   bridge = [ (s, Epsilon, [start1]) | s <- accepts0 ]
                     bridge' = [ (s, a, start1 `insert` ts) | (s, a, ts) <- end ]
         
         states = states0 `union` states1
@@ -274,7 +276,7 @@ kleeneStarNFA (NFA states alphabets (MapN mappings) start accepts) =
         accepts' = start' `insert` accepts
         mappings' = mappings ++ (backToTheStart <$> (start':accepts))
 
-        backToTheStart state = (state, ' ', [start])
+        backToTheStart state = (state, Epsilon, [start])
 
 
 ----------------------------
@@ -290,7 +292,7 @@ encodePowerset = sum . fmap ((^) 2)
 
 
 epsilonClosure :: Map -> State -> States
-epsilonClosure mappings state = nub . insert state . join $ epsilonClosure mappings <$> transit state ' '
+epsilonClosure mappings state = nub . insert state . join $ epsilonClosure mappings <$> transit state Epsilon
     where   transit = driverN mappings
 
 -- replace states with given SURJECTIVE function
@@ -334,7 +336,7 @@ nubStatesNFA (NFA states alphabets (MapN mappings) start accepts) =
 
             sameMapping (s, a, t) (s', a', t') = s == s' && a == a'
             glue mappings = case glue' mappings $ head mappings of
-                (s, ' ', ts) -> (s, ' ', delete s (nub ts))
+                (s, Epsilon, ts) -> (s, Epsilon, delete s (nub ts))
                 (s, a, ts) -> (s, a, nub ts)
             glue' [] result = result
             glue' ((_, _, t):rest) (s, a, ts) = glue' rest (s, a, t ++ ts) 
@@ -357,11 +359,13 @@ normalizeNFA nfa = replaceStatesNFA function . nubStatesNFA $ nfa
 
 
 minimizeDFA :: DFA -> DFA
-minimizeDFA dfa = nubStatesDFA $ replaceStatesDFA replace dfa
+minimizeDFA dfa = replaceStatesDFA replace dfa
     where   undistinguishablePairs = undistinguishableStates dfa
             replace a = case lookup a undistinguishablePairs of
                 Just b  -> b
                 Nothing -> a
+
+
 
 undistinguishableStates :: DFA -> [(State, State)]
 undistinguishableStates dfa = 
@@ -369,7 +373,7 @@ undistinguishableStates dfa =
     where
         (DFA states alphabets (Map mappings) start accepts) = dfa
 
-        combinations = filter (uncurry (<)) $ curry id <$> states <*> states
+        combinations = pairCombinations states
         initialDisguindished = filter distinguishable combinations
             where distinguishable (a, b) = a `elem` accepts || b `elem` accepts
         initialMixed = combinations \\ initialDisguindished
@@ -384,6 +388,10 @@ undistinguishableStates dfa =
             where   sort (a, b) = if a < b then (a, b) else (b, a)
                     check (a, b) = (a, b) `elem` distinguished && a /= b
                     result = check . sort <$> transitPair pair
+
+pairCombinations :: (Ord a) => [a] -> [(a, a)]
+pairCombinations [] = []
+pairCombinations (x:xs) = map (curry id x) xs ++ pairCombinations xs
 
 trimUnreachableStates :: DFA -> DFA
 trimUnreachableStates (DFA states alphabets (Map mappings) start accepts) = 

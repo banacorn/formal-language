@@ -2,7 +2,7 @@ module Automaton.Type (
     Language,
     State,
     States,
-    Alphabet,
+    Alphabet(..),
     Alphabets,
     DFA(..),
     NFA(..),
@@ -28,8 +28,8 @@ module Automaton.Type (
 type State  = Int
 type States = [State]
 
-type Alphabet = Char
-type Language = [Alphabet]
+data Alphabet = Alphabet Char | Epsilon deriving (Eq, Ord)
+type Language = String
 type Alphabets = [Alphabet]
 
 type Transition = State -> Alphabet -> State

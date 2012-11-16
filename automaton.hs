@@ -4,7 +4,7 @@ module Automaton (
 
     State,
     States,
-    Alphabet,
+    Alphabet(..),
     Alphabets,
     Language,
     Map(..),

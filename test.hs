@@ -18,8 +18,8 @@ import Debug.Trace
 
 bana test = replicateM_ 10 (quickCheck test)
 
-mains = replicateM_ 100 $ sample . join $ genMapping <$> genStates <*> genAlphabets
-main = q propNFA2DFA
+--mains = replicateM_ 100 $ sample . join $ genMapping <$> genStates <*> genAlphabets
+--main = q propNFA2DFA
 
 q :: Testable prop => prop -> IO ()
 q = quickCheck
@@ -30,25 +30,25 @@ q = quickCheck
 
 -- dfa minimization test data
 statesMin = [0..7]
-alphabetsMin = ['0', '1']
+alphabetsMin = [Alphabet '0', Alphabet '1']
 
 mappingsMin = Map [
-    (0, '0', 1),
-    (0, '1', 5),
-    (1, '0', 6),
-    (1, '1', 2),
-    (2, '0', 0),
-    (2, '1', 2),
-    (3, '0', 2),
-    (3, '1', 6),
-    (4, '0', 7),
-    (4, '1', 5),
-    (5, '0', 2),
-    (5, '1', 6),
-    (6, '0', 6),
-    (6, '1', 4),
-    (7, '0', 6),
-    (7, '1', 2)
+    (0, Alphabet '0', 1),
+    (0, Alphabet '1', 5),
+    (1, Alphabet '0', 6),
+    (1, Alphabet '1', 2),
+    (2, Alphabet '0', 0),
+    (2, Alphabet '1', 2),
+    (3, Alphabet '0', 2),
+    (3, Alphabet '1', 6),
+    (4, Alphabet '0', 7),
+    (4, Alphabet '1', 5),
+    (5, Alphabet '0', 2),
+    (5, Alphabet '1', 6),
+    (6, Alphabet '0', 6),
+    (6, Alphabet '1', 4),
+    (7, Alphabet '0', 6),
+    (7, Alphabet '1', 2)
     ]
 
 startMin = 0
@@ -58,14 +58,14 @@ dfa = DFA statesMin alphabetsMin mappingsMin startMin acceptsMin
 ------------
 
 statesM' = [0 .. 2]
-alphabetsM' = ['1', '0']
+alphabetsM' = [Alphabet '1', Alphabet '0']
 mappingsM' = Map [
-    (0, '0', 1),
-    (0, '1', 2),
-    (1, '0', 2),
-    (1, '1', 0),
-    (2, '0', 0),
-    (2, '1', 2)
+    (0, Alphabet '0', 1),
+    (0, Alphabet '1', 2),
+    (1, Alphabet '0', 2),
+    (1, Alphabet '1', 0),
+    (2, Alphabet '0', 0),
+    (2, Alphabet '1', 2)
     ]
 startM' = 0
 acceptsM' = [1]
@@ -74,10 +74,10 @@ dfam' = DFA statesM' alphabetsM' mappingsM' startM' acceptsM'
 ------------
 
 statesEq = [0 .. 2]
-alphabetsEq = ['1', '0']
+alphabetsEq = [Alphabet '1', Alphabet '0']
 mappingsEq = Map [
-    (0, '0', 0),
-    (0, '1', 0)
+    (0, Alphabet '0', 0),
+    (0, Alphabet '1', 0)
     ]
 startEq = 0
 acceptsEq = [0]
@@ -86,13 +86,13 @@ dfae = DFA statesEq alphabetsEq mappingsEq startEq acceptsEq
 ---------
 
 statesN = [0 .. 2]
-alphabetsN = ['a', 'b']
+alphabetsN = [Alphabet 'a', Alphabet 'b']
 mappingsN = MapN [
-    (0, ' ', [2]),
-    (0, 'b', [1]),
-    (1, 'a', [1, 2]),
-    (1, 'b', [2]),
-    (2, 'a', [0])
+    (0, Epsilon, [2]),
+    (0, Alphabet 'b', [1]),
+    (1, Alphabet 'a', [1, 2]),
+    (1, Alphabet 'b', [2]),
+    (2, Alphabet 'a', [0])
     ]
 startN = 0
 acceptsN = [0]
@@ -101,11 +101,11 @@ nfa = NFA statesN alphabetsN mappingsN startN acceptsN
 
 
 statesM = [0 .. 1]
-alphabetsM = ['a', 'b']
+alphabetsM = [Alphabet 'a', Alphabet 'b']
 mappingsM = MapN [
-    (0, ' ', [1]),
-    (0, 'b', [1]),
-    (1, 'a', [0])
+    (0, Epsilon, [1]),
+    (0, Alphabet 'b', [1]),
+    (1, Alphabet 'a', [0])
     ]
 startM = 0
 acceptsM = [1]
@@ -115,12 +115,12 @@ nfam = NFA statesM alphabetsM mappingsM startM acceptsM
 ---
 
 statesF = [0 .. 1]
-alphabetsF = ['a', 'b']
+alphabetsF = [Alphabet 'a', Alphabet 'b']
 mappingsF = MapN [
-    (0, 'a', [1]),
-    (0, 'b', [0]),
-    (1, 'a', [0]),
-    (1, 'b', [1])
+    (0, Alphabet 'a', [1]),
+    (0, Alphabet 'b', [0]),
+    (1, Alphabet 'a', [0]),
+    (1, Alphabet 'b', [1])
     ]
 startF = 1
 acceptsF = [0]
@@ -141,11 +141,11 @@ genStates = fmap nub . listOf1 $ seed
     where seed = choose (0, 1000) :: Gen Int
 
 genAlphabets :: Gen Alphabets
-genAlphabets =  nub <$> (listOf1 $ elements ['a' .. 'z'])
+genAlphabets =  nub <$> (listOf1 . elements $ Alphabet <$> ['a' .. 'z'])
 
 genLanguage :: Alphabets -> Gen Language
-genLanguage = listOf . elements
-
+genLanguage = listOf . elements . map rip
+    where   rip (Alphabet x) = x
 
 genMapping :: States -> Alphabets -> Gen Map
 genMapping states alphabets = 
@@ -226,6 +226,8 @@ propTrimStatesDFA = do
             printTestCase (show dfa ++ "\n" ++ show dfa') prop
         )
 
+
+
 ----------------------------
 --
 --  Minimize DFA
@@ -234,8 +236,8 @@ propTrimStatesDFA = do
 
 propMinimizeDFA :: Property
 propMinimizeDFA = do
-    states      <- genStates
-    alphabets   <- genAlphabets
+    states      <- take 3 <$> genStates
+    alphabets   <- take 2 <$> genAlphabets
     dfa         <- genDFA states alphabets
     dfa'        <- return (minimizeDFA dfa)
     forAll (genLanguage alphabets) (\ language ->
