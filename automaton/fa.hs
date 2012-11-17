@@ -148,7 +148,7 @@ negateDFA (DFA states a m s accepts) = DFA states a m s (states \\ accepts)
 
 
 negateNFA :: NFA -> NFA
-negateNFA (NFA states a m s accepts) = NFA states a m s (states \\ accepts)
+negateNFA = dfa2nfa . negateDFA . nfa2dfa
 
 
 ----------------------------
