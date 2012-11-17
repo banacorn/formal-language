@@ -10,6 +10,7 @@ module Automaton (
     Map(..),
     DFA(..),
     NFA(..),
+    GNFA(..),
 
     RE(..),
 
@@ -54,7 +55,8 @@ module Automaton (
     undistinguishableStates,
 
     -- RE
-    re2nfa
+    re2nfa,
+    nfa2gnfa
 
 
 ) where

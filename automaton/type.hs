@@ -6,6 +6,7 @@ module Automaton.Type (
     Alphabets,
     DFA(..),
     NFA(..),
+    GNFA(..),
 
     RE(..),
 

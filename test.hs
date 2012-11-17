@@ -140,7 +140,7 @@ dfaf = DFA statesF alphabetsF mappingsF startF acceptsF
 r = read "a b" :: RE
 run = automatonN $ re2nfa r
 
-
+n = nfa2gnfa nfa
 
 ------------------------------------------------------------------------
 -- generators

@@ -6,7 +6,7 @@ import Automaton.FA
 import Data.List
 import Control.Applicative
 
-alphabetSet = Alphabet <$> ['0' .. '9'] ++ ['a' .. 'z']
+alphabetSet = Alphabet <$> ['0' .. '9'] ++ ['a' .. 'z'] ++ [' ']
 
 re2nfa :: RE -> NFA
 re2nfa (A a) = NFA states alphabets (MapN mappings) start accept 
@@ -62,4 +62,22 @@ re2nfa (Star a) = NFA states' alphabets (MapN mappings') start' accept'
 re2nfa E = NFA [0] [Epsilon] (MapN [(0, Epsilon, [0])]) 0 [0]
 
 re2nfa N = NFA [0] [] (MapN []) 0 []
+
+--------
+
+nfa2gnfa (NFA states alphabets (MapN mappings) start accept) = GNFA states' alphabets (MapRE mappings') start' accept'
+    where
+        start' = minimum states - 1
+        accept' = [maximum states + 1]
+        states' = start' : (accept' ++ states)
+
+        mappings' = startBridge : (replacedWithRE ++ finalBridges)
+            where
+                replaceAlphabetWithRE (s, Alphabet a, t) = (s, A a, t)
+                replaceAlphabetWithRE (s, Epsilon, t) = (s, E, t)
+                replacedWithRE = replaceAlphabetWithRE <$> mappings
+                startBridge = (start', E, [start])
+                finalBridges = (\f -> (f, E, accept')) <$> accept
+
+--nfa2re 
 
