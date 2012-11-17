@@ -1,28 +1,37 @@
 import Test.QuickCheck
+import Text.Printf
+
 import Control.Applicative
 import Control.Monad
 import Automaton
 import Data.List
 import Debug.Trace
 
---main  = mapM_ (\(s,a) -> printf "%-25s: " s >> a) tests
 
 
 
---tests = [
---    ("~~dfa == dfa", quickCheck propNegateDFATwice),
---    ("~dfa /= dfa", quickCheck propComplementary),
---    ("dfa union", quickCheck propUnionDFA),
---    ("dfa intersect", quickCheck propIntersectDFA)
---    ]
+tests = [
+    ("DFA Negation", quickCheck propNegateDFA),
+    ("DFA Union", quickCheck propUnionDFA),
+    ("DFA Intersection", quickCheck propIntersectDFA),
+    ("DFA Concatenation", quickCheck propConcatenateDFA),
+    ("DFA Kleene Star", quickCheck propKleeneStarDFA),
+    ("NFA Negation", quickCheck propNegateNFA),
+    ("NFA Union", quickCheck propUnionNFA),
+    ("NFA Intersection", quickCheck propIntersectNFA),
+    ("NFA Concatenation", quickCheck propConcatenateNFA),
+    ("NFA Kleene Star", quickCheck propKleeneStarNFA),
+    ("DFA => NFA", quickCheck propDFA2NFA),
+    ("DFA <= NFA", quickCheck propNFA2DFA)
+    ]
+
+main  = mapM_ (\(s,a) -> printf "%-25s: " s >> a) tests
+
 
 bana test = replicateM_ 10 (quickCheck test)
 
 --mains = replicateM_ 100 $ sample . join $ genMapping <$> genStates <*> genAlphabets
 --main = q propNFA2DFA
-
-q :: Testable prop => prop -> IO ()
-q = quickCheck
 
 ------------------------------------------------------------------------
 -- test data
@@ -185,6 +194,11 @@ genNFA states alphabets = do
 ------------------------------------------------------------------------
 -- properties
 
+
+
+alphabetTestLimit = fmap $ take 4
+stateTestLimit = fmap $ take 20
+
 propGenStates :: Property
 propGenStates = do
     states <- genStates
@@ -235,8 +249,8 @@ propTrimStatesDFA = do
 
 propMinimizeDFA :: Property
 propMinimizeDFA = do
-    states      <- take 3 <$> genStates
-    alphabets   <- take 2 <$> genAlphabets
+    states      <- stateTestLimit genStates
+    alphabets   <- alphabetTestLimit genAlphabets
     dfa         <- genDFA states alphabets
     dfa'        <- return (minimizeDFA dfa)
     forAll (genLanguage alphabets) (\ language ->
@@ -269,6 +283,20 @@ propNegateDFA = do
             automaton dfa language /= automaton (negateDFA dfa) language 
         )
 
+
+propNegateNFA :: Property
+propNegateNFA = do
+    alphabets   <- alphabetTestLimit genAlphabets
+    states      <- stateTestLimit genStates
+    nfa         <- genNFA states alphabets
+
+    forAll (genLanguage alphabets) (\ language ->
+            let
+                prop = automatonN nfa language /= automatonN (negateNFA nfa) language 
+            in
+            printTestCase (show nfa ++ "\n" ++ show (negateNFA nfa)) prop
+        )
+
 ----------------------------
 --
 --  Union
@@ -279,12 +307,12 @@ propNegateDFA = do
 
 propUnionDFA :: Property
 propUnionDFA = do
-    alphabets   <- genAlphabets
+    alphabets   <- alphabetTestLimit genAlphabets
     -- DFA 0
-    states0     <- genStates
+    states0     <- stateTestLimit genStates
     dfa0        <- genDFA states0 alphabets
     -- DFA 1
-    states1     <- genStates
+    states1     <- stateTestLimit genStates
     dfa1        <- genDFA states1 alphabets
 
     forAll (genLanguage alphabets) (\ language -> 
@@ -296,12 +324,12 @@ propUnionDFA = do
 
 propUnionNFA :: Property
 propUnionNFA = do
-    alphabets   <- genAlphabets
+    alphabets   <- alphabetTestLimit genAlphabets
     -- NFA 0
-    states0     <- genStates
+    states0     <- take 5 <$> genStates
     nfa0        <- genNFA states0 alphabets
     -- NFA 1
-    states1     <- genStates
+    states1     <- take 5 <$> genStates
     nfa1        <- genNFA states1 alphabets
 
     forAll (genLanguage alphabets) (\ language -> 
@@ -322,12 +350,12 @@ propUnionNFA = do
 
 propIntersectDFA :: Property
 propIntersectDFA = do
-    alphabets   <- genAlphabets
+    alphabets   <- alphabetTestLimit genAlphabets
     -- DFA 0
-    states0     <- genStates
+    states0     <- stateTestLimit genStates
     dfa0        <- genDFA states0 alphabets
     -- DFA 1
-    states1     <- genStates
+    states1     <- stateTestLimit genStates
     dfa1        <- genDFA states1 alphabets
 
     forAll (genLanguage alphabets) (\ language -> 
@@ -338,12 +366,12 @@ propIntersectDFA = do
 
 propIntersectNFA :: Property
 propIntersectNFA = do
-    alphabets   <- take 3 <$> genAlphabets
+    alphabets   <- alphabetTestLimit genAlphabets
     -- NFA 0
-    states0     <- take 5 <$> genStates
+    states0     <- take 4 <$> genStates
     nfa0        <- genNFA states0 alphabets
     -- NFA 1
-    states1     <- take 5 <$> genStates
+    states1     <- take 4 <$> genStates
     nfa1        <- genNFA states1 alphabets
 
     forAll (genLanguage alphabets) (\ language -> 
@@ -365,13 +393,13 @@ propIntersectNFA = do
 
 propConcatenateDFA :: Property
 propConcatenateDFA = do
-    alphabets   <- take 3 <$> genAlphabets
+    alphabets   <- alphabetTestLimit genAlphabets
     -- DFA 0
-    states0     <- take 6 <$> genStates
+    states0     <- take 4 <$> genStates
     dfa0        <- genDFA states0 alphabets
     lang0       <- genLanguage alphabets
     -- DFA 1
-    states1     <- take 6 <$> genStates
+    states1     <- take 4 <$> genStates
     dfa1        <- genDFA states1 alphabets
     lang1       <- genLanguage alphabets
 
@@ -407,8 +435,8 @@ propConcatenateNFA = do
 
 propKleeneStarDFA :: Property
 propKleeneStarDFA = do
-    states      <- take 4 <$> genStates
-    alphabets   <- take 2 <$> genAlphabets
+    states      <- take 6 <$> genStates
+    alphabets   <- alphabetTestLimit genAlphabets
     dfa         <- genDFA states alphabets
     forAll (take 5 <$> genLanguage alphabets) (\ language ->
             let
@@ -427,8 +455,8 @@ propKleeneStarDFA = do
 
 propKleeneStarNFA :: Property
 propKleeneStarNFA = do
-    states      <- take 4 <$> genStates
-    alphabets   <- take 2 <$> genAlphabets
+    states      <- stateTestLimit genStates
+    alphabets   <- alphabetTestLimit genAlphabets
     nfa         <- genNFA states alphabets
     forAll (take 5 <$> genLanguage alphabets) (\ language ->
             let
@@ -464,8 +492,8 @@ propDFA2NFA = do
 
 propNFA2DFA :: Property
 propNFA2DFA = do
-    states      <-  take 20 <$> genStates
-    alphabets   <-  take 2 <$> genAlphabets
+    states      <-  stateTestLimit genStates
+    alphabets   <-  alphabetTestLimit genAlphabets
     nfa         <- genNFA states alphabets
     forAll (genLanguage alphabets) (\language ->
             let dfa = nfa2dfa nfa
