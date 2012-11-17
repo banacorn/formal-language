@@ -38,7 +38,7 @@ type NDTransition = State -> Alphabet -> States
 
 type Mapping = (State, Alphabet, State)
 type MappingN = (State, Alphabet, States)
-type MappingRE = (State, RE, States)
+type MappingRE = (State, RE, State)
 
 
 data Map = Map [Mapping]

@@ -1,5 +1,7 @@
 module Automaton.FA (
     
+    driver,
+    driverN,
     automaton,
     automatonN,
 

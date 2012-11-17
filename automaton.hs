@@ -16,6 +16,8 @@ module Automaton (
 
     -- functions
 
+    driver,
+    driverN,
     automaton,
     automatonN,
 
@@ -57,7 +59,8 @@ module Automaton (
     -- RE
     re2nfa,
     nfa2gnfa,
-    gnfa2re
+    gnfa2re,
+    alphabet2re
 
 
 ) where

@@ -66,25 +66,37 @@ re2nfa N = NFA [0] [] (MapN []) 0 []
 
 --------
 
-nfa2gnfa (NFA states alphabets (MapN mappings) start accept) = GNFA states' alphabets (MapRE mappings') start' accept'
+alphabet2re (Alphabet a) = A a
+alphabet2re Epsilon = E
+
+nfa2gnfa (NFA states alphabets (MapN mappings) start accept) =
+    GNFA states' alphabets (MapRE mappings') start' accept'
     where
         start' = minimum states - 1
         accept' = [maximum states + 1]
         states' = start' : (accept' ++ states)
+        mappings' = (\ from to ->
+                case [ (from, alphabet2re a, to) | (s, a, t) <- extendedMappings, s == from, to `elem` t] of
+                    []      -> (from, N, to)
+                    triples -> (from, foldl1 (:|) (symbols triples), to)
+            ) <$> domain <*> codomain
+            
+            where   second (_, a, _)    = a
+                    symbols triples     = second <$> triples
+                    startBridge         = (start', Epsilon, [start])
+                    finalBridges        = (\f -> (f, Epsilon, accept')) <$> accept
+                    extendedMappings    = startBridge : (mappings ++ finalBridges)
+                    domain              = start' : states
+                    codomain            = states ++ accept'
 
-        mappings' = startBridge : (replacedWithRE ++ finalBridges)
-            where
-                replaceAlphabetWithRE (s, Alphabet a, t) = (s, A a, t)
-                replaceAlphabetWithRE (s, Epsilon, t) = (s, E, t)
-                replacedWithRE = replaceAlphabetWithRE <$> mappings
-                startBridge = (start', E, [start])
-                finalBridges = (\f -> (f, E, accept')) <$> accept
+
+gnfa2re = 1
 
 
+--gnfa2re (GNFA _ _ (MapRE [(start, re, final)]) _ accept)
+--    | final `subsetOf` accept   = re
+--    | otherwise                 = N
+--    where subsetOf elems list = and (flip elem list <$> elems)
 
-gnfa2re (GNFA _ _ (MapRE [(start, re, final)]) _ accept)
-    | final `subsetOf` accept   = re
-    | otherwise                 = N
-    where subsetOf elems list = and (flip elem list <$> elems)
-
+--gnfa2re (GNFA )
 
