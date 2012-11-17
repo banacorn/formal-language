@@ -140,6 +140,8 @@ dfaf = DFA statesF alphabetsF mappingsF startF acceptsF
 r = read "a b" :: RE
 run = automatonN $ re2nfa r
 
+a = nfa2gnfa (NFA [0] [] (MapN []) 0 [])
+
 n = nfa2gnfa nfa
 
 ------------------------------------------------------------------------

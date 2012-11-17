@@ -56,7 +56,8 @@ module Automaton (
 
     -- RE
     re2nfa,
-    nfa2gnfa
+    nfa2gnfa,
+    gnfa2re
 
 
 ) where

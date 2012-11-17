@@ -6,6 +6,7 @@ import Automaton.FA
 import Data.List
 import Control.Applicative
 
+
 alphabetSet = Alphabet <$> ['0' .. '9'] ++ ['a' .. 'z'] ++ [' ']
 
 re2nfa :: RE -> NFA
@@ -79,5 +80,11 @@ nfa2gnfa (NFA states alphabets (MapN mappings) start accept) = GNFA states' alph
                 startBridge = (start', E, [start])
                 finalBridges = (\f -> (f, E, accept')) <$> accept
 
---nfa2re 
+
+
+gnfa2re (GNFA _ _ (MapRE [(start, re, final)]) _ accept)
+    | final `subsetOf` accept   = re
+    | otherwise                 = N
+    where subsetOf elems list = and (flip elem list <$> elems)
+
 
