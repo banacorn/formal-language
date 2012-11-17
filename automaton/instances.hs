@@ -81,6 +81,17 @@ instance Show NFA where
         "\n    q   " ++ (show state) ++ 
         "\n    F   " ++ (show accepts) ++
         "\n"
+instance Show GNFA where
+    show (GNFA states alphabets mappings state accepts) = dropQuote $ 
+        "GNFA" ++
+        "\n    Q   " ++ (show states) ++ 
+        "\n    Σ   " ++ (show alphabets) ++
+        "\n    δ   " ++ (show mappings) ++
+        "\n    q   " ++ (show state) ++ 
+        "\n    F   " ++ (show accepts) ++
+        "\n"
+
+
 
 
 
