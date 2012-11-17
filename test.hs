@@ -95,17 +95,18 @@ dfae = DFA statesEq alphabetsEq mappingsEq startEq acceptsEq
 
 ---------
 
-statesN = [0 .. 2]
+statesN = [1 .. 3]
 alphabetsN = [Alphabet 'a', Alphabet 'b']
 mappingsN = MapN [
-    (0, Epsilon, [2]),
-    (0, Alphabet 'b', [1]),
-    (1, Alphabet 'a', [1, 2]),
-    (1, Alphabet 'b', [2]),
-    (2, Alphabet 'a', [0])
+    (1, Alphabet 'a', [2]),
+    (1, Alphabet 'b', [3]),
+    (2, Alphabet 'a', [1]),
+    (2, Alphabet 'b', [2]),
+    (3, Alphabet 'a', [2]),
+    (3, Alphabet 'b', [1])
     ]
-startN = 0
-acceptsN = [0]
+startN = 1
+acceptsN = [2, 3]
 
 nfa = NFA statesN alphabetsN mappingsN startN acceptsN
 
@@ -140,7 +141,7 @@ dfaf = DFA statesF alphabetsF mappingsF startF acceptsF
 r = read "a b" :: RE
 run = automatonN $ re2nfa r
 
-a = nfa2gnfa (NFA [0] [] (MapN []) 0 [])
+a = NFA [0] [] (MapN []) 0 []
 
 n = nfa2gnfa nfa
 

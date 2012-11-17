@@ -60,7 +60,9 @@ module Automaton (
     re2nfa,
     nfa2gnfa,
     gnfa2re,
-    alphabet2re
+    alphabet2re,
+    nfa2re,
+    normalizeRE
 
 
 ) where

@@ -9,15 +9,36 @@ import Control.Applicative
 
 alphabetSet = Alphabet <$> ['0' .. '9'] ++ ['a' .. 'z'] ++ [' ']
 
+
 normalizeRE :: RE -> RE
 normalizeRE (Star N) = E
 normalizeRE (Star E) = E
+normalizeRE (Star a) = Star $ normalizeRE a
 normalizeRE (N :+ a) = N
 normalizeRE (a :+ N) = N
-normalizeRE (E :+ a) = a
-normalizeRE (a :+ E) = a
-normalizeRE (N :| a) = a
-normalizeRE (a :| N) = a
+normalizeRE (E :+ a) = normalizeRE a
+normalizeRE (a :+ E) = normalizeRE a
+normalizeRE (a :+ b)
+    | a' == N   = N
+    | b' == N   = N
+    | a' == E   = normalizeRE b'
+    | b' == E   = normalizeRE a'
+    | otherwise = a' :+ b'
+    where   a'  = normalizeRE a
+            b'  = normalizeRE b
+
+normalizeRE (N :| a) = normalizeRE a
+normalizeRE (a :| N) = normalizeRE a
+normalizeRE (a :| b)
+    | a' == b'  = a'
+    | a' == N   = b'
+    | b' == N   = a'
+    | otherwise = a' :| b'
+    where   a'  = normalizeRE a
+            b'  = normalizeRE b
+normalizeRE E = E
+normalizeRE N = N
+normalizeRE (A a) = A a
 
 re2nfa :: RE -> NFA
 re2nfa (A a) = NFA states alphabets (MapN mappings) start accept 
@@ -108,17 +129,18 @@ nfa2gnfa (NFA states alphabets (MapN mappings) start accept) =
                     codomain            = states ++ accept'
 
 
---gnfa2re :: GNFA -> RE
---gnfa2re (GNFA _ _ (MapRE []) _ _) = N
---gnfa2re (GNFA _ _ (MapRE [(_, re, _)]) _ _) = re
+gnfa2re :: GNFA -> RE
+gnfa2re (GNFA _ _ (MapRE [(_, re, _)]) _ _) = re
 gnfa2re (GNFA (x:xs) alphabets (MapRE mappings) start accept)
     | x == start        = gnfa2re (GNFA (xs ++ [x]) alphabets (MapRE mappings) start accept)
     | x `elem` accept   = gnfa2re (GNFA (xs ++ [x]) alphabets (MapRE mappings) start accept)
-    | otherwise         = traceShow x $ [ (s, a :| Star loop :| b, t) | (_, a, t) <- fromDomain, (s, b, _) <- toCodomain ]
+    | otherwise         = gnfa2re (GNFA xs alphabets (MapRE mappings') start accept)
         where
+            mappings'   = [ (s, normalizeRE $ (b :+ (Star loop) :+ a) :| originRE, t) | (_, a, t) <- fromDomain, (s, b, _) <- toCodomain, (s', originRE, t') <- restMappings, s' == s, t' == t]
             fromDomain  = [ (x, re, t) | (s, re, t) <- mappings, s == x, t /= x ]
             toCodomain  = [ (s, re, x) | (s, re, t) <- mappings, s /= x, t == x ]
             loop        = head [ re | (s, re, t) <- mappings, s == x, t == x ]
-            --gnfa2re (GNFA (xs) alphabets (MapRE [(0, E, 1)]) start accept)
+            restMappings = mappings \\ ((x, loop, x) : (fromDomain ++ toCodomain))
 
+nfa2re = gnfa2re . nfa2gnfa
 
