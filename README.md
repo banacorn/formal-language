@@ -8,6 +8,9 @@ Curry–Howard Correspondence for fun!
 Proofs Constructed
 ===
 
+Finite Automaton
+---
+
 * DFA
  * Negation
  * Union
@@ -26,7 +29,8 @@ Proofs Constructed
  * Equivalance Relation
 
 * DFA ↔ NFA
-* RE ➞ NFA
+* RE ↔ NFA
+* NFA ➞ GNFA ➞ RE
 
 (RE also comes as an instance of Read built on top of Parsec)
 
