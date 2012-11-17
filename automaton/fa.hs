@@ -359,7 +359,7 @@ normalizeNFA nfa = replaceStatesNFA function . nubStatesNFA $ nfa
 
 
 minimizeDFA :: DFA -> DFA
-minimizeDFA dfa = replaceStatesDFA replace dfa
+minimizeDFA dfa = nubStatesDFA $ replaceStatesDFA replace dfa
     where   undistinguishablePairs = undistinguishableStates dfa
             replace a = case lookup a undistinguishablePairs of
                 Just b  -> b
