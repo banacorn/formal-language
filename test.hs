@@ -22,7 +22,8 @@ tests = [
     ("NFA Concatenation", quickCheck propConcatenateNFA),
     ("NFA Kleene Star", quickCheck propKleeneStarNFA),
     ("DFA => NFA", quickCheck propDFA2NFA),
-    ("DFA <= NFA", quickCheck propNFA2DFA)
+    ("DFA <= NFA", quickCheck propNFA2DFA),
+    ("DFA Minimization", quickCheck propMinimizeDFA)
     ]
 
 main  = mapM_ (\(s,a) -> printf "%-25s: " s >> a) tests
@@ -324,12 +325,12 @@ propUnionDFA = do
 
 propUnionNFA :: Property
 propUnionNFA = do
-    alphabets   <- alphabetTestLimit genAlphabets
+    alphabets   <- take 3 <$> genAlphabets
     -- NFA 0
-    states0     <- take 5 <$> genStates
+    states0     <- take 4 <$> genStates
     nfa0        <- genNFA states0 alphabets
     -- NFA 1
-    states1     <- take 5 <$> genStates
+    states1     <- take 4 <$> genStates
     nfa1        <- genNFA states1 alphabets
 
     forAll (genLanguage alphabets) (\ language -> 
