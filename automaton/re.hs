@@ -18,6 +18,8 @@ re2nfa (A a) = NFA states alphabets (MapN mappings) start accept
             accept = [1]
 
 
+re2nfa (E :+ a) = re2nfa a
+re2nfa (a :+ E) = re2nfa a
 re2nfa (a :+ b) = NFA states alphabets (MapN mappings) start accept
     where   NFA states0 alphabets0 (MapN mappings0) start0 accept0 = re2nfa a
             NFA states1 alphabets1 (MapN mappings1) start1 accept1 = replaceStatesNFA replaceStates $ re2nfa b
@@ -33,7 +35,8 @@ re2nfa (a :+ b) = NFA states alphabets (MapN mappings) start accept
             replaceStates = (+) (maximum states0 + 1)
 
 
-
+re2nfa (N :| a) = re2nfa a
+re2nfa (a :| N) = re2nfa a
 re2nfa (a :| b) = NFA states alphabets (MapN mappings) start accept
     where   NFA states0 alphabets0 (MapN mappings0) start0 accept0 = re2nfa a
             NFA states1 alphabets1 (MapN mappings1) start1 accept1 = replaceStatesNFA replaceStates $ re2nfa b
@@ -66,9 +69,11 @@ re2nfa N = NFA [0] [] (MapN []) 0 []
 
 --------
 
+alphabet2re :: Alphabet -> RE
 alphabet2re (Alphabet a) = A a
 alphabet2re Epsilon = E
 
+nfa2gnfa :: NFA -> GNFA
 nfa2gnfa (NFA states alphabets (MapN mappings) start accept) =
     GNFA states' alphabets (MapRE mappings') start' accept'
     where
@@ -90,13 +95,14 @@ nfa2gnfa (NFA states alphabets (MapN mappings) start accept) =
                     codomain            = states ++ accept'
 
 
-gnfa2re = 1
+gnfa2re :: GNFA -> RE
+gnfa2re (GNFA _ _ (MapRE []) _ _) = N
+gnfa2re (GNFA _ _ (MapRE [(_, re, _)]) _ _) = re
+gnfa2re (GNFA (x:xs) alphabets (MapRE mappings) start accept)
+    | x == start        = gnfa2re (GNFA (xs ++ [x]) alphabets (MapRE mappings) start accept)
+    | x `elem` accept   = gnfa2re (GNFA (xs ++ [x]) alphabets (MapRE mappings) start accept)
+    | otherwise         = gnfa2re (GNFA (xs) alphabets (MapRE [(0, E, 1)]) start accept)
 
 
---gnfa2re (GNFA _ _ (MapRE [(start, re, final)]) _ accept)
---    | final `subsetOf` accept   = re
---    | otherwise                 = N
---    where subsetOf elems list = and (flip elem list <$> elems)
 
---gnfa2re (GNFA )
 
