@@ -18,6 +18,8 @@ re2nfa (A a) = NFA states alphabets (MapN mappings) start accept
             accept = [1]
 
 
+re2nfa (N :+ a) = re2nfa N
+re2nfa (a :+ N) = re2nfa N
 re2nfa (E :+ a) = re2nfa a
 re2nfa (a :+ E) = re2nfa a
 re2nfa (a :+ b) = NFA states alphabets (MapN mappings) start accept
@@ -53,6 +55,7 @@ re2nfa (a :| b) = NFA states alphabets (MapN mappings) start accept
 
 
 
+re2nfa (Star N) = re2nfa E 
 re2nfa (Star a) = NFA states' alphabets (MapN mappings') start' accept'
     where   NFA states alphabets (MapN mappings) start accept = re2nfa a
 
