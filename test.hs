@@ -114,21 +114,20 @@ nfam = NFA statesM alphabetsM mappingsM startM acceptsM
 
 ---
 
-statesF = [0 .. 1]
-alphabetsF = [Alphabet 'a', Alphabet 'b']
-mappingsF = MapN [
-    (0, Alphabet 'a', [1]),
-    (0, Alphabet 'b', [0]),
-    (1, Alphabet 'a', [0]),
-    (1, Alphabet 'b', [1])
+statesF = [656, 101, 497]
+alphabetsF = [Alphabet 'z']
+mappingsF = Map [
+    (656, Alphabet 'z', 101),
+    (101, Alphabet 'z', 656),
+    (497, Alphabet 'z', 101)
     ]
-startF = 1
-acceptsF = [0]
-nfaf = NFA statesF alphabetsF mappingsF startF acceptsF
+startF = 497
+acceptsF = [656]
+dfaf = DFA statesF alphabetsF mappingsF startF acceptsF
 
 ---
 
-r = read "hello world" :: RE
+r = read "a b" :: RE
 run = automatonN $ re2nfa r
 
 

@@ -101,7 +101,7 @@ instance Eq NFA where
 instance Show RE where
     show (A a) = [a]
     show N = "∅"
-    show E = " "
+    show E = "ɛ"
     show (a :| b) = "(" ++ show a ++ "|" ++ show b ++ ")"
     show (a :+ b) = show a ++ show b
     show (Star a) = show a ++ "*"
@@ -129,11 +129,18 @@ unitParser =
             <|> return (N)
     <|> 
     do
-        char ' '
+        char 'ɛ'
         do
             char '*'
             return (Star (E))
             <|> return (E)
+    <|> 
+    do
+        char ' '
+        do
+            char '*'
+            return (Star (A ' '))
+            <|> return (A ' ')
     <|> 
     do
         c <- digit

@@ -365,33 +365,40 @@ minimizeDFA dfa = replaceStatesDFA replace dfa
                 Just b  -> b
                 Nothing -> a
 
-
-
 undistinguishableStates :: DFA -> [(State, State)]
 undistinguishableStates dfa = 
-    combinations \\ collect' distinguishable (initialDisguindished, initialMixed)
+    combinations \\ collect' (distinguishable dfa) (initialDisguindished, initialMixed)
     where
         (DFA states alphabets (Map mappings) start accepts) = dfa
 
         combinations = pairCombinations states
         initialDisguindished = filter distinguishable combinations
-            where distinguishable (a, b) = a `elem` accepts || b `elem` accepts
+            where distinguishable (a, b) = (a `elem` accepts && b `notElem` accepts) || (a `notElem` accepts && b `elem` accepts)
         initialMixed = combinations \\ initialDisguindished
 
-        transitPair pair = jump pair <$> alphabets
-        jump (a, b) alphabet = (driver (Map mappings) a alphabet, driver (Map mappings) b alphabet)
 
-        distinguishable distinguished pair =
-            case or result of 
-                True -> [pair]
-                False -> []
-            where   sort (a, b) = if a < b then (a, b) else (b, a)
-                    check (a, b) = (a, b) `elem` distinguished && a /= b
-                    result = check . sort <$> transitPair pair
+distinguishable :: DFA -> [(State, State)] -> (State, State) -> [(State, State)]
+distinguishable dfa distinguished pair = 
+    case or result of 
+        True -> [pair]
+        False -> []
+    where   (DFA states alphabets (Map mappings) start accepts) = dfa
+            
+            transitPair pair = jump pair <$> alphabets
+            jump (a, b) alphabet = (driver (Map mappings) a alphabet, driver (Map mappings) b alphabet)
+
+            sort (a, b) = if a < b then (a, b) else (b, a)
+            check (a, b) = (a, b) `elem` distinguished && a /= b
+            result = check . sort <$> transitPair pair
+
+
+
 
 pairCombinations :: (Ord a) => [a] -> [(a, a)]
 pairCombinations [] = []
-pairCombinations (x:xs) = map (curry id x) xs ++ pairCombinations xs
+pairCombinations (x:xs) = map (sort . curry id x) xs ++ pairCombinations xs
+    where sort (a, b) = if a < b then (a, b) else (b, a)
+
 
 trimUnreachableStates :: DFA -> DFA
 trimUnreachableStates (DFA states alphabets (Map mappings) start accepts) = 
@@ -425,17 +432,16 @@ collect next (old, new)
             subsetOf elems list = and (flip elem list <$> elems)
 
 
-collect' :: Eq a => ([a] -> a -> [a]) -> ([a], [a]) -> [a]
-collect' process (collected, raw)
-    | emptied   = collected
-    | reapeated = collected
-    | otherwise = nub $ collect' process (collected', raw')
-    where   processed = raw >>= process collected
-            collected' = nub (collected `union` processed)
-            raw' = raw \\ processed
-            emptied = null raw'
-            reapeated = raw `subsetOf` raw'
-            subsetOf elems list = and (flip elem list <$> elems)
 
+collect' :: (Show a, Eq a) => ([a] -> a -> [a]) -> ([a], [a]) -> [a]
+collect' next (old, new)
+    | emptied = old
+    | reapeated = old
+    | otherwise = nub $ collect' next (old', new')
+    where   new' = nub $ new >>= next old
+            old' = nub (old `union` new)
+            emptied = null new'
+            reapeated = new' `subsetOf` old
+            subsetOf elems list = and (flip elem list <$> elems)
 
 
