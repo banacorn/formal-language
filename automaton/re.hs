@@ -9,6 +9,16 @@ import Control.Applicative
 
 alphabetSet = Alphabet <$> ['0' .. '9'] ++ ['a' .. 'z'] ++ [' ']
 
+normalizeRE :: RE -> RE
+normalizeRE (Star N) = E
+normalizeRE (Star E) = E
+normalizeRE (N :+ a) = N
+normalizeRE (a :+ N) = N
+normalizeRE (E :+ a) = a
+normalizeRE (a :+ E) = a
+normalizeRE (N :| a) = a
+normalizeRE (a :| N) = a
+
 re2nfa :: RE -> NFA
 re2nfa (A a) = NFA states alphabets (MapN mappings) start accept 
     where   states = [0, 1]
@@ -55,7 +65,7 @@ re2nfa (a :| b) = NFA states alphabets (MapN mappings) start accept
 
 
 
-re2nfa (Star N) = re2nfa E 
+re2nfa (Star N) = re2nfa E
 re2nfa (Star a) = NFA states' alphabets (MapN mappings') start' accept'
     where   NFA states alphabets (MapN mappings) start accept = re2nfa a
 
@@ -98,14 +108,17 @@ nfa2gnfa (NFA states alphabets (MapN mappings) start accept) =
                     codomain            = states ++ accept'
 
 
-gnfa2re :: GNFA -> RE
-gnfa2re (GNFA _ _ (MapRE []) _ _) = N
-gnfa2re (GNFA _ _ (MapRE [(_, re, _)]) _ _) = re
+--gnfa2re :: GNFA -> RE
+--gnfa2re (GNFA _ _ (MapRE []) _ _) = N
+--gnfa2re (GNFA _ _ (MapRE [(_, re, _)]) _ _) = re
 gnfa2re (GNFA (x:xs) alphabets (MapRE mappings) start accept)
     | x == start        = gnfa2re (GNFA (xs ++ [x]) alphabets (MapRE mappings) start accept)
     | x `elem` accept   = gnfa2re (GNFA (xs ++ [x]) alphabets (MapRE mappings) start accept)
-    | otherwise         = gnfa2re (GNFA (xs) alphabets (MapRE [(0, E, 1)]) start accept)
-
-
+    | otherwise         = traceShow x $ [ (s, a :| Star loop :| b, t) | (_, a, t) <- fromDomain, (s, b, _) <- toCodomain ]
+        where
+            fromDomain  = [ (x, re, t) | (s, re, t) <- mappings, s == x, t /= x ]
+            toCodomain  = [ (s, re, x) | (s, re, t) <- mappings, s /= x, t == x ]
+            loop        = head [ re | (s, re, t) <- mappings, s == x, t == x ]
+            --gnfa2re (GNFA (xs) alphabets (MapRE [(0, E, 1)]) start accept)
 
 
