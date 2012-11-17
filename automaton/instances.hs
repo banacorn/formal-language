@@ -49,6 +49,17 @@ instance Show Map where
                 "  ×  " ++ 
                 show a ++ 
                 "  →  " ++ 
+                show t   
+    show (MapRE mappings) = dropQuote $
+        listMapping mappings
+        where
+            listMapping = concat . fmap (prefixIndent . showMap)
+            prefixIndent = (++) "\n        "
+            showMap (s, a, t) = 
+                show s ++ 
+                "  ×  " ++ 
+                show a ++ 
+                "  →  " ++ 
                 show t
 
 
