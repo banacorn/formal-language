@@ -37,9 +37,6 @@ type Language = String
 type Alphabets = [Alphabet]
 type SAlphabets = [SAlphabet]
 
-type Transition = State -> Alphabet -> State
-type NDTransition = State -> Alphabet -> States
-
 type Mapping = (State, Alphabet, State)
 type MappingN = (State, Alphabet, States)
 type MappingRE = (State, RE, State)

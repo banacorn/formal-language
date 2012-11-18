@@ -58,7 +58,7 @@ import Debug.Trace
 
 
 -- make mappings a function
-driver :: Map -> Transition
+driver :: Map -> State -> Alphabet -> State
 driver (Map mappings) state alphabet =
     let result = [ f | (s, a, f) <- mappings, s == state, a == alphabet ] in
     case result of [] -> error $ show state ++ ", " ++ showAlphabet alphabet ++ " Transition not deinfed"
@@ -66,7 +66,7 @@ driver (Map mappings) state alphabet =
     where   showAlphabet Epsilon = "ɛ"
             showAlphabet (Alphabet a) = show a
 -- make mappings a function
-driverN :: Map -> NDTransition
+driverN :: Map -> State -> Alphabet -> States
 driverN (MapN mappings) state alphabet = 
     let result = [ f | (s, a, f) <- mappings, s == state, a == alphabet ] in
     case result of [] -> []
