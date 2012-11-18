@@ -8,7 +8,7 @@ Curry–Howard Correspondence for fun!
 Proofs Constructed
 ===
 
-Finite Automaton
+Regular Language
 ---
 
 * DFA
