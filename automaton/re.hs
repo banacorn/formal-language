@@ -41,7 +41,7 @@ normalizeRE N = N
 normalizeRE (A a) = A a
 
 re2nfa :: RE -> NFA
-re2nfa (A a) = NFA states alphabets (MapN mappings) start accept 
+re2nfa (A a) = NFA states alphabets (TransitionsNFA mappings) start accept 
     where   states = [0, 1]
             alphabets = [Alphabet a]
             mappings = [(0, Alphabet a, [1])]
@@ -53,9 +53,9 @@ re2nfa (N :+ a) = re2nfa N
 re2nfa (a :+ N) = re2nfa N
 re2nfa (E :+ a) = re2nfa a
 re2nfa (a :+ E) = re2nfa a
-re2nfa (a :+ b) = NFA states alphabets (MapN mappings) start accept
-    where   NFA states0 alphabets0 (MapN mappings0) start0 accept0 = re2nfa a
-            NFA states1 alphabets1 (MapN mappings1) start1 accept1 = replaceStatesNFA replaceStates $ re2nfa b
+re2nfa (a :+ b) = NFA states alphabets (TransitionsNFA mappings) start accept
+    where   NFA states0 alphabets0 (TransitionsNFA mappings0) start0 accept0 = re2nfa a
+            NFA states1 alphabets1 (TransitionsNFA mappings1) start1 accept1 = replaceStatesNFA replaceStates $ re2nfa b
 
             states = states0 ++ states1
             alphabets = nub $ union alphabets0 alphabets1
@@ -70,9 +70,9 @@ re2nfa (a :+ b) = NFA states alphabets (MapN mappings) start accept
 
 re2nfa (N :| a) = re2nfa a
 re2nfa (a :| N) = re2nfa a
-re2nfa (a :| b) = NFA states alphabets (MapN mappings) start accept
-    where   NFA states0 alphabets0 (MapN mappings0) start0 accept0 = re2nfa a
-            NFA states1 alphabets1 (MapN mappings1) start1 accept1 = replaceStatesNFA replaceStates $ re2nfa b
+re2nfa (a :| b) = NFA states alphabets (TransitionsNFA mappings) start accept
+    where   NFA states0 alphabets0 (TransitionsNFA mappings0) start0 accept0 = re2nfa a
+            NFA states1 alphabets1 (TransitionsNFA mappings1) start1 accept1 = replaceStatesNFA replaceStates $ re2nfa b
 
             start = maximum states1 + 1
             states = start : states0 ++ states1
@@ -87,8 +87,8 @@ re2nfa (a :| b) = NFA states alphabets (MapN mappings) start accept
 
 
 re2nfa (Star N) = re2nfa E
-re2nfa (Star a) = NFA states' alphabets (MapN mappings') start' accept'
-    where   NFA states alphabets (MapN mappings) start accept = re2nfa a
+re2nfa (Star a) = NFA states' alphabets (TransitionsNFA mappings') start' accept'
+    where   NFA states alphabets (TransitionsNFA mappings) start accept = re2nfa a
 
             start' = maximum states + 1
             states' = start' : states
@@ -97,9 +97,9 @@ re2nfa (Star a) = NFA states' alphabets (MapN mappings') start' accept'
             mappings' = mappings ++ bridges
                 where   bridges = [ (endpoint, Epsilon, [start]) | endpoint <- accept' ]
 
-re2nfa E = NFA [0] [Epsilon] (MapN [(0, Epsilon, [0])]) 0 [0]
+re2nfa E = NFA [0] [Epsilon] (TransitionsNFA [(0, Epsilon, [0])]) 0 [0]
 
-re2nfa N = NFA [0] [] (MapN []) 0 []
+re2nfa N = NFA [0] [] (TransitionsNFA []) 0 []
 
 --------
 
@@ -108,8 +108,8 @@ alphabet2re (Alphabet a) = A a
 alphabet2re Epsilon = E
 
 nfa2gnfa :: NFA -> GNFA
-nfa2gnfa (NFA states alphabets (MapN mappings) start accept) =
-    GNFA states' alphabets (MapRE mappings') start' accept'
+nfa2gnfa (NFA states alphabets (TransitionsNFA mappings) start accept) =
+    GNFA states' alphabets (TransitionsRE mappings') start' accept'
     where
         start' = minimum states - 1
         accept' = [maximum states + 1]
@@ -130,11 +130,11 @@ nfa2gnfa (NFA states alphabets (MapN mappings) start accept) =
 
 
 gnfa2re :: GNFA -> RE
-gnfa2re (GNFA _ _ (MapRE [(_, re, _)]) _ _) = re
-gnfa2re (GNFA (x:xs) alphabets (MapRE mappings) start accept)
-    | x == start        = gnfa2re (GNFA (xs ++ [x]) alphabets (MapRE mappings) start accept)
-    | x `elem` accept   = gnfa2re (GNFA (xs ++ [x]) alphabets (MapRE mappings) start accept)
-    | otherwise         = gnfa2re (GNFA xs alphabets (MapRE mappings') start accept)
+gnfa2re (GNFA _ _ (TransitionsRE [(_, re, _)]) _ _) = re
+gnfa2re (GNFA (x:xs) alphabets (TransitionsRE mappings) start accept)
+    | x == start        = gnfa2re (GNFA (xs ++ [x]) alphabets (TransitionsRE mappings) start accept)
+    | x `elem` accept   = gnfa2re (GNFA (xs ++ [x]) alphabets (TransitionsRE mappings) start accept)
+    | otherwise         = gnfa2re (GNFA xs alphabets (TransitionsRE mappings') start accept)
         where
             mappings'   = [ (s, normalizeRE $ (b :+ (Star loop) :+ a) :| originRE, t) | (_, a, t) <- fromDomain, (s, b, _) <- toCodomain, (s', originRE, t') <- restMappings, s' == s, t' == t]
             fromDomain  = [ (x, re, t) | (s, re, t) <- mappings, s == x, t /= x ]

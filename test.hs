@@ -42,7 +42,7 @@ bana test = replicateM_ 10 (quickCheck test)
 statesMin = [0..7]
 alphabetsMin = [Alphabet '0', Alphabet '1']
 
-mappingsMin = Map [
+mappingsMin = TransitionsDFA [
     (0, Alphabet '0', 1),
     (0, Alphabet '1', 5),
     (1, Alphabet '0', 6),
@@ -69,7 +69,7 @@ dfa = DFA statesMin alphabetsMin mappingsMin startMin acceptsMin
 
 statesM' = [0 .. 2]
 alphabetsM' = [Alphabet '1', Alphabet '0']
-mappingsM' = Map [
+mappingsM' = TransitionsDFA [
     (0, Alphabet '0', 1),
     (0, Alphabet '1', 2),
     (1, Alphabet '0', 2),
@@ -85,7 +85,7 @@ dfam' = DFA statesM' alphabetsM' mappingsM' startM' acceptsM'
 
 statesEq = [0 .. 2]
 alphabetsEq = [Alphabet '1', Alphabet '0']
-mappingsEq = Map [
+mappingsEq = TransitionsDFA [
     (0, Alphabet '0', 0),
     (0, Alphabet '1', 0)
     ]
@@ -97,7 +97,7 @@ dfae = DFA statesEq alphabetsEq mappingsEq startEq acceptsEq
 
 statesN = [1 .. 3]
 alphabetsN = [Alphabet 'a', Alphabet 'b']
-mappingsN = MapN [
+mappingsN = TransitionsNFA [
     (1, Alphabet 'a', [2]),
     (1, Alphabet 'b', [3]),
     (2, Alphabet 'a', [1]),
@@ -113,7 +113,7 @@ nfa = NFA statesN alphabetsN mappingsN startN acceptsN
 
 statesM = [0 .. 1]
 alphabetsM = [Alphabet 'a', Alphabet 'b']
-mappingsM = MapN [
+mappingsM = TransitionsNFA [
     (0, Epsilon, [1]),
     (0, Alphabet 'b', [1]),
     (1, Alphabet 'a', [0])
@@ -127,7 +127,7 @@ nfam = NFA statesM alphabetsM mappingsM startM acceptsM
 
 statesF = [656, 101, 497]
 alphabetsF = [Alphabet 'z']
-mappingsF = Map [
+mappingsF = TransitionsDFA [
     (656, Alphabet 'z', 101),
     (101, Alphabet 'z', 656),
     (497, Alphabet 'z', 101)
@@ -141,7 +141,7 @@ dfaf = DFA statesF alphabetsF mappingsF startF acceptsF
 r = read "a b" :: RE
 run = automatonN $ re2nfa r
 
-a = NFA [0] [] (MapN []) 0 []
+a = NFA [0] [] (TransitionsNFA []) 0 []
 
 n = nfa2gnfa nfa
 
@@ -159,18 +159,18 @@ genLanguage :: Alphabets -> Gen Language
 genLanguage = listOf . elements . map rip
     where   rip (Alphabet x) = x
 
-genMapping :: States -> Alphabets -> Gen Map
+genMapping :: States -> Alphabets -> Gen Transitions
 genMapping states alphabets = 
-    fmap Map $ sequence $ map extend pairs
+    fmap TransitionsDFA $ sequence $ map extend pairs
     where   pair a b = (a, b)
             pairs = pair <$> states <*> alphabets
             extend (a, b) = do
                 c <- elements states
                 return (a, b, c)
 
-genMappingN :: States -> Alphabets -> Gen Map
-genMappingN states alphabets = 
-    fmap MapN $ sequence $ map extend pairs
+genTransitionNFA :: States -> Alphabets -> Gen Transitions
+genTransitionNFA states alphabets = 
+    fmap TransitionsNFA $ sequence $ map extend pairs
     where   pair a b = (a, b)
             pairs = pair <$> states <*> alphabets
             extend (a, b) = do
@@ -190,7 +190,7 @@ genNFA :: States -> Alphabets -> Gen NFA
 genNFA states alphabets = do
     start <- elements states
     accepts <- fmap nub . listOf . elements $ states
-    mappings <- genMappingN states alphabets
+    mappings <- genTransitionNFA states alphabets
     return $ NFA states alphabets mappings start accepts
 
 ------------------------------------------------------------------------
@@ -210,12 +210,12 @@ propGenStates = do
 
 propGenMapping :: Property
 propGenMapping = do
-    Map mapping <- join $ genMapping <$> genStates <*> genAlphabets
+    TransitionsDFA mapping <- join $ genMapping <$> genStates <*> genAlphabets
     property $ mapping == nub mapping 
 
-propGenMappingN :: Property
-propGenMappingN = do
-    MapN mapping <- join $ genMappingN <$> genStates <*> genAlphabets
+propGenTransitionNFA :: Property
+propGenTransitionNFA = do
+    TransitionsNFA mapping <- join $ genTransitionNFA <$> genStates <*> genAlphabets
     property $ mapping == nub mapping
 
 

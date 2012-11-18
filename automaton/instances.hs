@@ -27,8 +27,8 @@ instance Show Alphabet where
     show Epsilon = "ɛ"
 
 
-instance Show Map where
-    show (Map mappings) = dropQuote $ 
+instance Show Transitions where
+    show (TransitionsDFA mappings) = dropQuote $ 
         listMapping mappings
         where
             listMapping = concat . fmap (prefixIndent . showMap)
@@ -39,7 +39,7 @@ instance Show Map where
                 show a ++ 
                 "  →  " ++ 
                 show t
-    show (MapN mappings) = dropQuote $
+    show (TransitionsNFA mappings) = dropQuote $
         listMapping mappings
         where
             listMapping = concat . fmap (prefixIndent . showMap)
@@ -50,7 +50,7 @@ instance Show Map where
                 show a ++ 
                 "  →  " ++ 
                 show t   
-    show (MapRE mappings) = dropQuote $
+    show (TransitionsRE mappings) = dropQuote $
         listMapping mappings
         where
             listMapping = concat . fmap (prefixIndent . showMap)

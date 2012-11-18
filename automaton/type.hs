@@ -1,24 +1,5 @@
 module Automaton.Type where
 
--- (
---    Language,
---    State,
---    States,
---    Alphabet(..),
---    Alphabets,
---    DFA(..),
---    NFA(..),
---    GNFA(..),
-
---    RE(..),
-
---    Transition,
---    NDTransition,
-
---    Map(..),
---    Mapping,
---    MappingN
---) where
 
 
 --------------------------------------------------------------
@@ -37,20 +18,20 @@ type Language = String
 type Alphabets = [Alphabet]
 type SAlphabets = [SAlphabet]
 
-type Mapping = (State, Alphabet, State)
-type MappingN = (State, Alphabet, States)
-type MappingRE = (State, RE, State)
-type MappingPDA = (State, Alphabet, SAlphabet, State, SAlphabet)
+type TransitionDFA = (State, Alphabet, State)
+type TransitionNFA = (State, Alphabet, States)
+type TransitionRE = (State, RE, State)
+type TransitionPDA = (State, Alphabet, SAlphabet, State, SAlphabet)
 
 
-data Map = Map [Mapping]
-         | MapN [MappingN]
-         | MapRE [MappingRE]
-         | MapPDA [MappingPDA]
+data Transitions = TransitionsDFA [TransitionDFA]
+                 | TransitionsNFA [TransitionNFA]
+                 | TransitionsRE [TransitionRE]
+                 | TransitionsPDA [TransitionPDA]
 
-data DFA = DFA States Alphabets Map State States
-data NFA = NFA States Alphabets Map State States
-data GNFA = GNFA States Alphabets Map State States
+data DFA = DFA States Alphabets Transitions State States
+data NFA = NFA States Alphabets Transitions State States
+data GNFA = GNFA States Alphabets Transitions State States
 
 
 --- RE
@@ -69,7 +50,7 @@ data RE = A Char | N | E |  RE :| RE | RE :+ RE | Star RE deriving Eq
 
 -- PDA
 
-data PDA = PDA States Alphabets SAlphabets Map State SAlphabet States
+data PDA = PDA States Alphabets SAlphabets Transitions State SAlphabet States
 
 -- CFG
 data Symbol = V Int | T Char

@@ -58,16 +58,16 @@ import Debug.Trace
 
 
 -- make mappings a function
-driver :: Map -> State -> Alphabet -> State
-driver (Map mappings) state alphabet =
+driver :: Transitions -> State -> Alphabet -> State
+driver (TransitionsDFA mappings) state alphabet =
     let result = [ f | (s, a, f) <- mappings, s == state, a == alphabet ] in
     case result of [] -> error $ show state ++ ", " ++ showAlphabet alphabet ++ " Transition not deinfed"
                    (x:xs) -> x
     where   showAlphabet Epsilon = "ɛ"
             showAlphabet (Alphabet a) = show a
 -- make mappings a function
-driverN :: Map -> State -> Alphabet -> States
-driverN (MapN mappings) state alphabet = 
+driverN :: Transitions -> State -> Alphabet -> States
+driverN (TransitionsNFA mappings) state alphabet = 
     let result = [ f | (s, a, f) <- mappings, s == state, a == alphabet ] in
     case result of [] -> []
                    (x:xs) -> x
@@ -113,14 +113,14 @@ automatonN (NFA states alphabets mappings state accepts) language
 
 
 dfa2nfa :: DFA -> NFA
-dfa2nfa (DFA s a (Map mappings) i f) = (NFA s a (MapN ndmappings) i f)
+dfa2nfa (DFA s a (TransitionsDFA mappings) i f) = (NFA s a (TransitionsNFA ndmappings) i f)
     where   ndmappings = mapping2ndmapping <$> mappings
             mapping2ndmapping (state, alphabet, target) = (state, alphabet, [target])
 
 
 nfa2dfa :: NFA -> DFA
 nfa2dfa nfa =
-    nubStatesDFA $ DFA states' alphabets (Map mappings') start' accepts'
+    nubStatesDFA $ DFA states' alphabets (TransitionsDFA mappings') start' accepts'
     where
         NFA statesN alphabets mappingsN startN acceptsN = normalizeNFA nfa
         transit = driverN mappingsN
@@ -164,14 +164,14 @@ unionDFA :: DFA -> DFA -> DFA
 unionDFA dfa0 dfa1 =
     DFA states alphabets mappings start accepts
     where
-        DFA states0 alphabets (Map mappings0) start0 accepts0 = normalizeDFA dfa0
-        DFA states1 _         (Map mappings1) start1 accepts1 = normalizeDFA dfa1
+        DFA states0 alphabets (TransitionsDFA mappings0) start0 accepts0 = normalizeDFA dfa0
+        DFA states1 _         (TransitionsDFA mappings1) start1 accepts1 = normalizeDFA dfa1
 
         stateSpace = length states0 * length states1
         encode (a, b) = a * length states1 + b
 
         states = [0 .. stateSpace - 1]
-        mappings = Map [ (encode (s0, s1), a0, encode (t0, t1)) | (s0, a0, t0) <- mappings0, (s1, a1, t1) <- mappings1, a0 == a1]
+        mappings = TransitionsDFA [ (encode (s0, s1), a0, encode (t0, t1)) | (s0, a0, t0) <- mappings0, (s1, a1, t1) <- mappings1, a0 == a1]
         start = encode (start0, start1)
         accepts = [ encode (s0, s1) | s0 <- states0, s1 <- states1, elem s0 accepts0 || elem s1 accepts1 ]
 
@@ -180,14 +180,14 @@ unionNFA :: NFA -> NFA -> NFA
 unionNFA nfa0 nfa1 =
     NFA states alphabets mappings start accepts
     where
-        NFA states0 alphabets (MapN mappings0) start0 accepts0 = normalizeNFA nfa0
-        NFA states1 _ (MapN mappings1) start1 accepts1 = replace nfa1
+        NFA states0 alphabets (TransitionsNFA mappings0) start0 accepts0 = normalizeNFA nfa0
+        NFA states1 _ (TransitionsNFA mappings1) start1 accepts1 = replace nfa1
         
         replace = replaceStatesNFA ((+) $ length states0)
         start = maximum states1 + 1
 
         states = start `insert` (states0 `union` states1)
-        mappings = MapN $ mappings0 `union` mappings1 `union` [(start, Epsilon, [start0, start1])]
+        mappings = TransitionsNFA $ mappings0 `union` mappings1 `union` [(start, Epsilon, [start0, start1])]
         accepts = accepts0 `union` accepts1
 
 
@@ -205,14 +205,14 @@ intersectDFA :: DFA -> DFA -> DFA
 intersectDFA dfa0 dfa1 =
     DFA states alphabets mappings start accepts
     where
-        DFA states0 alphabets (Map mappings0) start0 accepts0 = normalizeDFA dfa0
-        DFA states1 _         (Map mappings1) start1 accepts1 = normalizeDFA dfa1
+        DFA states0 alphabets (TransitionsDFA mappings0) start0 accepts0 = normalizeDFA dfa0
+        DFA states1 _         (TransitionsDFA mappings1) start1 accepts1 = normalizeDFA dfa1
 
         stateSpace = length states0 * length states1
         encode (a, b) = a * length states1 + b
 
         states = [0 .. stateSpace - 1]
-        mappings = Map [ (encode (s0, s1), a0, encode (t0, t1)) | (s0, a0, t0) <- mappings0, (s1, a1, t1) <- mappings1, a0 == a1]
+        mappings = TransitionsDFA [ (encode (s0, s1), a0, encode (t0, t1)) | (s0, a0, t0) <- mappings0, (s1, a1, t1) <- mappings1, a0 == a1]
         start = encode (start0, start1)
         accepts = curry encode <$> accepts0 <*> accepts1
 
@@ -240,10 +240,10 @@ concatenateDFA dfa0 dfa1 = minimizeDFA . normalizeDFA . nfa2dfa $ nfa0 `concaten
 
 concatenateNFA :: NFA -> NFA -> NFA
 concatenateNFA nfa0 nfa1 =
-    normalizeNFA (NFA states alphabets (MapN mappings) start0 accepts1)
+    normalizeNFA (NFA states alphabets (TransitionsNFA mappings) start0 accepts1)
     where
-        (NFA states0 alphabets (MapN mappings0) start0 accepts0) = nfa0
-        (NFA states1 _         (MapN mappings1) start1 accepts1) = replace nfa1
+        (NFA states0 alphabets (TransitionsNFA mappings0) start0 accepts0) = nfa0
+        (NFA states1 _         (TransitionsNFA mappings1) start1 accepts1) = replace nfa1
 
         offset = maximum states0 - minimum states0 + 1
         replace = replaceStatesNFA (+ offset)
@@ -270,8 +270,8 @@ kleeneStarDFA = nfa2dfa . kleeneStarNFA . dfa2nfa
 
 
 kleeneStarNFA :: NFA -> NFA
-kleeneStarNFA (NFA states alphabets (MapN mappings) start accepts) =
-    normalizeNFA (NFA states' alphabets (MapN mappings') start' accepts')
+kleeneStarNFA (NFA states alphabets (TransitionsNFA mappings) start accepts) =
+    normalizeNFA (NFA states' alphabets (TransitionsNFA mappings') start' accepts')
     where
         start' = maximum states + 1
         states' = start' `insert` states
@@ -293,14 +293,14 @@ encodePowerset = sum . fmap ((^) 2)
 
 
 
-epsilonClosure :: Map -> State -> States
+epsilonClosure :: Transitions -> State -> States
 epsilonClosure mappings state = nub . insert state . join $ epsilonClosure mappings <$> transit state Epsilon
     where   transit = driverN mappings
 
 -- replace states with given SURJECTIVE function
 replaceStatesDFA :: (State -> State) -> DFA -> DFA
-replaceStatesDFA table (DFA states alphabets (Map mappings) start accepts) = 
-    DFA states' alphabets (Map mappings') start' accepts'
+replaceStatesDFA table (DFA states alphabets (TransitionsDFA mappings) start accepts) = 
+    DFA states' alphabets (TransitionsDFA mappings') start' accepts'
     where   states'     = table <$> states
             mappings'   = replaceMapping <$> mappings
                 where replaceMapping (s, a, t) = (table s, a, table t)
@@ -310,8 +310,8 @@ replaceStatesDFA table (DFA states alphabets (Map mappings) start accepts) =
 
 
 replaceStatesNFA :: (State -> State) -> NFA -> NFA
-replaceStatesNFA table (NFA states alphabets (MapN mappings) start accepts) = 
-    NFA states' alphabets (MapN mappings') start' accepts'
+replaceStatesNFA table (NFA states alphabets (TransitionsNFA mappings) start accepts) = 
+    NFA states' alphabets (TransitionsNFA mappings') start' accepts'
     where   states'     = table <$> states
             mappings'   = replaceMapping <$> mappings
                 where replaceMapping (s, a, t) = (table s, a, table <$> t)
@@ -320,15 +320,15 @@ replaceStatesNFA table (NFA states alphabets (MapN mappings) start accepts) =
 
 -- nub the states
 nubStatesDFA :: DFA -> DFA
-nubStatesDFA (DFA states alphabets (Map mappings) start accepts) = 
-    DFA states' alphabets (Map mappings') start accepts'
+nubStatesDFA (DFA states alphabets (TransitionsDFA mappings) start accepts) = 
+    DFA states' alphabets (TransitionsDFA mappings') start accepts'
     where   states' = nub states
             mappings' = nub mappings
             accepts' = nub accepts
 
 nubStatesNFA :: NFA -> NFA
-nubStatesNFA (NFA states alphabets (MapN mappings) start accepts) = 
-    NFA states' alphabets (MapN mappings') start accepts'
+nubStatesNFA (NFA states alphabets (TransitionsNFA mappings) start accepts) = 
+    NFA states' alphabets (TransitionsNFA mappings') start accepts'
     where   states' = nub states
             mappings' = filter validTransition $ glue <$> (groupBy sameMapping $ sort mappings)
             accepts' = nub accepts
@@ -371,7 +371,7 @@ undistinguishableStates :: DFA -> [(State, State)]
 undistinguishableStates dfa = 
     combinations \\ collect' (distinguishable dfa) (initialDisguindished, initialMixed)
     where
-        (DFA states alphabets (Map mappings) start accepts) = dfa
+        (DFA states alphabets (TransitionsDFA mappings) start accepts) = dfa
 
         combinations = pairCombinations states
         initialDisguindished = filter distinguishable combinations
@@ -384,10 +384,10 @@ distinguishable dfa distinguished pair =
     case or result of 
         True -> [pair]
         False -> []
-    where   (DFA states alphabets (Map mappings) start accepts) = dfa
+    where   (DFA states alphabets (TransitionsDFA mappings) start accepts) = dfa
             
             transitPair pair = jump pair <$> alphabets
-            jump (a, b) alphabet = (driver (Map mappings) a alphabet, driver (Map mappings) b alphabet)
+            jump (a, b) alphabet = (driver (TransitionsDFA mappings) a alphabet, driver (TransitionsDFA mappings) b alphabet)
 
             sort (a, b) = if a < b then (a, b) else (b, a)
             check (a, b) = (a, b) `elem` distinguished && a /= b
@@ -403,19 +403,19 @@ pairCombinations (x:xs) = map (sort . curry id x) xs ++ pairCombinations xs
 
 
 trimUnreachableStates :: DFA -> DFA
-trimUnreachableStates (DFA states alphabets (Map mappings) start accepts) = 
-    (DFA states' alphabets (Map mappings') start accepts')
-    where   states' = collectState (Map mappings) alphabets start
+trimUnreachableStates (DFA states alphabets (TransitionsDFA mappings) start accepts) = 
+    (DFA states' alphabets (TransitionsDFA mappings') start accepts')
+    where   states' = collectState (TransitionsDFA mappings) alphabets start
             trimmedStates = states \\ states'
             mappings' = filter (reachable states') mappings
                 where reachable states (a, b, c) = elem a states && elem c states
             accepts' = accepts \\ trimmedStates
 
-collectState :: Map -> Alphabets -> State -> States
+collectState :: Transitions -> Alphabets -> State -> States
 collectState mappings alphabets start = collect next ([start], [start])
     where next state = driver mappings state <$> alphabets
 
-collectStates :: Map -> Alphabets -> State -> [States]
+collectStates :: Transitions -> Alphabets -> State -> [States]
 collectStates mappings alphabets start = collect next (start', start')
     where   bana alphabet state = driverN mappings state alphabet >>= closure
             next states = (\ alphabet -> nub . sort $ states >>= bana alphabet) <$> alphabets

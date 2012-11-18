@@ -7,7 +7,7 @@ module Automaton (
     Alphabet(..),
     Alphabets,
     Language,
-    Map(..),
+    Transitions(..),
     DFA(..),
     NFA(..),
     GNFA(..),
