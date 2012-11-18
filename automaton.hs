@@ -82,8 +82,8 @@ module Automaton (
     -- Context-free Language
     ---------------------------
 
-    driverPDA
-
+    driverPDA,
+    automatonPDA
 
 
 
