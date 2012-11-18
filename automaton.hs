@@ -11,8 +11,9 @@ module Automaton (
     DFA(..),
     NFA(..),
     GNFA(..),
-
     RE(..),
+
+    PDA(..),
 
     -- functions
 
@@ -63,6 +64,9 @@ module Automaton (
     alphabet2re,
     nfa2re,
     normalizeRE
+
+
+    
 
 
 ) where

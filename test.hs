@@ -145,6 +145,28 @@ a = NFA [0] [] (TransitionsNFA []) 0 []
 
 n = nfa2gnfa nfa
 
+
+
+
+statesP = [0 .. 3]
+alphabetsP = [Alphabet '0', Alphabet '1']
+salphabetsP = [Alphabet '0', Alphabet '$']
+
+
+transitionsP = TransitionsPDA [
+    (0, Epsilon, Epsilon, 1, Alphabet '$'),
+    (1, Alphabet '1', Alphabet '0', 2, Epsilon),
+    (1, Alphabet '0', Epsilon, 1, Alphabet '0'),
+    (2, Alphabet '1', Alphabet '0', 2, Epsilon),
+    (2, Alphabet '1', Alphabet '$', 3, Epsilon)
+    ]
+startP = 0
+startStackP = Epsilon
+acceptsP = [0, 3]
+pda = PDA statesP alphabetsP salphabetsP transitionsP startP startStackP acceptsP
+
+
+
 ------------------------------------------------------------------------
 -- generators
 
