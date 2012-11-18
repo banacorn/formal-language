@@ -1,22 +1,24 @@
-module Automaton.Type (
-    Language,
-    State,
-    States,
-    Alphabet(..),
-    Alphabets,
-    DFA(..),
-    NFA(..),
-    GNFA(..),
+module Automaton.Type where
 
-    RE(..),
+-- (
+--    Language,
+--    State,
+--    States,
+--    Alphabet(..),
+--    Alphabets,
+--    DFA(..),
+--    NFA(..),
+--    GNFA(..),
 
-    Transition,
-    NDTransition,
+--    RE(..),
 
-    Map(..),
-    Mapping,
-    MappingN
-) where
+--    Transition,
+--    NDTransition,
+
+--    Map(..),
+--    Mapping,
+--    MappingN
+--) where
 
 
 --------------------------------------------------------------
