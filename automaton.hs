@@ -1,38 +1,49 @@
 module Automaton (
     
+    -----------------
     -- types
+    -----------------
 
     State,
     States,
     Alphabet(..),
+    SAlphabet,
     Alphabets,
+    SAlphabets,
     Language,
     Transitions(..),
+
+    -- Regular Language
     DFA(..),
     NFA(..),
     GNFA(..),
     RE(..),
 
+    -- Context-free Language
     PDA(..),
 
-    -- functions
+
+
+    ---------------------------
+    -- Regular Language
+    ---------------------------
 
     driver,
     driverN,
     automaton,
     automatonN,
 
+    dfa2nfa,
+    nfa2dfa,
+
     trimUnreachableStates,
-    minimizeDFA,
-    normalizeDFA,    
-    replaceStatesDFA,
-    replaceStatesNFA,
-    nubStatesDFA,
-    nubStatesNFA,
+    undistinguishableStates,
+    epsilonClosure,
     collectState,
     collectStates,
     collect,
 
+    -- DFA
 
 
     negateDFA,
@@ -41,13 +52,12 @@ module Automaton (
     concatenateDFA,
     kleeneStarDFA,
 
-    dfa2nfa,
-    nfa2dfa,
-
+    nubStatesDFA,
+    minimizeDFA,
+    normalizeDFA,    
+    replaceStatesDFA,
 
     -- NFA
-    epsilonClosure,
-    normalizeNFA,
     
     negateNFA,
     unionNFA,
@@ -55,7 +65,9 @@ module Automaton (
     concatenateNFA,
     kleeneStarNFA,
 
-    undistinguishableStates,
+    replaceStatesNFA,
+    nubStatesNFA,
+    normalizeNFA,
 
     -- RE
     re2nfa,
@@ -63,10 +75,18 @@ module Automaton (
     gnfa2re,
     alphabet2re,
     nfa2re,
-    normalizeRE
+    normalizeRE,
 
 
-    
+    ---------------------------
+    -- Context-free Language
+    ---------------------------
+
+    driverPDA
+
+
+
+
 
 
 ) where
@@ -78,3 +98,4 @@ import Automaton.Instances
 import Automaton.Type
 import Automaton.FA
 import Automaton.RE
+import Automaton.PDA
