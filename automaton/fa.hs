@@ -294,8 +294,9 @@ encodePowerset = sum . fmap ((^) 2)
 
 
 epsilonClosure :: Transitions -> State -> States
-epsilonClosure mappings state = nub . insert state . join $ epsilonClosure mappings <$> transit state Epsilon
-    where   transit = driverN mappings
+epsilonClosure (TransitionsPDA transitions) state = [state]
+epsilonClosure transitions state = nub . insert state . join $ epsilonClosure transitions <$> transit state Epsilon
+    where   transit = driverN transitions
 
 -- replace states with given SURJECTIVE function
 replaceStatesDFA :: (State -> State) -> DFA -> DFA

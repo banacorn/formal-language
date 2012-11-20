@@ -28,6 +28,22 @@ instance Show Alphabet where
 
 
 instance Show Transitions where
+    show (TransitionsPDA mappings) = dropQuote $ 
+        listMapping mappings
+        where
+            listMapping = concat . fmap (prefixIndent . showMap)
+            prefixIndent = (++) "\n        "
+            showMap (s, a, p, t, q) = 
+                show s ++ 
+                "  ×  " ++ 
+                show a ++ 
+                "  ×  " ++ 
+                show p ++ 
+                "  →  " ++ 
+                show t ++
+                "  ×  " ++ 
+                show q 
+
     show (TransitionsDFA mappings) = dropQuote $ 
         listMapping mappings
         where

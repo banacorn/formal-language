@@ -10,3 +10,4 @@ automatonPDA :: PDA -> Language -> Bool
 automatonPDA (PDA states alphabets stateAlphabets (TransitionsPDA transitions) state stackTop acceptStates) []
 	| state `elem` acceptStates = True
 	| otherwise = False
+
