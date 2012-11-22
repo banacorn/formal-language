@@ -6,6 +6,8 @@ import Automaton.Util
 import Control.Applicative
 
 automatonPDA :: PDA -> Language -> Bool
+
+automatonPDA (PDA _ _ _ _ _ _ []) _ = False
 automatonPDA (PDA states alphabets stateAlphabets (TransitionsPDA transitions) state stackTop acceptStates) []
 	| state `elem` acceptStates = True
 	| or $ flip elem acceptStates <$> (epsilonClosure (TransitionsPDA transitions) state) = True
