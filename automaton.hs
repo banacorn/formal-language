@@ -28,7 +28,7 @@ module Automaton (
     -- Regular Language
     ---------------------------
 
-    driver,
+    driverDFA,
     driverNFA,
     automaton,
     automatonN,

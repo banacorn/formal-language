@@ -1,6 +1,6 @@
 module Automaton.FA (
     
-    driver,
+    driverDFA,
     driverNFA,
     automaton,
     automatonN,
@@ -59,8 +59,8 @@ import Debug.Trace
 
 
 -- make mappings a function
-driver :: Transitions -> State -> Alphabet -> State
-driver (TransitionsDFA mappings) state alphabet =
+driverDFA :: Transitions -> State -> Alphabet -> State
+driverDFA (TransitionsDFA mappings) state alphabet =
     let result = [ f | (s, a, f) <- mappings, s == state, a == alphabet ] in
     case result of [] -> error $ show state ++ ", " ++ showAlphabet alphabet ++ " Transition not deinfed"
                    (x:xs) -> x
@@ -82,7 +82,7 @@ automaton (DFA states alphabets mappings state accepts) [] = elem state accepts
 automaton (DFA states alphabets mappings state accepts) (x:xs)
     | notElem (Alphabet x) alphabets = False
     | otherwise = automaton (DFA states alphabets mappings nextState accepts) xs
-    where   nextState = (driver mappings) state (Alphabet x)
+    where   nextState = (driverDFA mappings) state (Alphabet x)
 
 automatonN :: NFA -> Language -> Bool
 automatonN (NFA states alphabets mappings state []) _ = False
@@ -389,7 +389,7 @@ distinguishable dfa distinguished pair =
     where   (DFA states alphabets (TransitionsDFA mappings) start accepts) = dfa
             
             transitPair pair = jump pair <$> alphabets
-            jump (a, b) alphabet = (driver (TransitionsDFA mappings) a alphabet, driver (TransitionsDFA mappings) b alphabet)
+            jump (a, b) alphabet = (driverDFA (TransitionsDFA mappings) a alphabet, driverDFA (TransitionsDFA mappings) b alphabet)
 
             sort (a, b) = if a < b then (a, b) else (b, a)
             check (a, b) = (a, b) `elem` distinguished && a /= b
@@ -415,7 +415,7 @@ trimUnreachableStates (DFA states alphabets (TransitionsDFA mappings) start acce
 
 collectState :: Transitions -> Alphabets -> State -> States
 collectState mappings alphabets start = collect next ([start], [start])
-    where next state = driver mappings state <$> alphabets
+    where next state = driverDFA mappings state <$> alphabets
 
 collectStates :: Transitions -> Alphabets -> State -> [States]
 collectStates mappings alphabets start = collect next (start', start')
