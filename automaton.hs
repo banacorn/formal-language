@@ -29,7 +29,7 @@ module Automaton (
     ---------------------------
 
     driver,
-    driverN,
+    driverNFA,
     automaton,
     automatonN,
 

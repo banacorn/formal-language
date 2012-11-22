@@ -11,3 +11,5 @@ automatonPDA (PDA states alphabets stateAlphabets (TransitionsPDA transitions) s
 	| state `elem` acceptStates = True
 	| otherwise = False
 
+
+--epsilonClosurePDA :: Transitions

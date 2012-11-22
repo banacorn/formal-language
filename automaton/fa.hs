@@ -1,7 +1,7 @@
 module Automaton.FA (
     
     driver,
-    driverN,
+    driverNFA,
     automaton,
     automatonN,
 
@@ -44,6 +44,7 @@ module Automaton.FA (
 --------------------------------------------------------------
 
 import Automaton.Type
+import Automaton.PDA
 
 import Data.Bits (testBit)
 import Control.Applicative hiding (empty)
@@ -66,8 +67,8 @@ driver (TransitionsDFA mappings) state alphabet =
     where   showAlphabet Epsilon = "ɛ"
             showAlphabet (Alphabet a) = show a
 -- make mappings a function
-driverN :: Transitions -> State -> Alphabet -> States
-driverN (TransitionsNFA mappings) state alphabet = 
+driverNFA :: Transitions -> State -> Alphabet -> States
+driverNFA (TransitionsNFA mappings) state alphabet = 
     let result = [ f | (s, a, f) <- mappings, s == state, a == alphabet ] in
     case result of [] -> []
                    (x:xs) -> x
@@ -93,7 +94,7 @@ automatonN (NFA states alphabets mappings state accepts) language
     | (Alphabet (head language)) `notElem` alphabets = False
     | otherwise = or $ consume language state
     where   closure state = epsilonClosure mappings state
-            jump x state = driverN mappings state x
+            jump x state = driverNFA mappings state x
             accept state = return $ elem state accepts
             consume [] state = closure state >>= accept
             consume (   x:xs) state = closure state >>= jump (Alphabet x) >>= consume xs
@@ -123,7 +124,7 @@ nfa2dfa nfa =
     nubStatesDFA $ DFA states' alphabets (TransitionsDFA mappings') start' accepts'
     where
         NFA statesN alphabets mappingsN startN acceptsN = normalizeNFA nfa
-        transit = driverN mappingsN
+        transit = driverNFA mappingsN
 
         start = epsilonClosure mappingsN startN
         states = collectStates mappingsN alphabets startN
@@ -292,11 +293,11 @@ encodePowerset :: States -> State
 encodePowerset = sum . fmap ((^) 2)
 
 
-
 epsilonClosure :: Transitions -> State -> States
-epsilonClosure (TransitionsPDA transitions) state = [state]
-epsilonClosure transitions state = nub . insert state . join $ epsilonClosure transitions <$> transit state Epsilon
-    where   transit = driverN transitions
+--epsilonClosure (TransitionsPDA transitions) state = nub . insert state . join $ epsilonClosure transitions <$> transitPDA state Epsilon Epsilon
+    --where   transitPDA = driverPDA transitions
+epsilonClosure transitions state = nub . insert state . join $ epsilonClosure transitions <$> transitNFA state Epsilon
+    where   transitNFA = driverNFA transitions
 
 -- replace states with given SURJECTIVE function
 replaceStatesDFA :: (State -> State) -> DFA -> DFA
@@ -418,7 +419,7 @@ collectState mappings alphabets start = collect next ([start], [start])
 
 collectStates :: Transitions -> Alphabets -> State -> [States]
 collectStates mappings alphabets start = collect next (start', start')
-    where   bana alphabet state = driverN mappings state alphabet >>= closure
+    where   bana alphabet state = driverNFA mappings state alphabet >>= closure
             next states = (\ alphabet -> nub . sort $ states >>= bana alphabet) <$> alphabets
             start' = return $ closure start 
             closure state = epsilonClosure mappings state
