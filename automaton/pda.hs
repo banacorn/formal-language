@@ -1,15 +1,13 @@
 module Automaton.PDA where
 
 import Automaton.Type
+import Automaton.Util
 
-
-driverPDA :: Transitions -> State -> Alphabet -> StackElement -> [(State, StackElement)]
-driverPDA (TransitionsPDA transitions) state alphabet stacktop = [ (t, push) | (s, a, pop, t, push) <- transitions, s == state, a == alphabet, pop == stacktop ]
+import Control.Applicative
 
 automatonPDA :: PDA -> Language -> Bool
 automatonPDA (PDA states alphabets stateAlphabets (TransitionsPDA transitions) state stackTop acceptStates) []
 	| state `elem` acceptStates = True
+	| or $ flip elem acceptStates <$> (epsilonClosure (TransitionsPDA transitions) state) = True
 	| otherwise = False
 
-
---epsilonClosurePDA :: Transitions -> State -> StackElement

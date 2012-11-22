@@ -44,7 +44,7 @@ module Automaton.FA (
 --------------------------------------------------------------
 
 import Automaton.Type
-import Automaton.PDA
+import Automaton.Util
 
 import Data.Bits (testBit)
 import Control.Applicative hiding (empty)
@@ -57,21 +57,6 @@ import Debug.Trace
 
 --------------------------------------------------------------
 
-
--- make mappings a function
-driverDFA :: Transitions -> State -> Alphabet -> State
-driverDFA (TransitionsDFA mappings) state alphabet =
-    let result = [ f | (s, a, f) <- mappings, s == state, a == alphabet ] in
-    case result of [] -> error $ show state ++ ", " ++ showAlphabet alphabet ++ " Transition not deinfed"
-                   (x:xs) -> x
-    where   showAlphabet Epsilon = "ɛ"
-            showAlphabet (Alphabet a) = show a
--- make mappings a function
-driverNFA :: Transitions -> State -> Alphabet -> States
-driverNFA (TransitionsNFA mappings) state alphabet = 
-    let result = [ f | (s, a, f) <- mappings, s == state, a == alphabet ] in
-    case result of [] -> []
-                   (x:xs) -> x
 
 
 
@@ -292,12 +277,6 @@ kleeneStarNFA (NFA states alphabets (TransitionsNFA mappings) start accepts) =
 encodePowerset :: States -> State
 encodePowerset = sum . fmap ((^) 2)
 
-
-epsilonClosure :: Transitions -> State -> States
---epsilonClosure (TransitionsPDA transitions) state = nub . insert state . join $ epsilonClosure transitions <$> transitPDA state Epsilon Epsilon
-    --where   transitPDA = driverPDA transitions
-epsilonClosure transitions state = nub . insert state . join $ epsilonClosure transitions <$> transitNFA state Epsilon
-    where   transitNFA = driverNFA transitions
 
 -- replace states with given SURJECTIVE function
 replaceStatesDFA :: (State -> State) -> DFA -> DFA

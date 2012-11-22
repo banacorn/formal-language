@@ -88,7 +88,6 @@ module Automaton (
 
 
 
-
 ) where
 
 
@@ -96,6 +95,7 @@ module Automaton (
 
 import Automaton.Instances
 import Automaton.Type
+import Automaton.Util
 import Automaton.FA
 import Automaton.RE
 import Automaton.PDA
