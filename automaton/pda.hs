@@ -3,7 +3,7 @@ module Automaton.PDA where
 import Automaton.Type
 
 
-driverPDA :: Transitions -> State -> Alphabet -> SAlphabet -> (State, SAlphabet)
+driverPDA :: Transitions -> State -> Alphabet -> StackElement -> (State, StackElement)
 driverPDA (TransitionsPDA transitions) state alphabet stacktop = head [ (t, push) | (s, a, pop, t, push) <- transitions, s == state, a == alphabet, pop == stacktop ]
 
 automatonPDA :: PDA -> Language -> Bool
@@ -12,4 +12,4 @@ automatonPDA (PDA states alphabets stateAlphabets (TransitionsPDA transitions) s
 	| otherwise = False
 
 
---epsilonClosurePDA :: Transitions
+--epsilonClosurePDA :: Transitions -> State -> StackElement

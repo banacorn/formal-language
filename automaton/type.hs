@@ -13,15 +13,15 @@ type State  = Int
 type States = [State]
 
 data Alphabet = Alphabet Char | Epsilon deriving (Eq, Ord)
-type SAlphabet = Alphabet
+type StackElement = Alphabet
 type Language = String
 type Alphabets = [Alphabet]
-type SAlphabets = [SAlphabet]
+type StackElements = [StackElement]
 
 type TransitionDFA = (State, Alphabet, State)
 type TransitionNFA = (State, Alphabet, States)
 type TransitionRE = (State, RE, State)
-type TransitionPDA = (State, Alphabet, SAlphabet, State, SAlphabet)
+type TransitionPDA = (State, Alphabet, StackElement, State, StackElement)
 
 
 data Transitions = TransitionsDFA [TransitionDFA]
@@ -50,7 +50,7 @@ data RE = A Char | N | E |  RE :| RE | RE :+ RE | Star RE deriving Eq
 
 -- PDA
 
-data PDA = PDA States Alphabets SAlphabets Transitions State SAlphabet States
+data PDA = PDA States Alphabets StackElements Transitions State StackElement States
 
 -- CFG
 data Symbol = V Int | T Char

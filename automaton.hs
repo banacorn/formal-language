@@ -7,9 +7,9 @@ module Automaton (
     State,
     States,
     Alphabet(..),
-    SAlphabet,
+    StackElement,
     Alphabets,
-    SAlphabets,
+    StackElements,
     Language,
     Transitions(..),
 
