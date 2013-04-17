@@ -82,7 +82,7 @@ automatonN (NFA states alphabets mappings state accepts) language
             jump x state = driverNFA mappings state x
             accept state = return $ elem state accepts
             consume [] state = closure state >>= accept
-            consume (   x:xs) state = closure state >>= jump (Alphabet x) >>= consume xs
+            consume (x:xs) state = closure state >>= jump (Alphabet x) >>= consume xs
 
 
 

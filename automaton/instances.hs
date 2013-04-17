@@ -154,7 +154,7 @@ unitParser =
         char '('
         inside <- reParser
         char ')'
-        do 
+        do
             char '*'
             return (Star inside)
             <|> return (inside)
