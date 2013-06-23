@@ -8,7 +8,7 @@ class Automaton a => FiniteAutomaton a where
     union :: a -> a -> a
     intersect :: a -> a -> a
     concatenate :: a -> a -> a
-    --kleeneStar :: a -> a
+    kleeneStar :: a -> a
 
     --normalize :: a -> a
     --minimize :: a -> a

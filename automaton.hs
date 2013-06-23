@@ -42,16 +42,12 @@ module Automaton (
     collect,
 
     -- DFA
-    kleeneStarDFA,
-
     nubStatesDFA,
     minimizeDFA,
     normalizeDFA,    
     replaceStatesDFA,
 
     -- NFA
-    kleeneStarNFA,
-
     replaceStatesNFA,
     nubStatesNFA,
     normalizeNFA,

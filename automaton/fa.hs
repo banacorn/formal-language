@@ -15,17 +15,12 @@ module Automaton.FA (
     collectStates,
     collect,
 
-    kleeneStarDFA,
-
-
     dfa2nfa,
     nfa2dfa,
 
     -- NFA
     epsilonClosure,
     normalizeNFA,
-
-    kleeneStarNFA,
 
     undistinguishableStates,
 
@@ -152,6 +147,8 @@ instance FiniteAutomaton DFA where
             nfa0 = dfa2nfa dfa0
             nfa1 = dfa2nfa dfa1
 
+    kleeneStar = nfa2dfa . kleeneStar . dfa2nfa
+
 
 
 instance FiniteAutomaton NFA where
@@ -192,22 +189,15 @@ instance FiniteAutomaton NFA where
             
             states = states0 `List.union` states1
 
+    kleeneStar (NFA states alphabets (TransitionsNFA mappings) start accepts) =
+        normalizeNFA (NFA states' alphabets (TransitionsNFA mappings') start' accepts')
+        where
+            start' = maximum states + 1
+            states' = start' `List.insert` states
+            accepts' = start' `List.insert` accepts
+            mappings' = mappings ++ (backToTheStart <$> (start':accepts))
 
-
-kleeneStarDFA :: DFA -> DFA
-kleeneStarDFA = nfa2dfa . kleeneStarNFA . dfa2nfa
-
-
-kleeneStarNFA :: NFA -> NFA
-kleeneStarNFA (NFA states alphabets (TransitionsNFA mappings) start accepts) =
-    normalizeNFA (NFA states' alphabets (TransitionsNFA mappings') start' accepts')
-    where
-        start' = maximum states + 1
-        states' = start' `List.insert` states
-        accepts' = start' `List.insert` accepts
-        mappings' = mappings ++ (backToTheStart <$> (start':accepts))
-
-        backToTheStart state = (state, Epsilon, [start])
+            backToTheStart state = (state, Epsilon, [start])
 
 
 ----------------------------
