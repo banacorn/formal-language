@@ -9,36 +9,38 @@ import Control.Applicative
 
 alphabetSet = Alphabet <$> ['0' .. '9'] ++ ['a' .. 'z'] ++ [' ']
 
+instance Automaton RE where
+    automaton re language = (automaton $ re2nfa re) language
 
-normalizeRE :: RE -> RE
-normalizeRE (Star N) = E
-normalizeRE (Star E) = E
-normalizeRE (Star a) = Star $ normalizeRE a
-normalizeRE (N :+ a) = N
-normalizeRE (a :+ N) = N
-normalizeRE (E :+ a) = normalizeRE a
-normalizeRE (a :+ E) = normalizeRE a
-normalizeRE (a :+ b)
-    | a' == N   = N
-    | b' == N   = N
-    | a' == E   = normalizeRE b'
-    | b' == E   = normalizeRE a'
-    | otherwise = a' :+ b'
-    where   a'  = normalizeRE a
-            b'  = normalizeRE b
 
-normalizeRE (N :| a) = normalizeRE a
-normalizeRE (a :| N) = normalizeRE a
-normalizeRE (a :| b)
-    | a' == b'  = a'
-    | a' == N   = b'
-    | b' == N   = a'
-    | otherwise = a' :| b'
-    where   a'  = normalizeRE a
-            b'  = normalizeRE b
-normalizeRE E = E
-normalizeRE N = N
-normalizeRE (A a) = A a
+    normalize (Star N) = E
+    normalize (Star E) = E
+    normalize (Star a) = Star $ normalize a
+    normalize (N :+ a) = N
+    normalize (a :+ N) = N
+    normalize (E :+ a) = normalize a
+    normalize (a :+ E) = normalize a
+    normalize (a :+ b)
+        | a' == N   = N
+        | b' == N   = N
+        | a' == E   = normalize b'
+        | b' == E   = normalize a'
+        | otherwise = a' :+ b'
+        where   a'  = normalize a
+                b'  = normalize b
+
+    normalize (N :| a) = normalize a
+    normalize (a :| N) = normalize a
+    normalize (a :| b)
+        | a' == b'  = a'
+        | a' == N   = b'
+        | b' == N   = a'
+        | otherwise = a' :| b'
+        where   a'  = normalize a
+                b'  = normalize b
+    normalize E = E
+    normalize N = N
+    normalize (A a) = A a
 
 re2nfa :: RE -> NFA
 re2nfa (A a) = NFA states alphabets (TransitionsNFA mappings) start accept 
@@ -136,7 +138,7 @@ gnfa2re (GNFA (x:xs) alphabets (TransitionsRE mappings) start accept)
     | x `elem` accept   = gnfa2re (GNFA (xs ++ [x]) alphabets (TransitionsRE mappings) start accept)
     | otherwise         = gnfa2re (GNFA xs alphabets (TransitionsRE mappings') start accept)
         where
-            mappings'   = [ (s, normalizeRE $ (b :+ (Star loop) :+ a) :| originRE, t) | (_, a, t) <- fromDomain, (s, b, _) <- toCodomain, (s', originRE, t') <- restMappings, s' == s, t' == t]
+            mappings'   = [ (s, normalize $ (b :+ (Star loop) :+ a) :| originRE, t) | (_, a, t) <- fromDomain, (s, b, _) <- toCodomain, (s', originRE, t') <- restMappings, s' == s, t' == t]
             fromDomain  = [ (x, re, t) | (s, re, t) <- mappings, s == x, t /= x ]
             toCodomain  = [ (s, re, x) | (s, re, t) <- mappings, s /= x, t == x ]
             loop        = head [ re | (s, re, t) <- mappings, s == x, t == x ]

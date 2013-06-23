@@ -3,14 +3,13 @@ module Automaton.Type where
 
 class Automaton a where
     automaton :: a -> Language -> Bool
+    normalize :: a -> a
 class Automaton a => FiniteAutomaton a where
     negate :: a -> a
     union :: a -> a -> a
     intersect :: a -> a -> a
     concatenate :: a -> a -> a
     kleeneStar :: a -> a
-
-    --normalize :: a -> a
     --minimize :: a -> a
 --------------------------------------------------------------
 -- Data Types

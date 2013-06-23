@@ -44,13 +44,11 @@ module Automaton (
     -- DFA
     nubStatesDFA,
     minimizeDFA,
-    normalizeDFA,    
     replaceStatesDFA,
 
     -- NFA
     replaceStatesNFA,
     nubStatesNFA,
-    normalizeNFA,
 
     -- RE
     re2nfa,
@@ -58,7 +56,6 @@ module Automaton (
     gnfa2re,
     alphabet2re,
     nfa2re,
-    normalizeRE,
 
 
     ---------------------------

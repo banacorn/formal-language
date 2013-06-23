@@ -6,7 +6,6 @@ module Automaton.FA (
 
     trimUnreachableStates,
     minimizeDFA,
-    normalizeDFA,
     replaceStatesDFA,
     replaceStatesNFA,
     nubStatesDFA,
@@ -20,7 +19,6 @@ module Automaton.FA (
 
     -- NFA
     epsilonClosure,
-    normalizeNFA,
 
     undistinguishableStates,
 
@@ -52,6 +50,13 @@ instance Automaton DFA where
         | otherwise = automaton (DFA states alphabets mappings nextState accepts) xs
         where   nextState = (driverDFA mappings) state (Alphabet x)
 
+    -- nub and replace states with natural numbers (states not minimized!!)
+    normalize dfa = replaceStatesDFA function . nubStatesDFA $ dfa
+        where   getStates (DFA states _ _ _ _) = states
+                table = zip (getStates dfa) [0..]
+                function s = case lookup s table of Just a -> a
+                                                    Nothing -> 0
+
 instance Automaton NFA where
     automaton (NFA states alphabets mappings state []) _ = False
     automaton (NFA states alphabets mappings state accepts) [] = (state `elem` accepts) || (or $ closure state >>= accept)
@@ -66,7 +71,11 @@ instance Automaton NFA where
                 consume [] state = closure state >>= accept
                 consume (x:xs) state = closure state >>= jump (Alphabet x) >>= consume xs
 
-
+    normalize nfa = replaceStatesNFA function . nubStatesNFA $ nfa
+        where   getStates (NFA s _ _ _ _) = s
+                table = zip (getStates nfa) [0..]
+                function s = case lookup s table of Just a -> a
+                                                    Nothing -> 0
 
 
 ----------------------------------------------------------------------
@@ -90,7 +99,7 @@ nfa2dfa :: NFA -> DFA
 nfa2dfa nfa =
     nubStatesDFA $ DFA states' alphabets (TransitionsDFA mappings') start' accepts'
     where
-        NFA statesN alphabets mappingsN startN acceptsN = normalizeNFA nfa
+        NFA statesN alphabets mappingsN startN acceptsN = normalize nfa
         transit = driverNFA mappingsN
 
         start = epsilonClosure mappingsN startN
@@ -118,8 +127,8 @@ instance FiniteAutomaton DFA where
     union dfa0 dfa1 =
             DFA states alphabets mappings start accepts
             where
-                DFA states0 alphabets (TransitionsDFA mappings0) start0 accepts0 = normalizeDFA dfa0
-                DFA states1 _         (TransitionsDFA mappings1) start1 accepts1 = normalizeDFA dfa1
+                DFA states0 alphabets (TransitionsDFA mappings0) start0 accepts0 = normalize dfa0
+                DFA states1 _         (TransitionsDFA mappings1) start1 accepts1 = normalize dfa1
 
                 stateSpace = length states0 * length states1
                 encode (a, b) = a * length states1 + b
@@ -131,8 +140,8 @@ instance FiniteAutomaton DFA where
 
     intersect dfa0 dfa1 = DFA states alphabets mappings start accepts
         where
-            DFA states0 alphabets (TransitionsDFA mappings0) start0 accepts0 = normalizeDFA dfa0
-            DFA states1 _         (TransitionsDFA mappings1) start1 accepts1 = normalizeDFA dfa1
+            DFA states0 alphabets (TransitionsDFA mappings0) start0 accepts0 = normalize dfa0
+            DFA states1 _         (TransitionsDFA mappings1) start1 accepts1 = normalize dfa1
 
             stateSpace = length states0 * length states1
             encode (a, b) = a * length states1 + b
@@ -142,7 +151,7 @@ instance FiniteAutomaton DFA where
             start = encode (start0, start1)
             accepts = curry encode <$> accepts0 <*> accepts1
 
-    concatenate dfa0 dfa1 = minimizeDFA . normalizeDFA . nfa2dfa $ nfa0 `concatenate` nfa1
+    concatenate dfa0 dfa1 = minimizeDFA . normalize . nfa2dfa $ nfa0 `concatenate` nfa1
         where 
             nfa0 = dfa2nfa dfa0
             nfa1 = dfa2nfa dfa1
@@ -157,7 +166,7 @@ instance FiniteAutomaton NFA where
     union nfa0 nfa1 =
         NFA states alphabets mappings start accepts
         where
-            NFA states0 alphabets (TransitionsNFA mappings0) start0 accepts0 = normalizeNFA nfa0
+            NFA states0 alphabets (TransitionsNFA mappings0) start0 accepts0 = normalize nfa0
             NFA states1 _ (TransitionsNFA mappings1) start1 accepts1 = replace nfa1
             
             replace = replaceStatesNFA ((+) $ length states0)
@@ -173,7 +182,7 @@ instance FiniteAutomaton NFA where
                 dfaIntersection = minimizeDFA $ dfa0 `intersect` dfa1
 
     concatenate nfa0 nfa1 =
-        normalizeNFA (NFA states alphabets (TransitionsNFA mappings) start0 accepts1)
+        normalize (NFA states alphabets (TransitionsNFA mappings) start0 accepts1)
         where
             (NFA states0 alphabets (TransitionsNFA mappings0) start0 accepts0) = nfa0
             (NFA states1 _         (TransitionsNFA mappings1) start1 accepts1) = replace nfa1
@@ -190,7 +199,7 @@ instance FiniteAutomaton NFA where
             states = states0 `List.union` states1
 
     kleeneStar (NFA states alphabets (TransitionsNFA mappings) start accepts) =
-        normalizeNFA (NFA states' alphabets (TransitionsNFA mappings') start' accepts')
+        normalize (NFA states' alphabets (TransitionsNFA mappings') start' accepts')
         where
             start' = maximum states + 1
             states' = start' `List.insert` states
@@ -258,20 +267,6 @@ nubStatesNFA (NFA states alphabets (TransitionsNFA mappings) start accepts) =
             glue' ((_, _, t):rest) (s, a, ts) = glue' rest (s, a, t ++ ts) 
 
 
--- nub and replace states with natural numbers (states not minimized!!)
-normalizeDFA :: DFA -> DFA
-normalizeDFA dfa = replaceStatesDFA function . nubStatesDFA $ dfa
-    where   getStates (DFA states _ _ _ _) = states
-            table = zip (getStates dfa) [0..]
-            function s = case lookup s table of Just a -> a
-                                                Nothing -> 0
-
-normalizeNFA :: NFA -> NFA
-normalizeNFA nfa = replaceStatesNFA function . nubStatesNFA $ nfa
-    where   getStates (NFA s _ _ _ _) = s
-            table = zip (getStates nfa) [0..]
-            function s = case lookup s table of Just a -> a
-                                                Nothing -> 0
 
 
 minimizeDFA :: DFA -> DFA
