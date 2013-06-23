@@ -115,7 +115,7 @@ instance Show GNFA where
 instance Eq DFA where
     (==) dfa0 dfa1 = alphabetDFA0 == alphabetDFA1 && null accepts
         where   (DFA _ _ _ _ accepts) = trimUnreachableStates wtf
-                wtf   = (dfa0 `intersectDFA` _dfa1) `union` (_dfa0 `intersectDFA` dfa1)
+                wtf   = (dfa0 `intersect` _dfa1) `union` (_dfa0 `intersect` dfa1)
                 _dfa0 = negate dfa0
                 _dfa1 = negate dfa1
                 alphabet (DFA _ a _ _ _) = a

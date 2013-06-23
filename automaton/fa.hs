@@ -15,8 +15,6 @@ module Automaton.FA (
     collectStates,
     collect,
 
-    intersectDFA,
-    concatenateDFA,
     kleeneStarDFA,
 
 
@@ -27,8 +25,6 @@ module Automaton.FA (
     epsilonClosure,
     normalizeNFA,
 
-    intersectNFA,
-    concatenateNFA,
     kleeneStarNFA,
 
     undistinguishableStates,
@@ -151,11 +147,16 @@ instance FiniteAutomaton DFA where
             start = encode (start0, start1)
             accepts = curry encode <$> accepts0 <*> accepts1
 
+    concatenate dfa0 dfa1 = minimizeDFA . normalizeDFA . nfa2dfa $ nfa0 `concatenate` nfa1
+        where 
+            nfa0 = dfa2nfa dfa0
+            nfa1 = dfa2nfa dfa1
+
 
 
 instance FiniteAutomaton NFA where
     negate = dfa2nfa . negate . nfa2dfa
-    
+
     union nfa0 nfa1 =
         NFA states alphabets mappings start accepts
         where
@@ -172,79 +173,24 @@ instance FiniteAutomaton NFA where
     intersect nfa0 nfa1 = dfa2nfa dfaIntersection
         where   dfa0 = nfa2dfa nfa0
                 dfa1 = nfa2dfa nfa1
-                dfaIntersection = minimizeDFA $ dfa0 `intersectDFA` dfa1
+                dfaIntersection = minimizeDFA $ dfa0 `intersect` dfa1
 
+    concatenate nfa0 nfa1 =
+        normalizeNFA (NFA states alphabets (TransitionsNFA mappings) start0 accepts1)
+        where
+            (NFA states0 alphabets (TransitionsNFA mappings0) start0 accepts0) = nfa0
+            (NFA states1 _         (TransitionsNFA mappings1) start1 accepts1) = replace nfa1
 
-----------------------------
---
---  Intersection
---
-----------------------------
+            offset = maximum states0 - minimum states0 + 1
+            replace = replaceStatesNFA (+ offset)
 
-
-
-
-intersectDFA :: DFA -> DFA -> DFA
-intersectDFA dfa0 dfa1 =
-    DFA states alphabets mappings start accepts
-    where
-        DFA states0 alphabets (TransitionsDFA mappings0) start0 accepts0 = normalizeDFA dfa0
-        DFA states1 _         (TransitionsDFA mappings1) start1 accepts1 = normalizeDFA dfa1
-
-        stateSpace = length states0 * length states1
-        encode (a, b) = a * length states1 + b
-
-        states = [0 .. stateSpace - 1]
-        mappings = TransitionsDFA [ (encode (s0, s1), a0, encode (t0, t1)) | (s0, a0, t0) <- mappings0, (s1, a1, t1) <- mappings1, a0 == a1]
-        start = encode (start0, start1)
-        accepts = curry encode <$> accepts0 <*> accepts1
-
-
-intersectNFA :: NFA -> NFA -> NFA
-intersectNFA nfa0 nfa1 = dfa2nfa dfaIntersection
-    where   dfa0 = nfa2dfa nfa0
-            dfa1 = nfa2dfa nfa1
-            dfaIntersection = minimizeDFA $ dfa0 `intersectDFA` dfa1
-
-
-
-----------------------------
---
---  Concatenation
---
-----------------------------
-
-concatenateDFA :: DFA -> DFA -> DFA
-concatenateDFA dfa0 dfa1 = minimizeDFA . normalizeDFA . nfa2dfa $ nfa0 `concatenateNFA` nfa1
-    where 
-        nfa0 = dfa2nfa dfa0
-        nfa1 = dfa2nfa dfa1
-
-
-concatenateNFA :: NFA -> NFA -> NFA
-concatenateNFA nfa0 nfa1 =
-    normalizeNFA (NFA states alphabets (TransitionsNFA mappings) start0 accepts1)
-    where
-        (NFA states0 alphabets (TransitionsNFA mappings0) start0 accepts0) = nfa0
-        (NFA states1 _         (TransitionsNFA mappings1) start1 accepts1) = replace nfa1
-
-        offset = maximum states0 - minimum states0 + 1
-        replace = replaceStatesNFA (+ offset)
-
-        end = [ (s, Epsilon, t) | (s, a, t) <- mappings0, s `elem` accepts0, a == Epsilon ]
-        mappings = case end of []        -> bridge `List.union` mappings0 `List.union` mappings1
-                               otherwise -> bridge' `List.union` (mappings0 List.\\ end) `List.union` mappings1
-            where   bridge = [ (s, Epsilon, [start1]) | s <- accepts0 ]
-                    bridge' = [ (s, a, start1 `List.insert` ts) | (s, a, ts) <- end ]
-        
-        states = states0 `List.union` states1
-
-
-----------------------------
---
---  Kleene Star
---
-----------------------------
+            end = [ (s, Epsilon, t) | (s, a, t) <- mappings0, s `elem` accepts0, a == Epsilon ]
+            mappings = case end of []        -> bridge `List.union` mappings0 `List.union` mappings1
+                                   otherwise -> bridge' `List.union` (mappings0 List.\\ end) `List.union` mappings1
+                where   bridge = [ (s, Epsilon, [start1]) | s <- accepts0 ]
+                        bridge' = [ (s, a, start1 `List.insert` ts) | (s, a, ts) <- end ]
+            
+            states = states0 `List.union` states1
 
 
 
