@@ -5,7 +5,7 @@ class Automaton a where
     automaton :: a -> Language -> Bool
 class Automaton a => FiniteAutomaton a where
     negate :: a -> a
-    --union :: a -> a
+    union :: a -> a -> a
     --intersect :: a -> a
     --concatenate :: a -> a
     --kleeneStar :: a -> a

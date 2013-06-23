@@ -44,7 +44,6 @@ module Automaton (
     -- DFA
 
 
-    unionDFA,
     intersectDFA,
     concatenateDFA,
     kleeneStarDFA,
@@ -56,7 +55,6 @@ module Automaton (
 
     -- NFA
     
-    unionNFA,
     intersectNFA,
     concatenateNFA,
     kleeneStarNFA,

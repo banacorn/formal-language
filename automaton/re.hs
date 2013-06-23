@@ -3,7 +3,7 @@ module Automaton.RE where
 import Debug.Trace
 import Automaton.Type
 import Automaton.FA
-import Data.List
+import Data.List as List
 import Control.Applicative
 
 
@@ -58,7 +58,7 @@ re2nfa (a :+ b) = NFA states alphabets (TransitionsNFA mappings) start accept
             NFA states1 alphabets1 (TransitionsNFA mappings1) start1 accept1 = replaceStatesNFA replaceStates $ re2nfa b
 
             states = states0 ++ states1
-            alphabets = nub $ union alphabets0 alphabets1
+            alphabets = List.nub $ List.union alphabets0 alphabets1
             mappings = mappings0 ++ mappings1 ++ bridges
                 where   bridges = [ (endpoint, Epsilon, [start1]) | endpoint <- accept0 ]
 
@@ -76,11 +76,11 @@ re2nfa (a :| b) = NFA states alphabets (TransitionsNFA mappings) start accept
 
             start = maximum states1 + 1
             states = start : states0 ++ states1
-            alphabets = nub $ union alphabets0 alphabets1
+            alphabets = List.nub $ List.union alphabets0 alphabets1
 
             mappings = (start, Epsilon, [start0, start1]) : mappings0 ++ mappings1
 
-            accept = union accept0 accept1
+            accept = List.union accept0 accept1
 
             replaceStates = (+) (maximum states0 + 1)
 

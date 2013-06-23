@@ -15,7 +15,6 @@ module Automaton.FA (
     collectStates,
     collect,
 
-    unionDFA,
     intersectDFA,
     concatenateDFA,
     kleeneStarDFA,
@@ -28,7 +27,6 @@ module Automaton.FA (
     epsilonClosure,
     normalizeNFA,
 
-    unionNFA,
     intersectNFA,
     concatenateNFA,
     kleeneStarNFA,
@@ -46,7 +44,8 @@ import Automaton.Util
 import Data.Bits (testBit)
 import Control.Applicative hiding (empty)
 import Control.Monad
-import Data.List
+import qualified Data.List as List
+--import qualified Data.List as List (union, intersect)
 import Debug.Trace
 
 
@@ -105,7 +104,7 @@ nfa2dfa nfa =
 
         start = epsilonClosure mappingsN startN
         states = collectStates mappingsN alphabets startN
-        mappings = [ ( state, alphabet, nub $ join ( (flip transit alphabet) <$> state) >>=  epsilonClosure mappingsN ) | state <- states, alphabet <- alphabets ]
+        mappings = [ ( state, alphabet, List.nub $ join ( (flip transit alphabet) <$> state) >>=  epsilonClosure mappingsN ) | state <- states, alphabet <- alphabets ]
         accepts = filter acceptable states
             where acceptable = any (flip elem acceptsN)
 
@@ -123,48 +122,34 @@ nfa2dfa nfa =
 ----------------------------
 
 instance FiniteAutomaton DFA where
-    negate (DFA states a m s accepts) = DFA states a m s (states \\ accepts)
+    negate (DFA states a m s accepts) = DFA states a m s (states List.\\ accepts)
+    union dfa0 dfa1 =
+            DFA states alphabets mappings start accepts
+            where
+                DFA states0 alphabets (TransitionsDFA mappings0) start0 accepts0 = normalizeDFA dfa0
+                DFA states1 _         (TransitionsDFA mappings1) start1 accepts1 = normalizeDFA dfa1
 
+                stateSpace = length states0 * length states1
+                encode (a, b) = a * length states1 + b
+
+                states = [0 .. stateSpace - 1]
+                mappings = TransitionsDFA [ (encode (s0, s1), a0, encode (t0, t1)) | (s0, a0, t0) <- mappings0, (s1, a1, t1) <- mappings1, a0 == a1]
+                start = encode (start0, start1)
+                accepts = [ encode (s0, s1) | s0 <- states0, s1 <- states1, elem s0 accepts0 || elem s1 accepts1 ]
 instance FiniteAutomaton NFA where
     negate = dfa2nfa . negate . nfa2dfa
+    union nfa0 nfa1 =
+        NFA states alphabets mappings start accepts
+        where
+            NFA states0 alphabets (TransitionsNFA mappings0) start0 accepts0 = normalizeNFA nfa0
+            NFA states1 _ (TransitionsNFA mappings1) start1 accepts1 = replace nfa1
+            
+            replace = replaceStatesNFA ((+) $ length states0)
+            start = maximum states1 + 1
 
-
-----------------------------
---
---  Union
---
-----------------------------
-
-
-unionDFA :: DFA -> DFA -> DFA
-unionDFA dfa0 dfa1 =
-    DFA states alphabets mappings start accepts
-    where
-        DFA states0 alphabets (TransitionsDFA mappings0) start0 accepts0 = normalizeDFA dfa0
-        DFA states1 _         (TransitionsDFA mappings1) start1 accepts1 = normalizeDFA dfa1
-
-        stateSpace = length states0 * length states1
-        encode (a, b) = a * length states1 + b
-
-        states = [0 .. stateSpace - 1]
-        mappings = TransitionsDFA [ (encode (s0, s1), a0, encode (t0, t1)) | (s0, a0, t0) <- mappings0, (s1, a1, t1) <- mappings1, a0 == a1]
-        start = encode (start0, start1)
-        accepts = [ encode (s0, s1) | s0 <- states0, s1 <- states1, elem s0 accepts0 || elem s1 accepts1 ]
-
-
-unionNFA :: NFA -> NFA -> NFA
-unionNFA nfa0 nfa1 =
-    NFA states alphabets mappings start accepts
-    where
-        NFA states0 alphabets (TransitionsNFA mappings0) start0 accepts0 = normalizeNFA nfa0
-        NFA states1 _ (TransitionsNFA mappings1) start1 accepts1 = replace nfa1
-        
-        replace = replaceStatesNFA ((+) $ length states0)
-        start = maximum states1 + 1
-
-        states = start `insert` (states0 `union` states1)
-        mappings = TransitionsNFA $ mappings0 `union` mappings1 `union` [(start, Epsilon, [start0, start1])]
-        accepts = accepts0 `union` accepts1
+            states = start `List.insert` (states0 `List.union` states1)
+            mappings = TransitionsNFA $ mappings0 `List.union` mappings1 `List.union` [(start, Epsilon, [start0, start1])]
+            accepts = accepts0 `List.union` accepts1
 
 
 
@@ -225,12 +210,12 @@ concatenateNFA nfa0 nfa1 =
         replace = replaceStatesNFA (+ offset)
 
         end = [ (s, Epsilon, t) | (s, a, t) <- mappings0, s `elem` accepts0, a == Epsilon ]
-        mappings = case end of []        -> bridge `union` mappings0 `union` mappings1
-                               otherwise -> bridge' `union` (mappings0 \\ end) `union` mappings1
+        mappings = case end of []        -> bridge `List.union` mappings0 `List.union` mappings1
+                               otherwise -> bridge' `List.union` (mappings0 List.\\ end) `List.union` mappings1
             where   bridge = [ (s, Epsilon, [start1]) | s <- accepts0 ]
-                    bridge' = [ (s, a, start1 `insert` ts) | (s, a, ts) <- end ]
+                    bridge' = [ (s, a, start1 `List.insert` ts) | (s, a, ts) <- end ]
         
-        states = states0 `union` states1
+        states = states0 `List.union` states1
 
 
 ----------------------------
@@ -250,8 +235,8 @@ kleeneStarNFA (NFA states alphabets (TransitionsNFA mappings) start accepts) =
     normalizeNFA (NFA states' alphabets (TransitionsNFA mappings') start' accepts')
     where
         start' = maximum states + 1
-        states' = start' `insert` states
-        accepts' = start' `insert` accepts
+        states' = start' `List.insert` states
+        accepts' = start' `List.insert` accepts
         mappings' = mappings ++ (backToTheStart <$> (start':accepts))
 
         backToTheStart state = (state, Epsilon, [start])
@@ -293,24 +278,24 @@ replaceStatesNFA table (NFA states alphabets (TransitionsNFA mappings) start acc
 nubStatesDFA :: DFA -> DFA
 nubStatesDFA (DFA states alphabets (TransitionsDFA mappings) start accepts) = 
     DFA states' alphabets (TransitionsDFA mappings') start accepts'
-    where   states' = nub states
-            mappings' = nub mappings
-            accepts' = nub accepts
+    where   states' = List.nub states
+            mappings' = List.nub mappings
+            accepts' = List.nub accepts
 
 nubStatesNFA :: NFA -> NFA
 nubStatesNFA (NFA states alphabets (TransitionsNFA mappings) start accepts) = 
     NFA states' alphabets (TransitionsNFA mappings') start accepts'
-    where   states' = nub states
-            mappings' = filter validTransition $ glue <$> (groupBy sameMapping $ sort mappings)
-            accepts' = nub accepts
+    where   states' = List.nub states
+            mappings' = filter validTransition $ glue <$> (List.groupBy sameMapping $ List.sort mappings)
+            accepts' = List.nub accepts
 
             validTransition (_, _, []) = False
             validTransition (_, _, _) = True
 
             sameMapping (s, a, t) (s', a', t') = s == s' && a == a'
             glue mappings = case glue' mappings $ head mappings of
-                (s, Epsilon, ts) -> (s, Epsilon, delete s (nub ts))
-                (s, a, ts) -> (s, a, nub ts)
+                (s, Epsilon, ts) -> (s, Epsilon, List.delete s (List.nub ts))
+                (s, a, ts) -> (s, a, List.nub ts)
             glue' [] result = result
             glue' ((_, _, t):rest) (s, a, ts) = glue' rest (s, a, t ++ ts) 
 
@@ -340,14 +325,14 @@ minimizeDFA dfa = nubStatesDFA $ replaceStatesDFA replace dfa
 
 undistinguishableStates :: DFA -> [(State, State)]
 undistinguishableStates dfa = 
-    combinations \\ collect' (distinguishable dfa) (initialDisguindished, initialMixed)
+    combinations List.\\ collect' (distinguishable dfa) (initialDisguindished, initialMixed)
     where
         (DFA states alphabets (TransitionsDFA mappings) start accepts) = dfa
 
         combinations = pairCombinations states
         initialDisguindished = filter distinguishable combinations
             where distinguishable (a, b) = (a `elem` accepts && b `notElem` accepts) || (a `notElem` accepts && b `elem` accepts)
-        initialMixed = combinations \\ initialDisguindished
+        initialMixed = combinations List.\\ initialDisguindished
 
 
 distinguishable :: DFA -> [(State, State)] -> (State, State) -> [(State, State)]
@@ -377,10 +362,10 @@ trimUnreachableStates :: DFA -> DFA
 trimUnreachableStates (DFA states alphabets (TransitionsDFA mappings) start accepts) = 
     (DFA states' alphabets (TransitionsDFA mappings') start accepts')
     where   states' = collectState (TransitionsDFA mappings) alphabets start
-            trimmedStates = states \\ states'
+            trimmedStates = states List.\\ states'
             mappings' = filter (reachable states') mappings
                 where reachable states (a, b, c) = elem a states && elem c states
-            accepts' = accepts \\ trimmedStates
+            accepts' = accepts List.\\ trimmedStates
 
 collectState :: Transitions -> Alphabets -> State -> States
 collectState mappings alphabets start = collect next ([start], [start])
@@ -389,7 +374,7 @@ collectState mappings alphabets start = collect next ([start], [start])
 collectStates :: Transitions -> Alphabets -> State -> [States]
 collectStates mappings alphabets start = collect next (start', start')
     where   bana alphabet state = driverNFA mappings state alphabet >>= closure
-            next states = (\ alphabet -> nub . sort $ states >>= bana alphabet) <$> alphabets
+            next states = (\ alphabet -> List.nub . List.sort $ states >>= bana alphabet) <$> alphabets
             start' = return $ closure start 
             closure state = epsilonClosure mappings state
 
@@ -397,9 +382,9 @@ collect :: (Show a, Eq a) => (a -> [a]) -> ([a], [a]) -> [a]
 collect next (old, new)
     | emptied   = old
     | reapeated = old
-    | otherwise = (nub $ collect next (old', new'))
-    where   new' = nub $ old >>= next
-            old' = nub (old `union` new)
+    | otherwise = (List.nub $ collect next (old', new'))
+    where   new' = List.nub $ old >>= next
+            old' = List.nub (old `List.union` new)
             emptied = null new'
             reapeated = new' `subsetOf` old
             subsetOf elems list = and (flip elem list <$> elems)
@@ -410,9 +395,9 @@ collect' :: (Show a, Eq a) => ([a] -> a -> [a]) -> ([a], [a]) -> [a]
 collect' next (old, new)
     | emptied = old
     | reapeated = old
-    | otherwise = nub $ collect' next (old', new')
-    where   new' = nub $ new >>= next old
-            old' = nub (old `union` new)
+    | otherwise = List.nub $ collect' next (old', new')
+    where   new' = List.nub $ new >>= next old
+            old' = List.nub (old `List.union` new)
             emptied = null new'
             reapeated = new' `subsetOf` old
             subsetOf elems list = and (flip elem list <$> elems)
