@@ -123,6 +123,7 @@ nfa2dfa nfa =
 
 instance FiniteAutomaton DFA where
     negate (DFA states a m s accepts) = DFA states a m s (states List.\\ accepts)
+
     union dfa0 dfa1 =
             DFA states alphabets mappings start accepts
             where
@@ -136,8 +137,25 @@ instance FiniteAutomaton DFA where
                 mappings = TransitionsDFA [ (encode (s0, s1), a0, encode (t0, t1)) | (s0, a0, t0) <- mappings0, (s1, a1, t1) <- mappings1, a0 == a1]
                 start = encode (start0, start1)
                 accepts = [ encode (s0, s1) | s0 <- states0, s1 <- states1, elem s0 accepts0 || elem s1 accepts1 ]
+
+    intersect dfa0 dfa1 = DFA states alphabets mappings start accepts
+        where
+            DFA states0 alphabets (TransitionsDFA mappings0) start0 accepts0 = normalizeDFA dfa0
+            DFA states1 _         (TransitionsDFA mappings1) start1 accepts1 = normalizeDFA dfa1
+
+            stateSpace = length states0 * length states1
+            encode (a, b) = a * length states1 + b
+
+            states = [0 .. stateSpace - 1]
+            mappings = TransitionsDFA [ (encode (s0, s1), a0, encode (t0, t1)) | (s0, a0, t0) <- mappings0, (s1, a1, t1) <- mappings1, a0 == a1]
+            start = encode (start0, start1)
+            accepts = curry encode <$> accepts0 <*> accepts1
+
+
+
 instance FiniteAutomaton NFA where
     negate = dfa2nfa . negate . nfa2dfa
+    
     union nfa0 nfa1 =
         NFA states alphabets mappings start accepts
         where
@@ -151,6 +169,10 @@ instance FiniteAutomaton NFA where
             mappings = TransitionsNFA $ mappings0 `List.union` mappings1 `List.union` [(start, Epsilon, [start0, start1])]
             accepts = accepts0 `List.union` accepts1
 
+    intersect nfa0 nfa1 = dfa2nfa dfaIntersection
+        where   dfa0 = nfa2dfa nfa0
+                dfa1 = nfa2dfa nfa1
+                dfaIntersection = minimizeDFA $ dfa0 `intersectDFA` dfa1
 
 
 ----------------------------

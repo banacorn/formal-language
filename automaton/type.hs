@@ -6,7 +6,7 @@ class Automaton a where
 class Automaton a => FiniteAutomaton a where
     negate :: a -> a
     union :: a -> a -> a
-    --intersect :: a -> a
+    intersect :: a -> a -> a
     --concatenate :: a -> a
     --kleeneStar :: a -> a
 

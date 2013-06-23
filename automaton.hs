@@ -42,9 +42,6 @@ module Automaton (
     collect,
 
     -- DFA
-
-
-    intersectDFA,
     concatenateDFA,
     kleeneStarDFA,
 
@@ -54,8 +51,6 @@ module Automaton (
     replaceStatesDFA,
 
     -- NFA
-    
-    intersectNFA,
     concatenateNFA,
     kleeneStarNFA,
 
