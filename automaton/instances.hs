@@ -5,7 +5,7 @@ import Automaton.FA
 import Automaton.RE
 import Text.ParserCombinators.Parsec
 
-
+import Prelude hiding (negate)
 import Data.List
 import Debug.Trace
 
@@ -116,8 +116,8 @@ instance Eq DFA where
     (==) dfa0 dfa1 = alphabetDFA0 == alphabetDFA1 && null accepts
         where   (DFA _ _ _ _ accepts) = trimUnreachableStates wtf
                 wtf   = (dfa0 `intersectDFA` _dfa1) `unionDFA` (_dfa0 `intersectDFA` dfa1)
-                _dfa0 = negateDFA dfa0
-                _dfa1 = negateDFA dfa1
+                _dfa0 = negate dfa0
+                _dfa1 = negate dfa1
                 alphabet (DFA _ a _ _ _) = a
                 alphabetDFA0 = sort $ alphabet dfa0
                 alphabetDFA1 = sort $ alphabet dfa1

@@ -2,8 +2,6 @@ module Automaton.FA (
     
     driverDFA,
     driverNFA,
-    automaton,
-    automatonN,
 
 
     trimUnreachableStates,
@@ -17,7 +15,6 @@ module Automaton.FA (
     collectStates,
     collect,
 
-    negateDFA,
     unionDFA,
     intersectDFA,
     concatenateDFA,
@@ -31,7 +28,6 @@ module Automaton.FA (
     epsilonClosure,
     normalizeNFA,
 
-    negateNFA,
     unionNFA,
     intersectNFA,
     concatenateNFA,
@@ -43,6 +39,7 @@ module Automaton.FA (
 
 --------------------------------------------------------------
 
+import Prelude hiding (negate)
 import Automaton.Type
 import Automaton.Util
 
@@ -52,37 +49,32 @@ import Control.Monad
 import Data.List
 import Debug.Trace
 
---import qualified Data.IntMap as IntMap
-
 
 --------------------------------------------------------------
 
 
+-- instance of Automaton
+instance Automaton DFA where
+    automaton (DFA states alphabets mappings state []) _ = False
+    automaton (DFA states alphabets mappings state accepts) [] = elem state accepts
+    automaton (DFA states alphabets mappings state accepts) (x:xs)
+        | notElem (Alphabet x) alphabets = False
+        | otherwise = automaton (DFA states alphabets mappings nextState accepts) xs
+        where   nextState = (driverDFA mappings) state (Alphabet x)
 
-
--- the automaton
-automaton :: DFA -> Language -> Bool
-automaton (DFA states alphabets mappings state []) _ = False
-automaton (DFA states alphabets mappings state accepts) [] = elem state accepts
-automaton (DFA states alphabets mappings state accepts) (x:xs)
-    | notElem (Alphabet x) alphabets = False
-    | otherwise = automaton (DFA states alphabets mappings nextState accepts) xs
-    where   nextState = (driverDFA mappings) state (Alphabet x)
-
-automatonN :: NFA -> Language -> Bool
-automatonN (NFA states alphabets mappings state []) _ = False
-automatonN (NFA states alphabets mappings state accepts) [] = (state `elem` accepts) || (or $ closure state >>= accept)
-    where   closure state = epsilonClosure mappings state
-            accept state = return $ elem state accepts
-
-automatonN (NFA states alphabets mappings state accepts) language
-    | (Alphabet (head language)) `notElem` alphabets = False
-    | otherwise = or $ consume language state
-    where   closure state = epsilonClosure mappings state
-            jump x state = driverNFA mappings state x
-            accept state = return $ elem state accepts
-            consume [] state = closure state >>= accept
-            consume (x:xs) state = closure state >>= jump (Alphabet x) >>= consume xs
+instance Automaton NFA where
+    automaton (NFA states alphabets mappings state []) _ = False
+    automaton (NFA states alphabets mappings state accepts) [] = (state `elem` accepts) || (or $ closure state >>= accept)
+        where   closure state = epsilonClosure mappings state
+                accept state = return $ elem state accepts
+    automaton (NFA states alphabets mappings state accepts) language
+        | (Alphabet (head language)) `notElem` alphabets = False
+        | otherwise = or $ consume language state
+        where   closure state = epsilonClosure mappings state
+                jump x state = driverNFA mappings state x
+                accept state = return $ elem state accepts
+                consume [] state = closure state >>= accept
+                consume (x:xs) state = closure state >>= jump (Alphabet x) >>= consume xs
 
 
 
@@ -130,13 +122,11 @@ nfa2dfa nfa =
 --
 ----------------------------
 
+instance FiniteAutomaton DFA where
+    negate (DFA states a m s accepts) = DFA states a m s (states \\ accepts)
 
-negateDFA :: DFA -> DFA
-negateDFA (DFA states a m s accepts) = DFA states a m s (states \\ accepts)
-
-
-negateNFA :: NFA -> NFA
-negateNFA = dfa2nfa . negateDFA . nfa2dfa
+instance FiniteAutomaton NFA where
+    negate = dfa2nfa . negate . nfa2dfa
 
 
 ----------------------------

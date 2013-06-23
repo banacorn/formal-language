@@ -1,12 +1,19 @@
 module Automaton.Type where
 
 
+class Automaton a where
+    automaton :: a -> Language -> Bool
+class Automaton a => FiniteAutomaton a where
+    negate :: a -> a
+    --union :: a -> a
+    --intersect :: a -> a
+    --concatenate :: a -> a
+    --kleeneStar :: a -> a
 
+    --normalize :: a -> a
+    --minimize :: a -> a
 --------------------------------------------------------------
-
---import qualified Data.IntMap as IntMap
-
-
+-- Data Types
 --------------------------------------------------------------
 
 type State  = Int

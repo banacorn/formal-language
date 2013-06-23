@@ -30,8 +30,6 @@ module Automaton (
 
     driverDFA,
     driverNFA,
-    automaton,
-    automatonN,
 
     dfa2nfa,
     nfa2dfa,
@@ -46,7 +44,6 @@ module Automaton (
     -- DFA
 
 
-    negateDFA,
     unionDFA,
     intersectDFA,
     concatenateDFA,
@@ -59,7 +56,6 @@ module Automaton (
 
     -- NFA
     
-    negateNFA,
     unionNFA,
     intersectNFA,
     concatenateNFA,
