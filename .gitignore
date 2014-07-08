@@ -4,4 +4,9 @@ cabal-dev
 *.hi
 *.chi
 *.chs.h
-prof*
+.virthualenv
+
+*.DS_Store
+
+.cabal-sandbox
+cabal.sandbox.config
