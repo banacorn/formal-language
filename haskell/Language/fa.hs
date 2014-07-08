@@ -1,4 +1,4 @@
-module Automaton.FA (
+module Language.FA (
     
     driverDFA,
     driverNFA,

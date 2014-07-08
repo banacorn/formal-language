@@ -1,6 +1,6 @@
-module Automaton.Util where
+module Language.Util where
 
-import Automaton.Type
+import Language.Type
 import Data.List
 import Control.Applicative
 import Control.Monad

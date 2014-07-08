@@ -1,15 +1,15 @@
-module Automaton.RE where
+module Language.RE where
 
 import Debug.Trace
-import Automaton.Type
-import Automaton.FA
+import Language.Type
+import Language.FA
 import Data.List as List
 import Control.Applicative
 
 
 alphabetSet = Alphabet <$> ['0' .. '9'] ++ ['a' .. 'z'] ++ [' ']
 
-instance Automaton RE where
+instance Language RE where
     automaton re language = (automaton $ re2nfa re) language
 
 

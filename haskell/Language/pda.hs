@@ -1,7 +1,7 @@
-module Automaton.PDA where
+module Language.PDA where
 
-import Automaton.Type
-import Automaton.Util
+import Language.Type
+import Language.Util
 
 import Control.Applicative
 import Debug.Trace

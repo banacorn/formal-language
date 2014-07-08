@@ -1,8 +1,8 @@
-module Automaton.Instances (Show(..), Eq(..)) where
+module Language.Instances (Show(..), Eq(..)) where
 
-import Automaton.Type
-import Automaton.FA
-import Automaton.RE
+import Language.Type
+import Language.FA
+import Language.RE
 import Text.ParserCombinators.Parsec
 
 import Prelude hiding (negate)

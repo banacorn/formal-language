@@ -1,4 +1,4 @@
-module Automaton (
+module Language (
     
     -----------------
     -- types

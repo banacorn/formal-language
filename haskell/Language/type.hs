@@ -1,4 +1,4 @@
-module Automaton.Type where
+module Language.Type where
 
 
 class Automaton a where
