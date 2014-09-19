@@ -7,8 +7,9 @@ cabal-dev
 .virthualenv
 
 *.DS_Store
-
-.cabal-sandbox
-cabal.sandbox.config
+.gitignore.swp
+**/.cabal-sandbox
+**/cabal.sandbox.config
 deprecated/dist
+**/*.agdai
 
