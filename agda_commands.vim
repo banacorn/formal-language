@@ -8,17 +8,14 @@ vmap <C-c> :call Wrap_comment()<CR>
 function! Wrap_comment ()
     let l:line = getline('.')
 
-    let l:prefix_space = matchstr(l:line, '^ *')
-    let l:after_space_data = l:line[strlen(l:prefix_space):]
-
-    if l:after_space_data[0:1] == '--'
-        let l:after_space_data = l:after_space_data[2:]
+    if l:line[0:1] == '--'
+        let l:line = l:line[2:]
 
     else
-        let l:after_space_data = '--' . l:after_space_data
+        let l:line = '--' . l:line
     endif
 
-    call setline('.', l:prefix_space . l:after_space_data)
+    call setline('.', l:line)
     execute "normal ^l"
     echom ""
 endfunction
