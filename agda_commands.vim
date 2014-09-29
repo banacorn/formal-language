@@ -1,7 +1,8 @@
-command! WC w<bar>call system("echo ".expand('%')." | nc localhost 1531")
+command! WC w<bar>call system("echo ".expand('%')." | nc -N localhost 1531")
 imap <C-g> <ESC>:WC<CR>
 nmap <C-g> <ESC>:WC<CR>
 
+imap <C-c> <ESC>:call Wrap_comment()<CR>
 nmap <C-c> :call Wrap_comment()<CR>
 vmap <C-c> :call Wrap_comment()<CR>
 
