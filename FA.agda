@@ -17,10 +17,10 @@ data Q : Set where
     q₀ : Q
 
 data State (A : Set) : ℕ -> Set where
-    enum : {n : ℕ} -> (A -> Fin n) -> State A n
+    nominate : {n : ℕ} -> (A -> Fin n) -> State A n
 
 f : Q -> Fin 1
 f q₀ = fzero {0} 
 
 haha : State Q 1
-haha = enum f
+haha = nominate f
