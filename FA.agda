@@ -1,26 +1,122 @@
 open import Nat
 
-data Fin : ℕ -> Set where
-    fzero : {n : ℕ} -> Fin (succ n)
-    fsucc : {n : ℕ} -> Fin n -> Fin (succ n)
+--data Fin : ℕ -> Set where
+--    fzero : {n : ℕ} -> Fin (succ n)
+--    fsucc : {n : ℕ} -> Fin n -> Fin (succ n)
+--
+--data State (A : Set) : ℕ -> Set where
+--    nominate : {n : ℕ} -> (A -> Fin n) -> State A n
+--
+--data Alphabet (A : Set) : ℕ -> Set where
+--    nominate : {n : ℕ} -> (A -> Fin n) -> Alphabet A n
 
-a : Fin 3
-a = fzero {2}
+-- example
+--                 c0,c1
+--               +------+
+--        c0     |      |
+-- (q0)------->[q1]<----+
+--   |
+--   | c1
+--   +----->(q2)---+
+--           ^     |c0,c1
+--           |     |
+--           +-----+
+--
 
-b : Fin 3
-b = fsucc (fzero {1})
+data Q1 : Set where
+    q0 : Q1
+    q1 : Q1
+    q2 : Q1
 
-c : Fin 3
-c = fsucc (fsucc (fzero {0}))
+data Σ1 : Set where
+    c0 : Σ1
+    c1 : Σ1
 
-data Q : Set where
-    q₀ : Q
+δ1 : Q1 -> Σ1 -> Q1
+δ1 q0 c0 = q1
+δ1 q0 c1 = q2
+δ1 q1 c0 = q1
+δ1 q1 c1 = q1
+δ1 q2 c0 = q2
+δ1 q2 c1 = q2
 
-data State (A : Set) : ℕ -> Set where
-    nominate : {n : ℕ} -> (A -> Fin n) -> State A n
+startState1 : Q1
+startState1 = q0
 
-f : Q -> Fin 1
-f q₀ = fzero {0} 
+data Subset (A : Set) : Set₁ where
+    ∈ : ((a : A) -> Set) -> Subset A
 
-haha : State Q 1
-haha = nominate f
+acceptStates1 : Subset Q1
+acceptStates1 = ∈ f
+    where   f : Q1 -> Set
+            f q1 = Top
+            f _  = Bot
+
+record DFA (Q : Set)  (Σ : Set) : Set₁ where
+    constructor DFA[_,_,_]
+    field
+        δ : Q -> Σ -> Q
+        startState : Q
+        acceptStates : Subset Q
+
+DFA1 : DFA Q1 Σ1
+DFA1 = DFA[ δ1 , q0 , acceptStates1 ]
+
+infixr 5 _::_
+data String (Alphabet : Set): Set where
+    nil : String Alphabet
+    _::_ : Alphabet -> String Alphabet -> String Alphabet
+
+run : {Q Σ : Set} -> DFA Q Σ -> Q -> String Σ -> Set
+run M s (w0 :: w) = run M ((DFA.δ M) s w0) w
+run M s nil with DFA.acceptStates M
+run M s nil | ∈ f = f s
+
+accept : {Q Σ : Set} -> DFA Q Σ -> String Σ -> Set
+accept M S = run M (DFA.startState M) S
+
+str1 = c0 :: nil
+check1 : accept DFA1 str1
+check1 = tt
+
+str2 = c0 :: c1 :: nil
+check2 : accept DFA1 str2
+check2 = tt
+
+str3 = c0 :: c0 :: nil
+check3 : accept DFA1 str3
+check3 = tt
+
+-------------------------------------
+-- for test vvv
+-------------------------------------
+--haha : {n m : ℕ} -> (State Q1 n) -> Q1 -> (Alphabet A1 m) -> A1 -> Fin n
+--haha (nominate nq) q (nominate na) a = f (nq q) (na a)
+--    where   f q0 c1 = q0
+--            f q0 c2 = q
+--haha : {n m : ℕ} {Q A : Set} -> State Q n -> Q -> Alphabet A m -> A -> State Q n
+--haha (nominate nState) state (nominate nAlphabet) alphabet = nominate (λ w -> ? )
+
+--a : Fin 3
+--a = fzero {2}
+--
+--b : Fin 3
+--b = fsucc (fzero {1})
+--
+--c : Fin 3
+--c = fsucc (fsucc (fzero {0}))
+--
+--data Q : Set where
+--    q₀ : Q
+--
+--f : Q -> Fin 1
+--f q₀ = fzero {0}
+--
+--haha : State Q 1
+--haha = nominate f
+--
+--haha2 : Alphabet Q 1
+--haha2 = nominate f
+-------------------------------------
+--for test ^^^
+-------------------------------------
