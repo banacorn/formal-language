@@ -30,5 +30,6 @@ run M s (w0 :: w) = run M ((DFA.δ M) s w0) w
 run M s nil with DFA.acceptStates M
 run M s nil | ∈ f = f s
 
-accept : {Q Σ : Set} -> DFA Q Σ -> String Σ -> Set
-accept M S = run M (DFA.startState M) S
+-- a language is regular iff some DFA recognizes it
+Regular : {Q Σ : Set} -> DFA Q Σ -> String Σ -> Set
+Regular M S = run M (DFA.startState M) S
