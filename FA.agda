@@ -2,7 +2,7 @@
 open import Data.List using (List; []; _∷_)
 
 record DFA (Q : Set) (Σ : Set) : Set₁ where
-    constructor DFA[_,_,_]
+    constructor dfa
     field
         δ : Q -> Σ -> Q
         startState : Q
