@@ -27,5 +27,5 @@ _∪_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ acce
         {!   !}
 
 -- definition of Language
-Language : Set₁
-Language = {Σ : Set} → String Σ → Set
+data Language (Σ : Set) : Set₁ where
+    language : (Σ → Set) → Language Σ
