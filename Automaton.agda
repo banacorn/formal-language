@@ -1,3 +1,5 @@
+module Autamaton where
+
 open import Data.List using (List; []; _∷_)
 open import Data.Product using (_×_; _,_)
 
