@@ -23,3 +23,7 @@ _∪_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ acce
     dfa (λ {(q₀ , q₁) a → δ₀ q₀ a , δ₁ q₁ a})
         (start₀ , start₁)
         {!   !}
+
+-- definition of Language
+Language : Set₁
+Language = {Σ : Set} → String Σ → Set
