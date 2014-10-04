@@ -1,4 +1,4 @@
-module Test where
+module Example where
 
 open import FA
 open import Nat
