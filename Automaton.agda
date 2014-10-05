@@ -94,3 +94,7 @@ _∩_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ acce
     → accept (¬ a) s
     → Relation.Unary.∁ (accept a) s
 ¬⇐ = {!   !}
+
+-- DFA ⇒ NFA
+DFA⇒NFA : {Q Σ : Set} → DFA Q Σ → NFA Q (Σ ⊎ E)
+DFA⇒NFA (dfa δ startState acceptStates) = {!   !}
