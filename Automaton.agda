@@ -2,7 +2,9 @@ module Automaton where
 
 open import Data.List using (List; []; _∷_)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 import Relation.Unary using (_∪_)
+open import Relation.Unary using (_∈_)
 open import Function using (_∘_)
 
 record DFA (Q : Set) (Σ : Set) : Set₁ where
@@ -33,3 +35,16 @@ _∪_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ acce
 -- definition of Language
 data Language (Σ : Set) : Set₁ where
     language : (String Σ → Set) → Language Σ
+
+∪⇒ : {Q₀ Q₁ Σ : Set} {s : String Σ} {a : DFA Q₀ Σ} {b : DFA Q₁ Σ}
+    → (accept a Relation.Unary.∪ accept b) s
+    → accept (a ∪ b) s
+∪⇒ {s = []}     ∪∘accept  = ∪∘accept
+∪⇒ {s = x ∷ xs} (inj₁ x₁) = ∪⇒ (inj₁ ∪⇒)
+∪⇒ {s = x ∷ xs} (inj₂ x₂) = ∪⇒ (inj₂ ∪⇒)
+
+∪⇐ : {Q₀ Q₁ Σ : Set} {s : String Σ} {a : DFA Q₀ Σ} {b : DFA Q₁ Σ}
+    → accept (a ∪ b) s
+    → (accept a Relation.Unary.∪ accept b) s
+∪⇐ {s = []}     accept∘∪ = accept∘∪
+∪⇐ {s = x ∷ xs} accept∘∪ = ∪⇐ accept∘∪
