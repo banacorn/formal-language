@@ -5,7 +5,7 @@ open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 import Relation.Unary using (_∪_; _∩_; ∁)
 open import Relation.Unary using (_∈_)
-open import Function using (_∘_)
+import Function using (_∘_)
 
 record DFA (Q : Set) (Σ : Set) : Set₁ where
     constructor dfa
@@ -35,7 +35,7 @@ _∪_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ acce
     dfa δ₂ start₂ accept₂
     where   δ₂      = λ {(q₀ , q₁) a → δ₀ q₀ a , δ₁ q₁ a}
             start₂  = start₀ , start₁
-            accept₂ = accept₀ ∘ proj₁ Relation.Unary.∪ accept₁ ∘ proj₂
+            accept₂ = accept₀ Function.∘ proj₁ Relation.Unary.∪ accept₁ Function.∘ proj₂
 
 ∪⇒ : {Q₀ Q₁ Σ : Set} {s : String Σ} {a : DFA Q₀ Σ} {b : DFA Q₁ Σ}
     → (accept a Relation.Unary.∪ accept b) s
@@ -56,7 +56,7 @@ _∩_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ acce
     dfa δ₂ start₂ accept₂
     where   δ₂      = λ {(q₀ , q₁) a → δ₀ q₀ a , δ₁ q₁ a}
             start₂  = start₀ , start₁
-            accept₂ = accept₀ ∘ proj₁ Relation.Unary.∩ accept₁ ∘ proj₂
+            accept₂ = accept₀ Function.∘ proj₁ Relation.Unary.∩ accept₁ Function.∘ proj₂
 
 ∩⇒ : {Q₀ Q₁ Σ : Set} {s : String Σ} {a : DFA Q₀ Σ} {b : DFA Q₁ Σ}
     → (accept a Relation.Unary.∩ accept b) s
