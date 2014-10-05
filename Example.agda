@@ -59,4 +59,4 @@ check3 = tt
 
 str4 = c1 ∷ c1 ∷ c0 ∷ []
 check4 : accept DFA1 str4
-check4 = tt
+check4 = ?

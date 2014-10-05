@@ -13,3 +13,5 @@ cabal-dev
 deprecated/dist
 **/*.agdai
 
+*.sw[op]
+
