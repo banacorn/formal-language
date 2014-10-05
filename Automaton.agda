@@ -3,8 +3,8 @@ module Automaton where
 open import Data.List using (List; []; _∷_)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-import Relation.Unary using (_∪_; _∩_; ∁)
 open import Relation.Unary using (_∈_)
+import Relation.Unary using (_∪_; _∩_; ∁)
 import Function using (_∘_)
 
 record DFA (Q : Set) (Σ : Set) : Set₁ where
@@ -96,5 +96,8 @@ _∩_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ acce
 ¬⇐ = {!   !}
 
 -- DFA ⇒ NFA
-DFA⇒NFA : {Q Σ : Set} → DFA Q Σ → NFA Q (Σ ⊎ E)
-DFA⇒NFA (dfa δ startState acceptStates) = {!   !}
+DFA⇒NFA : {Q Σ : Set} → DFA Q Σ → NFA Q Σ
+DFA⇒NFA (dfa δ startState acceptStates) = nfa δ' startState acceptStates
+    where   δ' : _ → _ → _
+            δ' q (inj₁ x) = {!   !}
+            δ' q (inj₂ ε) = {!  !}
