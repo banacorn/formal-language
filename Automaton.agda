@@ -3,7 +3,7 @@ module Automaton where
 open import Data.List using (List; []; _∷_)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-import Relation.Unary using (_∪_; _∩_)
+import Relation.Unary using (_∪_; _∩_; ∁)
 open import Relation.Unary using (_∈_)
 open import Function using (_∘_)
 
@@ -69,3 +69,17 @@ _∩_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ acce
     → (accept a Relation.Unary.∩ accept b) s
 ∩⇐ {s = []}     accept∘∩  = accept∘∩
 ∩⇐ {s = x ∷ xs} {a} {b} accept∘∩ = ∩⇐ (∩⇐ , ∩⇐)
+
+-- complement
+¬ : {Q Σ : Set} → DFA Q Σ → DFA Q Σ
+¬ (dfa δ start accept) = dfa δ start (Relation.Unary.∁ accept)
+
+¬⇒ : {Q Σ : Set} {s : String Σ} {a : DFA Q Σ}
+    → Relation.Unary.∁ (accept a) s
+    → accept (¬ a) s
+¬⇒ = {!   !}
+
+¬⇐ : {Q Σ : Set} {s : String Σ} {a : DFA Q Σ}
+    → accept (¬ a) s
+    → Relation.Unary.∁ (accept a) s
+¬⇐ = {!   !}
