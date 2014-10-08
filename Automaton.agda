@@ -52,14 +52,14 @@ _∪_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ acce
     → (accept a Relation.Unary.∪ accept b) s
     → accept (a ∪ b) s
 ∪⇒ {s = []}     ∪∘accept  = ∪∘accept
-∪⇒ {s = x ∷ xs} (inj₁ x₁) = ∪⇒ (inj₁ ∪⇒)
-∪⇒ {s = x ∷ xs} (inj₂ x₂) = ∪⇒ (inj₂ ∪⇒)
+∪⇒ {s = x ∷ xs} (inj₁ x₁) = {!   !}
+∪⇒ {s = x ∷ xs} (inj₂ x₂) = {!   !}
 
 ∪⇐ : {Q₀ Q₁ Σ : Set} {s : String Σ} {a : DFA Q₀ Σ} {b : DFA Q₁ Σ}
     → accept (a ∪ b) s
     → (accept a Relation.Unary.∪ accept b) s
 ∪⇐ {s = []}     accept∘∪ = accept∘∪
-∪⇐ {s = x ∷ xs} accept∘∪ = ∪⇐ accept∘∪
+∪⇐ {s = x ∷ xs} accept∘∪ = {!   !}
 
 -- intersection
 _∩_ : {Q₀ Q₁ Σ : Set} → DFA Q₀ Σ → DFA Q₁ Σ → DFA (Q₀ × Q₁) Σ
@@ -73,13 +73,13 @@ _∩_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ acce
     → (accept a Relation.Unary.∩ accept b) s
     → accept (a ∩ b) s
 ∩⇒ {s = []}     ∩∘accept  = ∩∘accept
-∩⇒ {s = x ∷ xs} (proj₁ , proj₂) = ∩⇒ (∩⇒ , ∩⇒)
+∩⇒ {s = x ∷ xs} (proj₁ , proj₂) = {!   !}
 
 ∩⇐ : {Q₀ Q₁ Σ : Set} {s : String Σ} {a : DFA Q₀ Σ} {b : DFA Q₁ Σ}
     → accept (a ∩ b) s
     → (accept a Relation.Unary.∩ accept b) s
 ∩⇐ {s = []}     accept∘∩  = accept∘∩
-∩⇐ {s = x ∷ xs} {a} {b} accept∘∩ = ∩⇐ (∩⇐ , ∩⇐)
+∩⇐ {s = x ∷ xs} {a} {b} accept∘∩ = {!   !}
 
 -- complement
 ¬ : {Q Σ : Set} → DFA Q Σ → DFA Q Σ
@@ -100,4 +100,4 @@ DFA⇒NFA : {Q Σ : Set} → DFA Q Σ → NFA Q Σ
 DFA⇒NFA (dfa δ startState acceptStates) = nfa δ' startState acceptStates
     where   δ' : _ → _ → _
             δ' q (inj₁ x) = {!   !}
-            δ' q (inj₂ ε) = {!  !}
+            δ' q (inj₂ ε) = {!   !}
