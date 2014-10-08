@@ -1,6 +1,7 @@
 module Automaton.Deterministic where
 
-open import Automaton using (String)
+open import Automaton.Types using (String)
+
 open import Data.List using ([]; _∷_)
 open import Data.Product using (_×_; _,_; proj₁; proj₂)
 open import Relation.Unary using (_∈_)
