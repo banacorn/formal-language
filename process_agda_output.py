@@ -2,11 +2,12 @@ import re
 
 try:
     while True:
-        msg = input().strip()
-        if msg.startswith('Agda2>'):
+        msg = input().strip().replace('Agda2>', '').strip()
+
+        if msg == '':
             continue
 
-        elif msg == '(agda2-highlight-clear)':
+        if msg == '(agda2-highlight-clear)':
             continue
 
         elif msg.startswith('(agda2-highlight-load-and-delete-action'):

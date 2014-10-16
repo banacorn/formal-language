@@ -6,8 +6,9 @@
 
 while [ 1 ]; do
     printf "=============================="
-    filename=`nc -l 1531 | sed "s/;//g" | sed "s/ //g"`
-    filepath="`pwd -P`/$filename"
+    #filename=`nc -l 1531 | sed "s/;//g" | sed "s/ //g"`
+    filepath=`nc -l 1531 | sed "s/;//g" | sed "s/ //g"`
+    #filepath="`pwd -P`/$filename"
     echo ""
     date
     echo "Input file: $filepath"
