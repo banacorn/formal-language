@@ -19,4 +19,4 @@ run : {Q Σ : Set} → NFA Q Σ → Q → String Σ → Set
 run m state string = {!   !}
 
 accept : {Q Σ : Set} → NFA Q Σ → String Σ → Set
-accept m string = {!   !}
+accept m string = run m (NFA.startState m) string
