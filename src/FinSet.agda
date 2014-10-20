@@ -1,13 +1,16 @@
 module FinSet where
 
-open import Data.Unit using (⊤)
-open import Data.Empty using (⊥)
-open import Data.Bool using (Bool; true; false; _∨_; _∧_)
-open import Data.Fin using (Fin; zero; suc; toℕ; fromℕ; inject≤)
-open import Data.Nat using (ℕ; _≤_)
-                        renaming (zero to Nzero; suc to Nsuc)
-open import Data.Vec using (Vec; []; _∷_; _++_; replicate; zipWith)
-open import Relation.Nullary using (¬_)
+open import Data.Unit           using (⊤)
+open import Data.Empty          using (⊥)
+open import Data.Bool           using (Bool; true; false; _∨_; _∧_)
+open import Data.Fin            using (Fin; zero; suc; toℕ; fromℕ; inject₁)
+open import Data.Nat            using (ℕ)
+                                renaming (zero to Nzero; suc to Nsuc; _+_ to _N+_; _≤_ to _N≤_; pred to Npred)
+open import Data.Vec            using (Vec; []; _∷_; _++_; replicate; zipWith; reverse)
+open import Data.List           using (List)
+                                renaming ([] to l[]; _∷_ to _l∷_; map to lmap)
+open import Relation.Nullary    using (¬_)
+open import Function            using (_∘_)
 
 -- represented by a vector of booleans, which indicates occurences of each elements
 --
@@ -38,9 +41,19 @@ size : ∀ {n} → FinSet n → ℕ
 size {n} _ = n
 
 -- embedding smaller set to larger set
-embed : ∀ {m n} → FinSet m → m ≤ n → FinSet n
+embed : ∀ {m n} → FinSet m → m N≤ n → FinSet n
 embed []       _                  = replicate false
 embed (x ∷ xs) (Data.Nat.s≤s m≤n) = x ∷ (embed xs m≤n)
+
+-- accepts reversed FinSet representation
+⇒List' : ∀ {n} → FinSet n → List (Fin n)
+⇒List' {Nzero}  [] = l[]
+⇒List' {Nsuc n} (true  ∷ xs) = fromℕ n l∷ lmap inject₁ (⇒List' xs)
+⇒List' {Nsuc n} (false ∷ xs) =            lmap inject₁ (⇒List' xs)
+
+-- build a list with elements collected from a subset
+⇒List : ∀ {n} → FinSet n → List (Fin n)
+⇒List = ⇒List' ∘ reverse
 
 _∪_ : ∀ {n} → FinSet n → FinSet n → FinSet n
 _∪_ = zipWith _∨_
