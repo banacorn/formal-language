@@ -3,13 +3,14 @@ module Automaton.NonDeterministic where
 open import Automaton.Types using (String)
 
 open import Data.Empty          using (⊥)
-open import Data.Bool           using (Bool)
+open import Data.Bool           using (Bool; true; false; T)
 open import Category.Monad      using (RawMonad; module RawMonad)
-open import Data.List           using (List; []; _∷_; foldr; monad; map; concat)
-open RawMonad {_} monad         using (return; _>>=_)
+open import Data.List           using (List; []; _∷_; foldr; monad; map; concat; or)
+open import Level using (zero)
+open RawMonad {zero} monad             using (return; _>>=_)
+open import Data.Nat            using (ℕ; suc; zero)
 open import Data.Vec            using (Vec)
                                 renaming ([] to []v; _∷_ to _∷v_)
-open import Data.Nat            using (ℕ; suc; zero)
 open import Data.Fin            using (Fin)
 open import Data.Sum            using (_⊎_)
 open import Data.Unit           using (⊤)
@@ -39,13 +40,23 @@ open NFA
 ε-closure : ∀ {q σ} → NFA q σ → Q q → FinSet q
 ε-closure m state = singleton state ∪ δ m state (Data.Sum.inj₂ ε)
 
-run : ∀ {q σ} → NFA q σ → Q q → String (Σ σ) → Set
-run m state [] = state ∈ acceptStates m
-run m state (x ∷ xs) = foldr {!   !} {!   !} (map (λ q → const (run m q xs)) (⇒List states' >>= (λ q → ⇒List (δ m q (Data.Sum.inj₁ x)) ) ))
+toBool : Set → Bool
+toBool ⊤ = true
+
+
+run' : ∀ {q σ} → NFA q σ → Q q → String (Σ σ) → Bool
+run' m state [] = toBool (state ∈ acceptStates m)
+run' {q} m state (x ∷ xs) = or (⇒List states' >>= map runWithState ∘ ⇒List ∘ transitWithState)
     where   states' = ε-closure m state
 
+            runWithState : Q q → Bool
+            runWithState q = run' m q xs
 
+            transitWithState : Q q → FinSet q
+            transitWithState q = δ m q (Data.Sum.inj₁ x)
 
+run : ∀ {q σ} → NFA q σ → Q q → String (Σ σ) → Set
+run m state = T ∘ run' m state
 
--- accept : {Q Σ : Set} → NFA Q Σ → String Σ → Set
--- accept m string = run m (startState m) string
+accept : ∀ {q σ} → NFA q σ → String (Σ σ) → Set
+accept m string = run m (startState m) string
