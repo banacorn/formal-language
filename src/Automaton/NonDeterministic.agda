@@ -8,7 +8,7 @@ open import Category.Monad      using (RawMonad; module RawMonad)
 open import Data.List           using (List; []; _∷_; foldr; monad; map; concat; or)
 open import Level using (zero)
 open RawMonad {zero} monad             using (return; _>>=_)
-open import Data.Nat            using (ℕ; suc; zero)
+open import Data.Nat            using (ℕ; suc; zero; _+_)
 open import Data.Vec            using (Vec)
                                 renaming ([] to []v; _∷_ to _∷v_)
 open import Data.Fin            using (Fin)
@@ -60,3 +60,10 @@ run m state = T ∘ run' m state
 
 accept : ∀ {q σ} → NFA q σ → String (Σ σ) → Set
 accept m string = run m (startState m) string
+
+
+-- concatenation
+_++_ : ∀ {q₀ q₁ σ} → NFA q₀ σ → NFA q₁ σ → NFA (q₀ + q₁) σ
+_++_ {q₀} {q₁} {σ} (nfa δ₀ start₀ accept₀) (nfa δ₁ start₁ accept₁) = {! nfa δ₂  !}
+    where   δ₂ : Q (q₀ + q₁) → (Σ σ ⊎ E) → FinSet (q₀ + q₁)
+            δ₂ q a = {! q  !}
