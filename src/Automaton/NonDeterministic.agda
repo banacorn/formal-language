@@ -17,7 +17,7 @@ open import Data.Sum            using (_⊎_; inj₁; inj₂)
 open import Data.Unit           using (⊤)
 open import Function            using (_∘_; const)
 import Relation.Unary           as RU
-open import Util                using (⇒List; inj[_+_]_; inj₁Subset; inj₂Subset)
+open import Util                using (⇒List; proj[_+_]_; inj₁Subset; inj₂Subset)
 
 
 
@@ -67,6 +67,6 @@ _++_ : ∀ {q₀ q₁ σ} → NFA q₀ σ → NFA q₁ σ → NFA (q₀ + q₁) 
 _++_ {q₀} {q₁} {σ} (nfa δ₀ start₀ accept₀) (nfa δ₁ start₁ accept₁) = nfa δ₂ (inject+ q₁ start₀) (inj₂Subset accept₁)
 
     where   δ₂ : Q (q₀ + q₁) → (Σ σ ⊎ E) → Subset (q₀ + q₁)
-            δ₂ q a with inj[ q₀ + q₁ ] q
+            δ₂ q a with proj[ q₀ + q₁ ] q
             δ₂ q a | inj₁ state₀ = inj₁Subset (δ₀ state₀ a)
             δ₂ q a | inj₂ state₁ = inj₂Subset (δ₁ state₁ a)

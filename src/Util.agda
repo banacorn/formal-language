@@ -10,23 +10,19 @@ open import Data.List           using (List)
 open import Data.Sum            using (_⊎_; inj₁; inj₂)
 open import Function            using (_∘_)
 
-
-
--- accepts reversed Subset representation
-⇒List' : ∀ {n} → Subset n → List (Fin n)
-⇒List' {zero}  [] = l[]
-⇒List' {suc n} (inside  ∷ xs) = fromℕ n l∷ lmap inject₁ (⇒List' xs)
-⇒List' {suc n} (outside ∷ xs) =            lmap inject₁ (⇒List' xs)
+--
+--  Subset
+--
 
 -- build a list with elements collected from a subset
 ⇒List : ∀ {n} → Subset n → List (Fin n)
 ⇒List = ⇒List' ∘ reverse
+    where   -- accepts reversed Subset representation
+            ⇒List' : ∀ {n} → Subset n → List (Fin n)
+            ⇒List' {zero}  [] = l[]
+            ⇒List' {suc n} (inside  ∷ xs) = fromℕ n l∷ lmap inject₁ (⇒List' xs)
+            ⇒List' {suc n} (outside ∷ xs) =            lmap inject₁ (⇒List' xs)
 
-
--- just read the fucking type
-inject⊎ : ∀ {m n} → Fin m ⊎ Fin n → Fin (suc m) ⊎ Fin n
-inject⊎ (inj₁ x) = inj₁ (inject₁ x)
-inject⊎ (inj₂ y) = inj₂ y
 
 -- fits a smaller subset into the front of a larger subset
 inj₁Subset : ∀ {m n} → Subset m → Subset (m + n)
@@ -36,8 +32,17 @@ inj₁Subset v = v ++ replicate outside
 inj₂Subset : ∀ {m n} → Subset m → Subset (n + m)
 inj₂Subset {m} {n} v = replicate {_} {n} outside ++ v
 
--- given Fin (m + n), determine whether it's coming from the "m" part or the "n" part
-inj[_+_]_ : (m : ℕ) → (n : ℕ) → Fin (m + n) → Fin m ⊎ Fin n
-inj[ zero + b ] x = inj₂ x
-inj[ suc a + b ] Fzero = inj₁ Fzero
-inj[ suc a + b ] Fsuc x = inject⊎ (inj[ a + b ] x)
+--
+--  Fin
+--
+
+-- given Fin (m + n)
+-- determine whether it's coming from the "m" part or the "n" part
+proj[_+_]_ : (m : ℕ) → (n : ℕ) → Fin (m + n) → Fin m ⊎ Fin n
+proj[ zero + b ] x = inj₂ x
+proj[ suc a + b ] Fzero = inj₁ Fzero
+proj[ suc a + b ] Fsuc x = inject⊎ (proj[ a + b ] x)
+    where   -- just read the fucking type
+            inject⊎ : ∀ {m n} → Fin m ⊎ Fin n → Fin (suc m) ⊎ Fin n
+            inject⊎ (inj₁ x) = inj₁ (inject₁ x)
+            inject⊎ (inj₂ y) = inj₂ y
