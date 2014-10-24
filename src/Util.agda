@@ -1,10 +1,10 @@
 module Util where
 
-open import Data.Fin.Subset     using (Subset; inside; outside)
 open import Data.Nat            using (ℕ; zero; suc; _+_)
-open import Data.Fin            using (Fin; fromℕ; inject₁)
+open import Data.Fin            using (Fin; fromℕ; inject₁; inject+)
                                 renaming (zero to Fzero; suc to Fsuc)
-open import Data.Vec            using (Vec; []; _∷_; reverse)
+open import Data.Fin.Subset     using (Subset; inside; outside)
+open import Data.Vec            using (Vec; []; _∷_; _++_; replicate; reverse)
 open import Data.List           using (List)
                                 renaming ([] to l[]; _∷_ to _l∷_; map to lmap)
 open import Data.Sum            using (_⊎_; inj₁; inj₂)
@@ -24,12 +24,20 @@ open import Function            using (_∘_)
 
 
 -- just read the fucking type
-inject⊎₀ : ∀ {m n} → Fin m ⊎ Fin n → Fin (suc m) ⊎ Fin n
-inject⊎₀ (inj₁ x) = inj₁ (inject₁ x)
-inject⊎₀ (inj₂ y) = inj₂ y
+inject⊎ : ∀ {m n} → Fin m ⊎ Fin n → Fin (suc m) ⊎ Fin n
+inject⊎ (inj₁ x) = inj₁ (inject₁ x)
+inject⊎ (inj₂ y) = inj₂ y
+
+-- fits a smaller subset into the front of a larger subset
+inj₁Subset : ∀ {m n} → Subset m → Subset (m + n)
+inj₁Subset v = v ++ replicate outside
+
+-- fits a smaller subset into the rare of a larger subset
+inj₂Subset : ∀ {m n} → Subset m → Subset (n + m)
+inj₂Subset {m} {n} v = replicate {_} {n} outside ++ v
 
 -- given Fin (m + n), determine whether it's coming from the "m" part or the "n" part
 inj[_+_]_ : (m : ℕ) → (n : ℕ) → Fin (m + n) → Fin m ⊎ Fin n
 inj[ zero + b ] x = inj₂ x
 inj[ suc a + b ] Fzero = inj₁ Fzero
-inj[ suc a + b ] Fsuc x = inject⊎₀ (inj[ a + b ] x)
+inj[ suc a + b ] Fsuc x = inject⊎ (inj[ a + b ] x)

@@ -11,13 +11,13 @@ open RawMonad {zero} monad             using (return; _>>=_)
 open import Data.Nat            using (ℕ; suc; zero; _+_)
 open import Data.Vec            using (Vec)
                                 renaming ([] to []v; _∷_ to _∷v_)
-open import Data.Fin            using (Fin)
+open import Data.Fin            using (Fin; compare; less; equal; greater; fromℕ; inject+)
 open import Data.Fin.Subset     using (Subset; ⁅_⁆; _∈_; _∪_)
-open import Data.Sum            using (_⊎_)
+open import Data.Sum            using (_⊎_; inj₁; inj₂)
 open import Data.Unit           using (⊤)
 open import Function            using (_∘_; const)
 import Relation.Unary           as RU
-open import Util                using (⇒List)
+open import Util                using (⇒List; inj[_+_]_; inj₁Subset; inj₂Subset)
 
 
 
@@ -62,9 +62,11 @@ run m state = T ∘ run' m state
 accept : ∀ {q σ} → NFA q σ → String (Σ σ) → Set
 accept m string = run m (startState m) string
 
-
 -- concatenation
--- _++_ : ∀ {q₀ q₁ σ} → NFA q₀ σ → NFA q₁ σ → NFA (q₀ + q₁) σ
--- _++_ {q₀} {q₁} {σ} (nfa δ₀ start₀ accept₀) (nfa δ₁ start₁ accept₁) = {! nfa δ₂  !}
---     where   δ₂ : Q (q₀ + q₁) → (Σ σ ⊎ E) → FinSet (q₀ + q₁)
---            δ₂ q a = {! q  !}
+_++_ : ∀ {q₀ q₁ σ} → NFA q₀ σ → NFA q₁ σ → NFA (q₀ + q₁) σ
+_++_ {q₀} {q₁} {σ} (nfa δ₀ start₀ accept₀) (nfa δ₁ start₁ accept₁) = nfa δ₂ (inject+ q₁ start₀) (inj₂Subset accept₁)
+
+    where   δ₂ : Q (q₀ + q₁) → (Σ σ ⊎ E) → Subset (q₀ + q₁)
+            δ₂ q a with inj[ q₀ + q₁ ] q
+            δ₂ q a | inj₁ state₀ = inj₁Subset (δ₀ state₀ a)
+            δ₂ q a | inj₂ state₁ = inj₂Subset (δ₁ state₁ a)
