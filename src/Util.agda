@@ -1,9 +1,9 @@
 module Util where
 
 open import Data.Bool           using (Bool; true; false)
-open import Data.Nat            using (ℕ; zero; suc; _+_; _*_)
-open import Data.Fin            using (Fin; fromℕ; inject₁; inject+)
-                                renaming (zero to Fzero; suc to Fsuc)
+open import Data.Nat            using (ℕ; zero; suc; _+_; _*_; _∸_; _≤?_)
+open import Data.Fin            using (Fin; fromℕ; toℕ; inject₁; inject+; #_)
+                                renaming (zero to Fzero; suc to Fsuc; _ℕ-_ to _Fℕ-_)
 open import Data.Fin.Subset     using (Subset; inside; outside; _∈_; _∉_)
 open import Data.List           using (List)
                                 renaming ([] to l[]; _∷_ to _l∷_; map to lmap)
@@ -57,6 +57,11 @@ proj[ suc a + b ] Fsuc x = inject⊎ (proj[ a + b ] x)
             inject⊎ (inj₂ y) = inj₂ y
 
 -- given Fin (m * n)
--- determine whether it's "coordinate" (m, n)
--- proj[_*_]_ : (m : ℕ) → (n : ℕ) → Fin (m * n) → Fin m × Fin n
--- proj[ a * b ] x = {!   !}
+-- determine it's "coordinate" (m, n)
+proj[_*_]_ : (m : ℕ) → (n : ℕ) → Fin (m * n) → Fin m × Fin n
+proj[ a * zero ] ()
+proj[ zero * b ] ()
+proj[ suc a * suc b ] x with (toℕ x) ≤? a
+... | yes p = (# (toℕ x)) , Fzero
+... | no p¬ = let m' , n' = proj[ suc a * b ] (# ((toℕ x) ∸ (suc a))) in
+    m' , Fsuc n'
