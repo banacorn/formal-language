@@ -1,18 +1,27 @@
 module Util where
 
-open import Data.Nat            using (ℕ; zero; suc; _+_)
+open import Data.Bool           using (Bool; true; false)
+open import Data.Nat            using (ℕ; zero; suc; _+_; _*_)
 open import Data.Fin            using (Fin; fromℕ; inject₁; inject+)
                                 renaming (zero to Fzero; suc to Fsuc)
-open import Data.Fin.Subset     using (Subset; inside; outside)
-open import Data.Vec            using (Vec; []; _∷_; _++_; replicate; reverse)
+open import Data.Fin.Subset     using (Subset; inside; outside; _∈_; _∉_)
 open import Data.List           using (List)
                                 renaming ([] to l[]; _∷_ to _l∷_; map to lmap)
+open import Data.Vec            using (Vec; []; _∷_; _++_; replicate; reverse; lookup)
+open import Data.Product        using (_×_; _,_)
 open import Data.Sum            using (_⊎_; inj₁; inj₂)
 open import Function            using (_∘_)
+open import Relation.Nullary
 
 --
 --  Subset
 --
+
+
+_∈-Bool_ : ∀ {n} → (x : Fin n) → (p : Subset n) → Bool
+x ∈-Bool p with lookup x p
+... | inside = true
+... | outside = false
 
 -- build a list with elements collected from a subset
 ⇒List : ∀ {n} → Subset n → List (Fin n)
@@ -46,3 +55,8 @@ proj[ suc a + b ] Fsuc x = inject⊎ (proj[ a + b ] x)
             inject⊎ : ∀ {m n} → Fin m ⊎ Fin n → Fin (suc m) ⊎ Fin n
             inject⊎ (inj₁ x) = inj₁ (inject₁ x)
             inject⊎ (inj₂ y) = inj₂ y
+
+-- given Fin (m * n)
+-- determine whether it's "coordinate" (m, n)
+-- proj[_*_]_ : (m : ℕ) → (n : ℕ) → Fin (m * n) → Fin m × Fin n
+-- proj[ a * b ] x = {!   !}
