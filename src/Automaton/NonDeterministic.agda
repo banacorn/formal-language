@@ -27,7 +27,7 @@ data E : Set where
 Q = Fin
 Σ = Fin
 
-record NFA (q : ℕ) (σ : ℕ) : Set₁ where
+record NFA (q : ℕ) (σ : ℕ) : Set where
     constructor nfa
     field
         δ : Q q → (Σ σ ⊎ E) → Subset q
