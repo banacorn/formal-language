@@ -1,4 +1,4 @@
-module Dist where
+module Data.Dist where
 
 open import Data.Fin            using (Fin; fromℕ; inject₁)
 open import Data.Fin.Subset     using (Subset; inside; outside; ⁅_⁆)

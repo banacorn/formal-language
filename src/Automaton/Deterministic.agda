@@ -3,7 +3,7 @@ module Automaton.Deterministic where
 open import Automaton.Types using (String)
 
 open import Data.List           using (List; _∷_; [])
-open import Dist                using (FinSet; FinElem; Structure; ⨀; _⨁_; _⨂_;
+open import Data.Dist           using (FinSet; FinElem; Structure; ⨀; _⨁_; _⨂_;
                                     ⊙; ⊕₀; ⊕₁; _⊗_; _∈_; ∁)
 
 record DFA (Q : Structure) (Σ : Structure) : Set where

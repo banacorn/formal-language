@@ -3,11 +3,18 @@ module Automaton.NonDeterministic where
 open import Automaton.Types using (String)
 
 open import Data.Bool           using (true; false)
+open import Data.Empty          using (⊥)
 open import Data.Nat            using (ℕ; suc; zero; _+_)
 open import Data.Fin            using (Fin)
                                 renaming (zero to Fzero; suc to Fsuc)
-open import Dist                using (FinSet; FinElem; Structure; ⨀; _⨁_; _⨂_;
-                                    ⊙; ⊕₀; ⊕₁; _⊗_; insert; _∈-Bool_)
+open import Data.List           using (List; []; _∷_; monad; foldr)
+open import Data.Dist           using (FinSet; FinElem; Structure; ⨀; _⨁_; _⨂_;
+                                    ⊙; ⊕₀; ⊕₁; _⊗_; insert; _∈-Bool_; _∈_)
+import Relation.Unary           as RU
+-- some monad shit
+open import Category.Monad      using (RawMonad; module RawMonad)
+open import Level               renaming (zero to Lzero)
+open RawMonad {Lzero} monad      using (return; _>>=_)
 
 -- ε, the "empty" character
 E : Structure
@@ -27,6 +34,16 @@ open NFA
 -- closure of Choices formed by collecting states reachable by ε
 ε-closure : ∀ {Q Σ} → NFA Q Σ → FinElem Q → FinSet Q
 ε-closure m state = insert state (δ m state (⊕₁ ε))
+
+∪-fold : ∀ {A} → (P : A → Set) → List A → Set
+∪-fold {A} P = foldr or ⊥
+    where   or : A → Set → Set
+            or x acc = (P RU.∪ λ _ → acc) x
+
+run : ∀ {Q Σ} → NFA Q Σ → FinElem Q → String (FinElem Σ) → Set
+run m state []       = state ∈ (acceptStates m)
+run m state (x ∷ xs) = ∪-fold {!   !} {!   !}
+    where   states' = ε-closure m state
 
 {-
 toBool : Set → Bool
