@@ -1,12 +1,16 @@
 module Dist where
 
 open import Data.Fin            using (Fin)
-open import Data.Fin.Subset     using (Subset; ⁅_⁆)
-                                renaming (_∪_ to _S∪_; _∩_ to _S∩_)
+open import Data.Fin.Subset     using (Subset; inside; outside; ⁅_⁆)
+                                renaming (_∪_ to _S∪_; _∩_ to _S∩_; _∈_ to _S∈_)
+open import Data.Vec            using (lookup)
 open import Data.Nat            using (ℕ)
+open import Data.Bool           using (Bool; true; false; _∧_)
 
 infixr 5 _⊗_
 infixr 3 _⨁_ _⨂_
+infix 4 _∈-Bool_
+infix 4 _∪_ _∩_
 
 data Structure : Set where
     ⨀   : ℕ → Structure
@@ -28,9 +32,24 @@ FinElem = Dist Fin
 --  FinSet
 --
 
-infix 4 _∪_ _∩_
+------------------------------------------------------------------------
+-- Membership and subset predicates
 
--- insertion
+_∈-Bool_ : ∀ {t} → FinElem t → FinSet t → Bool
+⊙  e    ∈-Bool ⊙  s with lookup e s
+... | inside  = true
+... | outside = false
+⊕₀ e    ∈-Bool ⊕₀ s    = e ∈-Bool s
+⊕₀ e    ∈-Bool ⊕₁ s    = false
+⊕₁ e    ∈-Bool ⊕₀ s    = false
+⊕₁ e    ∈-Bool ⊕₁ s    = e ∈-Bool s
+e₀ ⊗ e₁ ∈-Bool s₀ ⊗ s₁ = (e₀ ∈-Bool s₀) ∧ (e₁ ∈-Bool s₁)
+
+------------------------------------------------------------------------
+-- Set operations
+
+-- Insertion
+
 insert : ∀ {t} → FinElem t → FinSet t → FinSet t
 insert {   ⨀ x}  (⊙ e)     (⊙ s)     = ⊙ (⁅ e ⁆ S∪ s)
 insert {tₒ ⨁ t₁} (⊕₀ e)    (⊕₀ s)    = ⊕₀ (insert e s)
@@ -39,8 +58,9 @@ insert {tₒ ⨁ t₁} (⊕₁ e)    (⊕₀ s)    = ⊕₀ s    -- element disc
 insert {tₒ ⨁ t₁} (⊕₁ e)    (⊕₁ s)    = ⊕₁ (insert e s)
 insert {tₒ ⨂ t₁} (e₀ ⊗ e₁) (s₀ ⊗ s₁) = insert e₀ s₀ ⊗ insert e₁ s₁
 
--- union
+-- Union
 -- non-abelian, i.e., a ∪ b ≠ b ∪ a
+
 _∪_ : ∀ {t} → FinSet t → FinSet t → FinSet t
 ⊙  a    ∪ ⊙  b    = ⊙  (a S∪ b)
 ⊕₀ a    ∪ ⊕₀ b    = ⊕₀ (a ∪ b)
@@ -49,8 +69,9 @@ _∪_ : ∀ {t} → FinSet t → FinSet t → FinSet t
 ⊕₁ a    ∪ ⊕₁ b    = ⊕₁ (a ∪ b)
 a₀ ⊗ a₁ ∪ b₀ ⊗ b₁ = (a₀ ∪ b₀) ⊗ (a₁ ∪ b₁)
 
--- intersection
+-- Intersection
 -- non-abelian, i.e., a ∪ b ≠ b ∪ a
+
 _∩_ : ∀ {t} → FinSet t → FinSet t → FinSet t
 ⊙  a    ∩ ⊙  b    = ⊙  (a S∩ b)
 ⊕₀ a    ∩ ⊕₀ b    = ⊕₀ (a ∩ b)
