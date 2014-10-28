@@ -4,7 +4,7 @@ open import Automaton.Types using (String)
 
 open import Data.List           using (List; _∷_; [])
 open import Dist                using (FinSet; FinElem; Structure; ⨀; _⨁_; _⨂_;
-                                    ⊙; ⊕₀; ⊕₁; _⊗_; _∈_)
+                                    ⊙; ⊕₀; ⊕₁; _⊗_; _∈_; ∁)
 
 record DFA (Q : Structure) (Σ : Structure) : Set where
     constructor dfa
@@ -47,9 +47,7 @@ _∩_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ acce
             start₂ = start₀ ⊗ start₁
             accept₂ : FinSet (Q₀ ⨂ Q₁)
             accept₂ = accept₀ ⊗ accept₁
-{-}
--- complement
-¬ : {Q Σ : Set} → DFA Q Σ → DFA Q Σ
-¬ (dfa δ start accept) = dfa δ start (Relation.Unary.∁ accept)
 
--}
+-- Complement
+¬_ : ∀ {Q Σ} → DFA Q Σ → DFA Q Σ
+¬_ (dfa δ start accept) = dfa δ start (∁ accept)
