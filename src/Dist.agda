@@ -1,14 +1,16 @@
 module Dist where
 
-open import Data.Fin            using (Fin)
+open import Data.Fin            using (Fin; fromℕ; inject₁)
 open import Data.Fin.Subset     using (Subset; inside; outside; ⁅_⁆)
                                 renaming (_∪_ to _S∪_; _∩_ to _S∩_; _∈_ to _S∈_)
-open import Data.Vec            using (lookup; map)
-open import Data.Nat            using (ℕ)
+open import Data.List           using (List; []; _∷_; map; zipWith)
+open import Data.Vec            using (lookup; reverse)
+                                renaming ([] to v[]; _∷_ to _v∷_; map to vmap)
+open import Data.Nat            using (ℕ; zero; suc; _+_; _*_)
 open import Data.Empty          using (⊥)
 open import Data.Bool           using (Bool; true; false; _∧_; not)
 import Relation.Unary           as RU
-
+open import Function            using (_∘_)
 
 infixr 5 _⊗_
 infixr 3 _⨁_ _⨂_
@@ -96,7 +98,30 @@ a₀ ⊗ a₁ ∩ b₀ ⊗ b₁ = (a₀ ∩ b₀) ⊗ (a₁ ∩ b₁)
 -- Complement
 
 ∁ : ∀ {t} → FinSet t → FinSet t
-∁ (⊙ a)     = ⊙ (map not a)
+∁ (⊙ a)     = ⊙ (vmap not a)
 ∁ (⊕₀ a)    = ⊕₀ (∁ a)
 ∁ (⊕₁ a)    = ⊕₁ (∁ a)
 ∁ (a₀ ⊗ a₁) = (∁ a₀) ⊗ (∁ a₁)
+
+------------------------------------------------------------------------
+-- Utils & Convertions
+
+size : Structure → ℕ
+size (⨀ s) = s
+size (s₀ ⨁ s₁) = size s₀ + size s₁
+size (s₀ ⨂ s₁) = size s₀ * size s₁
+
+-- build a list with elements collected from a subset
+Subset⇒List : ∀ {n} → Subset n → List (Fin n)
+Subset⇒List = tesbuS⇒List ∘ reverse
+    where   -- accepts reversed Subset representation
+            tesbuS⇒List : ∀ {n} → Subset n → List (Fin n)
+            tesbuS⇒List {zero} xs = []
+            tesbuS⇒List {suc n} (inside  v∷ xs) = fromℕ n ∷ map inject₁ (tesbuS⇒List xs)
+            tesbuS⇒List {suc n} (outside v∷ xs) =           map inject₁ (tesbuS⇒List xs)
+
+⇒List : ∀ {t} → FinSet t → List (FinElem t)
+⇒List (⊙ a)   = map ⊙ (Subset⇒List a)
+⇒List (⊕₀ a)  = map ⊕₀ (⇒List a)
+⇒List (⊕₁ a)  = map ⊕₁ (⇒List a)
+⇒List (a ⊗ b) = zipWith _⊗_ (⇒List a) (⇒List b)
