@@ -5,11 +5,14 @@ open import Data.Fin.Subset     using (Subset; inside; outside; ⁅_⁆)
                                 renaming (_∪_ to _S∪_; _∩_ to _S∩_; _∈_ to _S∈_)
 open import Data.Vec            using (lookup)
 open import Data.Nat            using (ℕ)
+open import Data.Empty          using (⊥)
 open import Data.Bool           using (Bool; true; false; _∧_)
+import Relation.Unary           as RU
+
 
 infixr 5 _⊗_
 infixr 3 _⨁_ _⨂_
-infix 4 _∈-Bool_
+infix 4 _∈-Bool_ _∈_
 infix 4 _∪_ _∩_
 
 data Structure : Set where
@@ -34,6 +37,16 @@ FinElem = Dist Fin
 
 ------------------------------------------------------------------------
 -- Membership and subset predicates
+
+_∈_ : ∀ {t} → FinElem t → FinSet t → Set
+⊙  e    ∈ ⊙  s    = e S∈ s
+⊕₀ e    ∈ ⊕₀ s    = e ∈ s
+⊕₀ e    ∈ ⊕₁ s    = ⊥
+⊕₁ e    ∈ ⊕₀ s    = ⊥
+⊕₁ e    ∈ ⊕₁ s    = e ∈ s
+e₀ ⊗ e₁ ∈ s₀ ⊗ s₁ = (∈s₀ RU.∪ ∈s₁) (e₀ ⊗ e₁)
+    where   ∈s₀ = λ { (e₀ ⊗ e₁) → e₀ ∈ s₀ }
+            ∈s₁ = λ { (e₀ ⊗ e₁) → e₁ ∈ s₁ }
 
 _∈-Bool_ : ∀ {t} → FinElem t → FinSet t → Bool
 ⊙  e    ∈-Bool ⊙  s with lookup e s
