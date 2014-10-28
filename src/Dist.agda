@@ -2,7 +2,7 @@ module Dist where
 
 open import Data.Fin            using (Fin)
 open import Data.Fin.Subset     using (Subset; ⁅_⁆)
-                                renaming (_∪_ to _S∪_)
+                                renaming (_∪_ to _S∪_; _∩_ to _S∩_)
 open import Data.Nat            using (ℕ)
 
 infixr 5 _⊗_
@@ -28,7 +28,7 @@ FinElem = Dist Fin
 --  FinSet
 --
 
-infix 4 _∪_
+infix 4 _∪_ _∩_
 
 -- insertion
 insert : ∀ {t} → FinElem t → FinSet t → FinSet t
@@ -42,9 +42,19 @@ insert {tₒ ⨂ t₁} (e₀ ⊗ e₁) (s₀ ⊗ s₁) = insert e₀ s₀ ⊗ in
 -- union
 -- non-abelian, i.e., a ∪ b ≠ b ∪ a
 _∪_ : ∀ {t} → FinSet t → FinSet t → FinSet t
-⊙ a     ∪ ⊙ b     = ⊙ (a S∪ b)
+⊙  a    ∪ ⊙  b    = ⊙  (a S∪ b)
 ⊕₀ a    ∪ ⊕₀ b    = ⊕₀ (a ∪ b)
 ⊕₀ a    ∪ ⊕₁ b    = ⊕₀ a          -- second set discarded!
 ⊕₁ a    ∪ ⊕₀ b    = ⊕₁ a          -- second set discarded!
 ⊕₁ a    ∪ ⊕₁ b    = ⊕₁ (a ∪ b)
 a₀ ⊗ a₁ ∪ b₀ ⊗ b₁ = (a₀ ∪ b₀) ⊗ (a₁ ∪ b₁)
+
+-- intersection
+-- non-abelian, i.e., a ∪ b ≠ b ∪ a
+_∩_ : ∀ {t} → FinSet t → FinSet t → FinSet t
+⊙  a    ∩ ⊙  b    = ⊙  (a S∩ b)
+⊕₀ a    ∩ ⊕₀ b    = ⊕₀ (a ∩ b)
+⊕₀ a    ∩ ⊕₁ b    = ⊕₀ a
+⊕₁ a    ∩ ⊕₀ b    = ⊕₁ a
+⊕₁ a    ∩ ⊕₁ b    = ⊕₁ (a ∩ b)
+a₀ ⊗ a₁ ∩ b₀ ⊗ b₁ = (a₀ ∩ b₀) ⊗ (a₁ ∩ b₁)
