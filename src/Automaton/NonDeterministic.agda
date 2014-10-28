@@ -2,10 +2,12 @@ module Automaton.NonDeterministic where
 
 open import Automaton.Types using (String)
 
+open import Data.Bool           using (true; false)
 open import Data.Nat            using (ℕ; suc; zero; _+_)
 open import Data.Fin            using (Fin)
                                 renaming (zero to Fzero; suc to Fsuc)
-open import Dist                using (FinSet; FinElem; Structure; ⨀; _⨁_; _⨂_; ⊙; ⊕₀; ⊕₁; _⊗_; insert)
+open import Dist                using (FinSet; FinElem; Structure; ⨀; _⨁_; _⨂_;
+                                    ⊙; ⊕₀; ⊕₁; _⊗_; insert; _∈-Bool_)
 
 -- ε, the "empty" character
 E : Structure
@@ -46,15 +48,15 @@ run m state = T ∘ run' m state
 
 accept : ∀ {q σ} → NFA q σ → String (Σ σ) → Set
 accept m string = run m (startState m) string
+-}
 
 -- concatenation
-_++_ : ∀ {q₀ q₁ σ} → NFA q₀ σ → NFA q₁ σ → NFA (q₀ + q₁) σ
-_++_ {q₀} {q₁} {σ} (nfa δ₀ start₀ accept₀) (nfa δ₁ start₁ accept₁) = nfa δ₂ (inject+ q₁ start₀) (inj₂Subset accept₁)
+_++_ : ∀ {Q₀ Q₁ Σ} → NFA Q₀ Σ → NFA Q₁ Σ → NFA (Q₀ ⨁ Q₁) Σ
+_++_ {Q₀} {Q₁} {Σ} (nfa δ₀ start₀ accept₀) (nfa δ₁ start₁ accept₁) =
+    nfa δ₂ (⊕₀ start₀) (⊕₁ accept₁)
 
-    where   δ₂ : Q (q₀ + q₁) → (Σ σ ⊎ E) → Subset (q₀ + q₁)
-            δ₂ q a with proj[ q₀ + q₁ ] q
-            δ₂ q a | inj₂ state₁ = inj₂Subset (δ₁ state₁ a)
-            δ₂ q a | inj₁ state₀ with state₀ ∈-Bool accept₀
-            δ₂ q a | inj₁ state₀ | true = inj₂Subset (δ₁ start₁ a)
-            δ₂ q a | inj₁ state₀ | false = inj₁Subset (δ₀ state₀ a)
--}
+    where   δ₂ : FinElem (Q₀ ⨁ Q₁) → FinElem (Σ ⨁ E) → FinSet (Q₀ ⨁ Q₁)
+            δ₂ (⊕₀ state) a with state ∈-Bool accept₀
+            δ₂ (⊕₀ state) a | true  = ⊕₁ (δ₁ start₁ a)
+            δ₂ (⊕₀ state) a | false = ⊕₀ (δ₀ state  a)
+            δ₂ (⊕₁ state) a         = ⊕₁ (δ₁ state  a)
