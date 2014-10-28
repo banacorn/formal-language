@@ -2,6 +2,7 @@ module Automaton.Deterministic where
 
 open import Automaton.Types using (String)
 
+open import Data.List           using (List; _∷_; [])
 open import Dist
 
 record DFA (Q : Structure) (Σ : Structure) : Set where
@@ -13,16 +14,17 @@ record DFA (Q : Structure) (Σ : Structure) : Set where
 
 open DFA
 
-{-
--- run & accept
-run : ∀ {q σ} → DFA q σ → Q q → String (Σ σ) → Set
+------------------------------------------------------------------------
+-- Run & Accept
+
+run : ∀ {Q Σ} → DFA Q Σ → FinElem Q → String (FinElem Σ) → Set
 run m state (x ∷ xs) = run m (δ m state x) xs
-run m state [] = state ∈ (acceptStates m)
+run m state []       = state ∈ acceptStates m
 
-
-accept : ∀ {q σ} → DFA q σ → String (Σ σ) → Set
+accept : ∀ {Q Σ} → DFA Q Σ → String (FinElem Σ) → Set
 accept m state = run m (startState m) state
 
+{-}
 -- union
 _∪_ : ∀ {q₀ q₁ σ} → DFA q₀ σ → DFA q₁ σ → DFA (q₀ * q₁) σ
 _∪_ {q₀} {q₁} {σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ accept₁) =
