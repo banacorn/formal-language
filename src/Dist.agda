@@ -3,10 +3,10 @@ module Dist where
 open import Data.Fin            using (Fin)
 open import Data.Fin.Subset     using (Subset; inside; outside; ⁅_⁆)
                                 renaming (_∪_ to _S∪_; _∩_ to _S∩_; _∈_ to _S∈_)
-open import Data.Vec            using (lookup)
+open import Data.Vec            using (lookup; map)
 open import Data.Nat            using (ℕ)
 open import Data.Empty          using (⊥)
-open import Data.Bool           using (Bool; true; false; _∧_)
+open import Data.Bool           using (Bool; true; false; _∧_; not)
 import Relation.Unary           as RU
 
 
@@ -92,3 +92,11 @@ _∩_ : ∀ {t} → FinSet t → FinSet t → FinSet t
 ⊕₁ a    ∩ ⊕₀ b    = ⊕₁ a
 ⊕₁ a    ∩ ⊕₁ b    = ⊕₁ (a ∩ b)
 a₀ ⊗ a₁ ∩ b₀ ⊗ b₁ = (a₀ ∩ b₀) ⊗ (a₁ ∩ b₁)
+
+-- Complement
+
+∁ : ∀ {t} → FinSet t → FinSet t
+∁ (⊙ a)     = ⊙ (map not a)
+∁ (⊕₀ a)    = ⊕₀ (∁ a)
+∁ (⊕₁ a)    = ⊕₁ (∁ a)
+∁ (a₀ ⊗ a₁) = (∁ a₀) ⊗ (∁ a₁)
