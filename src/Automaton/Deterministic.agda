@@ -28,16 +28,6 @@ accept m state = run m (startState m) state
 ------------------------------------------------------------------------
 -- Operations on DFA
 
--- Union
-_∪_ : ∀ {Q₀ Q₁ Σ} → DFA Q₀ Σ → DFA Q₁ Σ → DFA (Q₀ ⨂ Q₁) Σ
-_∪_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ accept₁) =
-    dfa δ₂ start₂ accept₂
-    where   δ₂ : FinElem (Q₀ ⨂ Q₁) → FinElem Σ → FinElem (Q₀ ⨂ Q₁)
-            δ₂ (s₀ ⊗ s₁) a = δ₀ s₀ a ⊗ δ₁ s₁ a
-            start₂ : FinElem (Q₀ ⨂ Q₁)
-            start₂ = start₀ ⊗ start₁
-            accept₂ : FinSet (Q₀ ⨂ Q₁)
-            accept₂ = {!   !}
 
 -- Intersection
 _∩_ : ∀ {Q₀ Q₁ Σ} → DFA Q₀ Σ → DFA Q₁ Σ → DFA (Q₀ ⨂ Q₁) Σ
@@ -53,6 +43,10 @@ _∩_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ acce
 -- Complement
 ¬_ : ∀ {Q Σ} → DFA Q Σ → DFA Q Σ
 ¬_ (dfa δ start accept) = dfa δ start (∁ accept)
+
+-- Union
+_∪_ : ∀ {Q₀ Q₁ Σ} → DFA Q₀ Σ → DFA Q₁ Σ → DFA (Q₀ ⨂ Q₁) Σ
+A ∪ B = ¬ ((¬ A) ∩ (¬ B))
 
 -- Difference
 _//_ : ∀ {Q₀ Q₁ Σ} → DFA Q₀ Σ → DFA Q₁ Σ → DFA (Q₀ ⨂ Q₁) Σ
