@@ -25,6 +25,8 @@ run m state []       = state ∈ acceptStates m
 accept : ∀ {Q Σ} → DFA Q Σ → String (FinElem Σ) → Set
 accept m state = run m (startState m) state
 
+------------------------------------------------------------------------
+-- Operations on DFA
 
 -- Union
 _∪_ : ∀ {Q₀ Q₁ Σ} → DFA Q₀ Σ → DFA Q₁ Σ → DFA (Q₀ ⨂ Q₁) Σ
@@ -51,3 +53,7 @@ _∩_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ acce
 -- Complement
 ¬_ : ∀ {Q Σ} → DFA Q Σ → DFA Q Σ
 ¬_ (dfa δ start accept) = dfa δ start (∁ accept)
+
+-- Difference
+_//_ : ∀ {Q₀ Q₁ Σ} → DFA Q₀ Σ → DFA Q₁ Σ → DFA (Q₀ ⨂ Q₁) Σ
+A // B = A ∩ (¬ B)
