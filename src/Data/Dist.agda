@@ -21,6 +21,7 @@ data Structure : Set where
     ⨀   : ℕ → Structure
     _⨁_ : Structure → Structure → Structure         -- coproduct
     _⨂_ : Structure → Structure → Structure         -- product
+    ℘   : Structure → Structure
 
 data Dist (S : ℕ → Set) : Structure → Set where
     ⊙    : ∀ {m  } → S m                 → Dist S (  ⨀ m)
@@ -110,6 +111,9 @@ size : Structure → ℕ
 size (⨀ s) = s
 size (s₀ ⨁ s₁) = size s₀ + size s₁
 size (s₀ ⨂ s₁) = size s₀ * size s₁
+size (℘ s) with size s
+size (℘ s) | zero  = 1
+size (℘ s) | suc t = suc t * 2
 
 -- build a list with elements collected from a subset
 Subset⇒List : ∀ {n} → Subset n → List (Fin n)
