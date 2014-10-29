@@ -5,16 +5,14 @@ open import Automaton.Types using (String)
 open import Data.Bool           using (true; false)
 open import Data.Empty          using (⊥)
 open import Data.Nat            using (ℕ; suc; zero; _+_)
-open import Data.Fin            using (Fin)
-                                renaming (zero to Fzero; suc to Fsuc)
-open import Data.List           using (List; []; _∷_; monad; foldr)
+open import Data.Fin            renaming (zero to Fzero)
+open import Data.List           using (List; []; _∷_; foldr)
 open import Data.Dist           using (FinSet; FinElem; Structure; ⨀; _⨁_; _⨂_;
-                                    ⊙; ⊕₀; ⊕₁; _⊗_; insert; _∈-Bool_; _∈_)
+                                    ⊙; ⊕₀; ⊕₁; _⊗_; insert; _∈-Bool_; _∈_; ⇒List)
 import Relation.Unary           as RU
--- some monad shit
-open import Category.Monad      using (RawMonad; module RawMonad)
-open import Level               renaming (zero to Lzero)
-open RawMonad {Lzero} monad      using (return; _>>=_)
+
+------------------------------------------------------------------------
+-- NFA datatypes
 
 -- ε, the "empty" character
 E : Structure
@@ -31,6 +29,9 @@ record NFA (Q : Structure) (Σ : Structure) : Set where
 
 open NFA
 
+------------------------------------------------------------------------
+-- Run & Accept
+
 -- closure of Choices formed by collecting states reachable by ε
 ε-closure : ∀ {Q Σ} → NFA Q Σ → FinElem Q → FinSet Q
 ε-closure m state = insert state (δ m state (⊕₁ ε))
@@ -42,32 +43,17 @@ open NFA
 
 run : ∀ {Q Σ} → NFA Q Σ → FinElem Q → String (FinElem Σ) → Set
 run m state []       = state ∈ (acceptStates m)
-run m state (x ∷ xs) = ∪-fold {!   !} {!   !}
+run m state (x ∷ xs) = ∪-fold (λ s → run m s xs) (⇒List states')
     where   states' = ε-closure m state
 
-{-
-toBool : Set → Bool
-toBool ⊤ = true
-
-run' : ∀ {q σ} → NFA q σ → Q q → String (Σ σ) → Bool
-run' m state [] = toBool (state ∈ acceptStates m)
-run' {q} m state (x ∷ xs) = or (⇒List states' >>= map runWithState ∘ ⇒List ∘ transitWithState)
-    where   states' = ε-closure m state
-
-            runWithState : Q q → Bool
-            runWithState q = run' m q xs
-
-            transitWithState : Q q → Subset q
-            transitWithState q = δ m q (Data.Sum.inj₁ x)
-
-run : ∀ {q σ} → NFA q σ → Q q → String (Σ σ) → Set
-run m state = T ∘ run' m state
-
-accept : ∀ {q σ} → NFA q σ → String (Σ σ) → Set
+accept : ∀ {Q Σ} → NFA Q Σ → String (FinElem Σ) → Set
 accept m string = run m (startState m) string
--}
 
--- concatenation
+
+------------------------------------------------------------------------
+-- Opertations on NFA
+
+-- Concatenation
 _++_ : ∀ {Q₀ Q₁ Σ} → NFA Q₀ Σ → NFA Q₁ Σ → NFA (Q₀ ⨁ Q₁) Σ
 _++_ {Q₀} {Q₁} {Σ} (nfa δ₀ start₀ accept₀) (nfa δ₁ start₁ accept₁) =
     nfa δ₂ (⊕₀ start₀) (⊕₁ accept₁)
