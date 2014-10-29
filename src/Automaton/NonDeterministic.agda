@@ -36,7 +36,7 @@ open NFA
 ε-closure : ∀ {Q Σ} → NFA Q Σ → FinElem Q → FinSet Q
 ε-closure m state = insert state (δ m state (⊕₁ ε))
 
-∪-fold : ∀ {A} → (P : A → Set) → List A → Set
+∪-fold : {A : Set} → (P : A → Set) → List A → Set
 ∪-fold {A} P = foldr or ⊥
     where   or : A → Set → Set
             or x acc = (P RU.∪ λ _ → acc) x
