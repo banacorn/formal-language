@@ -38,8 +38,14 @@ data Dist (S : ℕ → Set) : Structure → Set where
 size (⨀ s) = s
 size (s₀ ⨁ s₁) = size s₀ + size s₁
 size (s₀ ⨂ s₁) = size s₀ * size s₁
-size (s₀ ^ s₁) with size s₁
-size (s₀ ^ s₁) | n  = {!   !}
+size (s₀ ^ s₁) with size s₀
+size (s₀ ^ s₁) | n₀ with size s₁
+size (s₀ ^ s₁) | n₀ | n₁ = n₀ ** n₁
+    where   -- exponential
+            _**_ : ℕ → ℕ → ℕ
+            a ** zero = a
+            a ** suc b = (a ** b) * b
+
 
 FinSet = Dist Subset
 FinElem = Dist Fin
