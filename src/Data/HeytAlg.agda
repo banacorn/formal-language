@@ -1,4 +1,4 @@
-module Data.Dist where
+module Data.HeytAlg where
 
 open import Data.Fin            using (Fin; fromℕ; inject₁)
 open import Data.Fin.Subset     using (Subset; inside; outside; ⁅_⁆)
@@ -9,7 +9,7 @@ open import Data.Vec            using (Vec; lookup; reverse)
 open import Data.Nat            using (ℕ; zero; suc; _+_; _*_)
 open import Data.Empty          using (⊥)
 open import Data.Bool           using (Bool; true; false; _∧_; not)
-import Relation.Unary           as RU
+import      Relation.Unary      as RU
 open import Function            using (_∘_)
 
 infixr 5 _⊗_
@@ -21,18 +21,18 @@ data Structure : Set where
     ⨀   : ℕ → Structure
     _⨁_ : Structure → Structure → Structure         -- coproduct
     _⨂_ : Structure → Structure → Structure         -- product
-    _^_ : Structure → Structure → Structure
+    _^_ : Structure → Structure → Structure         -- exponential
 
-
-data Dist (S : ℕ → Set) : Structure → Set where
-    ⊙    : ∀ {m  } → S m                 → Dist S (  ⨀ m)
+-- Bicartesian closed FinSet, I guess :p
+data HeytAlg (S : ℕ → Set) : Structure → Set where
+    ⊙    : ∀ {m  } → S m                       → HeytAlg S (  ⨀ m)
     -- coproduct
-    ⊕₀   : ∀ {m n} → Dist S m            → Dist S (m ⨁ n)
-    ⊕₁   : ∀ {m n} → Dist S n            → Dist S (m ⨁ n)
+    ⊕₀   : ∀ {m n} → HeytAlg S m               → HeytAlg S (m ⨁ n)
+    ⊕₁   : ∀ {m n} → HeytAlg S n               → HeytAlg S (m ⨁ n)
     -- product
-    _⊗_  : ∀ {m n} → Dist S m → Dist S n → Dist S (m ⨂ n)
-    -- function
-    ⊜    : ∀ {m n} → Dist (Vec (Dist S m)) n → Dist S (m ^ n)
+    _⊗_  : ∀ {m n} → HeytAlg S m → HeytAlg S n → HeytAlg S (m ⨂ n)
+    -- exponential
+    ⊜    : ∀ {m n} → HeytAlg (Vec (HeytAlg S m)) n → HeytAlg S (m ^ n)
 
 size : Structure → ℕ
 size (⨀ s) = s
@@ -46,8 +46,8 @@ size (s₀ ^ s₁) | n₀ | n₁ = n₀ ** n₁
             a ** zero = a
             a ** suc b = (a ** b) * b
 
-FinSet = Dist Subset
-FinElem = Dist Fin
+FinElem = HeytAlg Fin
+FinSet = HeytAlg Subset
 
 --
 --  FinSet
