@@ -23,7 +23,6 @@ data Structure : Set where
     _⨂_ : Structure → Structure → Structure         -- product
     _^_ : Structure → Structure → Structure
 
-size : Structure → ℕ
 
 data Dist (S : ℕ → Set) : Structure → Set where
     ⊙    : ∀ {m  } → S m                 → Dist S (  ⨀ m)
@@ -33,8 +32,9 @@ data Dist (S : ℕ → Set) : Structure → Set where
     -- product
     _⊗_  : ∀ {m n} → Dist S m → Dist S n → Dist S (m ⨂ n)
     -- function
-    ⊜    : ∀ {m n} → Vec (Dist S m) (size n) → Dist S (m ^ n)
+    ⊜    : ∀ {m n} → Dist (Vec (Dist S m)) n → Dist S (m ^ n)
 
+size : Structure → ℕ
 size (⨀ s) = s
 size (s₀ ⨁ s₁) = size s₀ + size s₁
 size (s₀ ⨂ s₁) = size s₀ * size s₁
@@ -45,7 +45,6 @@ size (s₀ ^ s₁) | n₀ | n₁ = n₀ ** n₁
             _**_ : ℕ → ℕ → ℕ
             a ** zero = a
             a ** suc b = (a ** b) * b
-
 
 FinSet = Dist Subset
 FinElem = Dist Fin
