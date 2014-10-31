@@ -18,50 +18,36 @@ infixr 3 _⨁_ _⨂_ _^_
 -- infix 4 _∈-Bool_ _∈_
 --infix 4 _∪_ _∩_
 
-data Structure : Set where
-    ⨀   : ℕ → Structure
-    _⨁_ : Structure → Structure → Structure         -- coproduct
-    _⨂_ : Structure → Structure → Structure         -- product
-    _^_ : Structure → Structure → Structure         -- exponential
+-- Supposely it's bicartesian closed and a poset
+-- but I have no idea what Heyting Algebra has something to do with this
+-- ** Just some cool names **
+data HeytAlg : Set where
+    ⨀   : ℕ → HeytAlg
+    _⨁_ : HeytAlg → HeytAlg → HeytAlg         -- coproduct
+    _⨂_ : HeytAlg → HeytAlg → HeytAlg         -- product
+    _^_ : HeytAlg → HeytAlg → HeytAlg         -- exponential
 
--- Bicartesian closed FinSet, I guess :p
-data HeytAlg (S : ℕ → Set) : Structure → Set where
-    ⊙    : ∀ {m  } → S m                       → HeytAlg S (  ⨀ m)
+-- Carrying something indexed by ℕ
+data Structure (S : ℕ → Set) : HeytAlg → Set where
+    ⊙    : ∀ {m  } → S m                       → Structure S (  ⨀ m)
     -- coproduct
-    ⊕₀   : ∀ {m n} → HeytAlg S m               → HeytAlg S (m ⨁ n)
-    ⊕₁   : ∀ {m n} → HeytAlg S n               → HeytAlg S (m ⨁ n)
+    ⊕₀   : ∀ {m n} → Structure S m               → Structure S (m ⨁ n)
+    ⊕₁   : ∀ {m n} → Structure S n               → Structure S (m ⨁ n)
     -- product
-    _⊗_  : ∀ {m n} → HeytAlg S m → HeytAlg S n → HeytAlg S (m ⨂ n)
+    _⊗_  : ∀ {m n} → Structure S m → Structure S n → Structure S (m ⨂ n)
     -- exponential
-    ⊜    : ∀ {m n} → HeytAlg (Vec (HeytAlg S m)) n → HeytAlg S (m ^ n)
+    ⊜    : ∀ {m n} → Structure (Vec (Structure S m)) n → Structure S (m ^ n)
 
-mapHeytAlg : ∀ {S T t} → (F : ∀ {x} → S x → T x) → HeytAlg S t → HeytAlg T t
-mapHeytAlg f (⊙ x) = ⊙ (f x)
-mapHeytAlg f (⊕₀ a) = ⊕₀ (mapHeytAlg f a)
-mapHeytAlg f (⊕₁ a) = ⊕₁ (mapHeytAlg f a)
-mapHeytAlg f (a ⊗ a₁) = mapHeytAlg f a ⊗ mapHeytAlg f a₁
-mapHeytAlg f (⊜ a) = ⊜ (mapHeytAlg (vmap (mapHeytAlg f)) a)
-
-
-FinElem : Structure → Set
-FinElem = HeytAlg Fin
-
-FinSet : Structure → Set
-FinSet s = HeytAlg Fin (⨀ 2 ^ s)
-
-⇒Side : HeytAlg Fin (⨀ 2) → Bool
-⇒Side (⊙ Fzero) = outside
-⇒Side (⊙ (Fsuc x)) = inside
-
-⇒Subset : ∀ {t} → FinSet t → HeytAlg Subset t
-⇒Subset (⊜ (   ⊙ s )) = ⊙ (vmap ⇒Side s)
-⇒Subset (⊜ (   ⊕₀ s)) = ⊕₀ (⇒Subset (⊜ s))
-⇒Subset (⊜ (   ⊕₁ s)) = ⊕₁ (⇒Subset (⊜ s))
-⇒Subset (⊜ (s₀ ⊗ s₁)) = (⇒Subset (⊜ s₀)) ⊗ (⇒Subset (⊜ s₁))
-⇒Subset (⊜ (⊜ s)) = ⊜ (mapHeytAlg (vmap (mapHeytAlg (vmap ⇒Side))) s)
+-- Structure be a functor, smap be the map
+smap : ∀ {S T t} → (F : ∀ {x} → S x → T x) → Structure S t → Structure T t
+smap f (⊙   x ) = ⊙ (f x)
+smap f (⊕₀  a ) = ⊕₀ (smap f a)
+smap f (⊕₁  a ) = ⊕₁ (smap f a)
+smap f (a ⊗ a₁) = smap f a ⊗ smap f a₁
+smap f (⊜   a ) = ⊜ (smap (vmap (smap f)) a)
 
 -- Measuring the size
-∣_∣ : Structure → ℕ
+∣_∣ : HeytAlg → ℕ
 ∣    ⨀ s ∣ = s
 ∣ s₀ ⨁ s₁ ∣ = ∣ s₀ ∣ + ∣ s₁ ∣
 ∣ s₀ ⨂ s₁ ∣ = ∣ s₀ ∣ * ∣ s₁ ∣
@@ -73,9 +59,26 @@ FinSet s = HeytAlg Fin (⨀ 2 ^ s)
             a ** zero = a
             a ** suc b = (a ** b) * b
 
---
---  FinSet
---
+
+------------------------------------------------------------------------
+-- FinElem & FinSet
+
+FinElem : HeytAlg → Set
+FinElem = Structure Fin
+
+FinSet : HeytAlg → Set
+FinSet s = Structure Fin (⨀ 2 ^ s)
+
+⇒Side : Structure Fin (⨀ 2) → Bool
+⇒Side (⊙ Fzero) = outside
+⇒Side (⊙ (Fsuc x)) = inside
+
+⇒Subset : ∀ {t} → FinSet t → Structure Subset t
+⇒Subset (⊜ (   ⊙ s )) = ⊙ (vmap ⇒Side s)
+⇒Subset (⊜ (   ⊕₀ s)) = ⊕₀ (⇒Subset (⊜ s))
+⇒Subset (⊜ (   ⊕₁ s)) = ⊕₁ (⇒Subset (⊜ s))
+⇒Subset (⊜ (s₀ ⊗ s₁)) = (⇒Subset (⊜ s₀)) ⊗ (⇒Subset (⊜ s₁))
+⇒Subset (⊜ (⊜ s)) = ⊜ (smap (vmap (smap (vmap ⇒Side))) s)
 
 ------------------------------------------------------------------------
 -- Membership and subset predicates
