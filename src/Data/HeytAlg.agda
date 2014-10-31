@@ -43,18 +43,6 @@ mapHeytAlg f (a ⊗ a₁) = mapHeytAlg f a ⊗ mapHeytAlg f a₁
 mapHeytAlg f (⊜ a) = ⊜ (mapHeytAlg (vmap (mapHeytAlg f)) a)
 
 
-size : Structure → ℕ
-size (⨀ s) = s
-size (s₀ ⨁ s₁) = size s₀ + size s₁
-size (s₀ ⨂ s₁) = size s₀ * size s₁
-size (s₀ ^ s₁) with size s₀
-size (s₀ ^ s₁) | n₀ with size s₁
-size (s₀ ^ s₁) | n₀ | n₁ = n₀ ** n₁
-    where   -- exponential
-            _**_ : ℕ → ℕ → ℕ
-            a ** zero = a
-            a ** suc b = (a ** b) * b
-
 FinElem : Structure → Set
 FinElem = HeytAlg Fin
 
@@ -71,6 +59,19 @@ FinSet s = HeytAlg Fin (⨀ 2 ^ s)
 ⇒Subset (⊜ (   ⊕₁ s)) = ⊕₁ (⇒Subset (⊜ s))
 ⇒Subset (⊜ (s₀ ⊗ s₁)) = (⇒Subset (⊜ s₀)) ⊗ (⇒Subset (⊜ s₁))
 ⇒Subset (⊜ (⊜ s)) = ⊜ (mapHeytAlg (vmap (mapHeytAlg (vmap ⇒Side))) s)
+
+-- Measuring the size
+∣_∣ : Structure → ℕ
+∣    ⨀ s ∣ = s
+∣ s₀ ⨁ s₁ ∣ = ∣ s₀ ∣ + ∣ s₁ ∣
+∣ s₀ ⨂ s₁ ∣ = ∣ s₀ ∣ * ∣ s₁ ∣
+∣ s₀ ^ s₁ ∣ with ∣ s₀ ∣
+∣ s₀ ^ s₁ ∣ | n₀ with ∣ s₁ ∣
+∣ s₀ ^ s₁ ∣ | n₀ | n₁ = n₀ ** n₁
+    where   -- exponential
+            _**_ : ℕ → ℕ → ℕ
+            a ** zero = a
+            a ** suc b = (a ** b) * b
 
 --
 --  FinSet
