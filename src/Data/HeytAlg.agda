@@ -1,7 +1,8 @@
 module Data.HeytAlg where
 
 open import Data.Fin            using (Fin; fromℕ; inject₁)
-open import Data.Fin.Subset     using (Subset; inside; outside; ⁅_⁆)
+                                renaming (zero to Fzero; suc to Fsuc)
+open import Data.Fin.Subset     using (Subset; Side; inside; outside; ⁅_⁆)
                                 renaming (_∪_ to _S∪_; _∩_ to _S∩_; _∈_ to _S∈_)
 open import Data.List           using (List; []; _∷_; map; zipWith)
 open import Data.Vec            using (Vec; lookup; reverse)
@@ -14,8 +15,8 @@ open import Function            using (_∘_)
 
 infixr 5 _⊗_
 infixr 3 _⨁_ _⨂_ _^_
-infix 4 _∈-Bool_ _∈_
-infix 4 _∪_ _∩_
+-- infix 4 _∈-Bool_ _∈_
+--infix 4 _∪_ _∩_
 
 data Structure : Set where
     ⨀   : ℕ → Structure
@@ -34,6 +35,14 @@ data HeytAlg (S : ℕ → Set) : Structure → Set where
     -- exponential
     ⊜    : ∀ {m n} → HeytAlg (Vec (HeytAlg S m)) n → HeytAlg S (m ^ n)
 
+mapHeytAlg : ∀ {S T t} → (F : ∀ {x} → S x → T x) → HeytAlg S t → HeytAlg T t
+mapHeytAlg f (⊙ x) = ⊙ (f x)
+mapHeytAlg f (⊕₀ a) = ⊕₀ (mapHeytAlg f a)
+mapHeytAlg f (⊕₁ a) = ⊕₁ (mapHeytAlg f a)
+mapHeytAlg f (a ⊗ a₁) = mapHeytAlg f a ⊗ mapHeytAlg f a₁
+mapHeytAlg f (⊜ a) = ⊜ (mapHeytAlg (vmap (mapHeytAlg f)) a)
+
+
 size : Structure → ℕ
 size (⨀ s) = s
 size (s₀ ⨁ s₁) = size s₀ + size s₁
@@ -46,8 +55,22 @@ size (s₀ ^ s₁) | n₀ | n₁ = n₀ ** n₁
             a ** zero = a
             a ** suc b = (a ** b) * b
 
+FinElem : Structure → Set
 FinElem = HeytAlg Fin
-FinSet = HeytAlg Subset
+
+FinSet : Structure → Set
+FinSet s = HeytAlg Fin (⨀ 2 ^ s)
+
+⇒Side : HeytAlg Fin (⨀ 2) → Bool
+⇒Side (⊙ Fzero) = outside
+⇒Side (⊙ (Fsuc x)) = inside
+
+⇒Subset : ∀ {t} → FinSet t → HeytAlg Subset t
+⇒Subset (⊜ (   ⊙ s )) = ⊙ (vmap ⇒Side s)
+⇒Subset (⊜ (   ⊕₀ s)) = ⊕₀ (⇒Subset (⊜ s))
+⇒Subset (⊜ (   ⊕₁ s)) = ⊕₁ (⇒Subset (⊜ s))
+⇒Subset (⊜ (s₀ ⊗ s₁)) = (⇒Subset (⊜ s₀)) ⊗ (⇒Subset (⊜ s₁))
+⇒Subset (⊜ (⊜ s)) = ⊜ (mapHeytAlg (vmap (mapHeytAlg (vmap ⇒Side))) s)
 
 --
 --  FinSet
@@ -56,16 +79,15 @@ FinSet = HeytAlg Subset
 ------------------------------------------------------------------------
 -- Membership and subset predicates
 
+{-}
 _∈_ : ∀ {t} → FinElem t → FinSet t → Set
-⊙  e    ∈ ⊙  s    = e S∈ s
-⊕₀ e    ∈ ⊕₀ s    = e ∈ s
-⊕₀ e    ∈ ⊕₁ s    = ⊥
-⊕₁ e    ∈ ⊕₀ s    = ⊥
-⊕₁ e    ∈ ⊕₁ s    = e ∈ s
-e₀ ⊗ e₁ ∈ s₀ ⊗ s₁ = (∈s₀ RU.∪ ∈s₁) (e₀ ⊗ e₁)
-    where   ∈s₀ = λ { (e₀ ⊗ e₁) → e₀ ∈ s₀ }
-            ∈s₁ = λ { (e₀ ⊗ e₁) → e₁ ∈ s₁ }
-⊜  e    ∈ ⊜  s    = {!   !}
+⊙ e ∈ ⊜ s = {!   !}
+⊕₀ e ∈ s = {!   !}
+⊕₁ e ∈ s = {!   !}
+e₀ ⊗ e₁ ∈ s = {!   !}
+⊜ e ∈ s = {!   !}
+
+
 
 _∈-Bool_ : ∀ {t} → FinElem t → FinSet t → Bool
 ⊙  e    ∈-Bool ⊙  s with lookup e s
@@ -143,3 +165,4 @@ Subset⇒List = tesbuS⇒List ∘ reverse
 ⇒List (⊕₁ a)  = map ⊕₁ (⇒List a)
 ⇒List (a ⊗ b) = zipWith _⊗_ (⇒List a) (⇒List b)
 ⇒List (⊜ a)   = {!   !}
+-}
