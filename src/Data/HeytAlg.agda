@@ -15,7 +15,8 @@ open import Function            using (_∘_)
 
 infixr 5 _⊗_
 infixr 3 _⨁_ _⨂_ _^_
--- infix 4 _∈-Bool_ _∈_
+infix 4 _∈_
+--infix 4 _∈-Bool_ _∈_
 --infix 4 _∪_ _∩_
 
 -- Supposely it's bicartesian closed and a poset
@@ -78,21 +79,24 @@ FinSet s = Structure Fin (⨀ 2 ^ s)
 ⇒Subset (⊜ (   ⊕₀ s)) = ⊕₀ (⇒Subset (⊜ s))
 ⇒Subset (⊜ (   ⊕₁ s)) = ⊕₁ (⇒Subset (⊜ s))
 ⇒Subset (⊜ (s₀ ⊗ s₁)) = (⇒Subset (⊜ s₀)) ⊗ (⇒Subset (⊜ s₁))
-⇒Subset (⊜ (⊜ s)) = ⊜ (smap (vmap (smap (vmap ⇒Side))) s)
+⇒Subset (⊜ (   ⊜ s )) = ⊜ (smap (vmap (smap (vmap ⇒Side))) s)
 
 ------------------------------------------------------------------------
 -- Membership and subset predicates
 
-{-}
 _∈_ : ∀ {t} → FinElem t → FinSet t → Set
-⊙ e ∈ ⊜ s = {!   !}
-⊕₀ e ∈ s = {!   !}
-⊕₁ e ∈ s = {!   !}
-e₀ ⊗ e₁ ∈ s = {!   !}
-⊜ e ∈ s = {!   !}
+⊙ e     ∈ ⊜ (⊙ x) = e S∈ (vmap ⇒Side x)
+⊕₀ e    ∈ ⊜ (⊕₀ s) = e ∈ (⊜ s)
+⊕₀ e    ∈ ⊜ (⊕₁ s) = ⊥
+⊕₁ e    ∈ ⊜ (⊕₀ s) = ⊥
+⊕₁ e    ∈ ⊜ (⊕₁ s) = e ∈ (⊜ s)
+e₀ ⊗ e₁ ∈ ⊜ (s₀ ⊗ s₁) = (∈s₀ RU.∪ ∈s₁) (e₀ ⊗ e₁)
+    where   ∈s₀ = λ { (e₀ ⊗ e₁) → e₀ ∈ ⊜ s₀ }
+            ∈s₁ = λ { (e₀ ⊗ e₁) → e₁ ∈ ⊜ s₁ }
+⊜ e ∈ ⊜ (⊜ s) = (⊜ e) ∈ (⊜ (⊜ s))
 
 
-
+{-}
 _∈-Bool_ : ∀ {t} → FinElem t → FinSet t → Bool
 ⊙  e    ∈-Bool ⊙  s with lookup e s
 ... | inside  = true
