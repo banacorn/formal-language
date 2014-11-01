@@ -15,8 +15,7 @@ open import Function            using (_∘_)
 
 infixr 5 _⊗_
 infixr 3 _⨁_ _⨂_ _^_
-infix 4 _∈_
---infix 4 _∈-Bool_ _∈_
+infix 4 _∈-Bool_ _∈_
 --infix 4 _∪_ _∩_
 
 -- Supposely it's bicartesian closed and a poset
@@ -38,6 +37,9 @@ data Structure (S : ℕ → Set) : HeytAlg → Set where
     _⊗_  : ∀ {m n} → Structure S m → Structure S n → Structure S (m ⨂ n)
     -- exponential
     ⊜    : ∀ {m n} → Structure (Vec (Structure S m)) n → Structure S (m ^ n)
+
+⊜' : ∀ {S m n} → Structure S (m ^ n) → Structure (Vec (Structure S m)) n
+⊜' a = ?
 
 -- Structure be a functor, smap be the map
 smap : ∀ {S T t} → (F : ∀ {x} → S x → T x) → Structure S t → Structure T t
@@ -74,6 +76,11 @@ FinSet s = Structure Fin (⨀ 2 ^ s)
 ⇒Side (⊙ Fzero) = outside
 ⇒Side (⊙ (Fsuc x)) = inside
 
+⇐Side : Bool → Structure Fin (⨀ 2)
+⇐Side outside = ⊙ Fzero
+⇐Side inside = ⊙ (Fsuc Fzero)
+
+
 ⇒Subset : ∀ {t} → FinSet t → Structure Subset t
 ⇒Subset (⊜ (   ⊙ s )) = ⊙ (vmap ⇒Side s)
 ⇒Subset (⊜ (   ⊕₀ s)) = ⊕₀ (⇒Subset (⊜ s))
@@ -96,18 +103,18 @@ e₀ ⊗ e₁ ∈ ⊜ (s₀ ⊗ s₁) = (∈s₀ RU.∪ ∈s₁) (e₀ ⊗ e₁)
 ⊜ e ∈ ⊜ (⊜ s) = (⊜ e) ∈ (⊜ (⊜ s))
 
 
-{-}
+
 _∈-Bool_ : ∀ {t} → FinElem t → FinSet t → Bool
-⊙  e    ∈-Bool ⊙  s with lookup e s
+⊙  e    ∈-Bool ⊜ (⊙ s) with lookup e (vmap ⇒Side s)
 ... | inside  = true
 ... | outside = false
-⊕₀ e    ∈-Bool ⊕₀ s    = e ∈-Bool s
-⊕₀ e    ∈-Bool ⊕₁ s    = false
-⊕₁ e    ∈-Bool ⊕₀ s    = false
-⊕₁ e    ∈-Bool ⊕₁ s    = e ∈-Bool s
-e₀ ⊗ e₁ ∈-Bool s₀ ⊗ s₁ = (e₀ ∈-Bool s₀) ∧ (e₁ ∈-Bool s₁)
-⊜  e    ∈-Bool ⊜  s    = {!   !}
-
+⊕₀ e    ∈-Bool ⊜ (⊕₀ s   ) = e ∈-Bool (⊜ s)
+⊕₀ e    ∈-Bool ⊜ (⊕₁ s   ) = false
+⊕₁ e    ∈-Bool ⊜ (⊕₀ s   ) = false
+⊕₁ e    ∈-Bool ⊜ (⊕₁ s   ) = e ∈-Bool (⊜ s)
+e₀ ⊗ e₁ ∈-Bool ⊜ (s₀ ⊗ s₁) = (e₀ ∈-Bool (⊜ s₀)) ∧ (e₁ ∈-Bool (⊜ s₁))
+⊜  e    ∈-Bool ⊜ (⊜  s   ) = {!   !}
+{-}
 ------------------------------------------------------------------------
 -- Set operations
 
