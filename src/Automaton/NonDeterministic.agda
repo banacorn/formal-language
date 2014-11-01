@@ -7,7 +7,7 @@ open import Data.Empty          using (⊥)
 open import Data.Nat            using (ℕ; suc; zero; _+_)
 open import Data.Fin            renaming (zero to Fzero)
 open import Data.List           using (List; []; _∷_; foldr)
-open import Data.Dist           using (FinSet; FinElem; Structure; ⨀; _⨁_; _⨂_;
+open import Data.HeytAlg        using (FinSet; FinElem; HeytAlg; ⨀; _⨁_; _⨂_;
                                     ⊙; ⊕₀; ⊕₁; _⊗_; insert; _∈-Bool_; _∈_; ⇒List)
 import Relation.Unary           as RU
 

@@ -4,8 +4,8 @@ open import Data.Fin            using (Fin; fromℕ; inject₁)
                                 renaming (zero to Fzero; suc to Fsuc)
 open import Data.Fin.Subset     using (Subset; Side; inside; outside; ⁅_⁆)
                                 renaming (_∪_ to _S∪_; _∩_ to _S∩_; _∈_ to _S∈_)
-open import Data.List           using (List; []; _∷_; map; zipWith)
-open import Data.Vec            using (Vec; lookup; reverse)
+open import Data.List           using (List; []; _∷_; map; zipWith; foldr; or)
+open import Data.Vec            using (Vec; lookup; reverse; toList)
                                 renaming ([] to v[]; _∷_ to _v∷_; map to vmap)
 open import Data.Nat            using (ℕ; zero; suc; _+_; _*_)
 open import Data.Empty          using (⊥)
@@ -38,16 +38,25 @@ data Structure (S : ℕ → Set) : HeytAlg → Set where
     -- exponential
     ⊜    : ∀ {m n} → Structure (Vec (Structure S m)) n → Structure S (m ^ n)
 
-⊜' : ∀ {S m n} → Structure S (m ^ n) → Structure (Vec (Structure S m)) n
-⊜' a = ?
-
 -- Structure be a functor, smap be the map
 smap : ∀ {S T t} → (F : ∀ {x} → S x → T x) → Structure S t → Structure T t
-smap f (⊙   x ) = ⊙ (f x)
+smap f (⊙   a ) = ⊙ (f a)
 smap f (⊕₀  a ) = ⊕₀ (smap f a)
 smap f (⊕₁  a ) = ⊕₁ (smap f a)
 smap f (a ⊗ a₁) = smap f a ⊗ smap f a₁
 smap f (⊜   a ) = ⊜ (smap (vmap (smap f)) a)
+
+∪-fold : ∀ {A n} → (P : A → Set) → Vec A n → Set
+∪-fold {A} P = foldr or' ⊥ ∘ toList
+    where   or' : A → Set → Set
+            or' x acc = (P RU.∪ λ _ → acc) x
+
+sor : ∀ {A S t} → (P : ∀ {n} → S n → Set) → Structure S t → Set
+sor P (⊙ s    ) = P s
+sor P (⊕₀ s   ) = sor P s
+sor P (⊕₁ s   ) = sor P s
+sor P (s₀ ⊗ s₁) = ((λ { (s₀ ⊗ s₁) → sor P s₀ }) RU.∪ (λ { (s₀ ⊗ s₁) → sor P s₁ })) (s₀ ⊗ s₁)
+sor P (⊜ s    ) = sor (∪-fold (sor P)) s
 
 -- Measuring the size
 ∣_∣ : HeytAlg → ℕ
@@ -100,11 +109,10 @@ _∈_ : ∀ {t} → FinElem t → FinSet t → Set
 e₀ ⊗ e₁ ∈ ⊜ (s₀ ⊗ s₁) = (∈s₀ RU.∪ ∈s₁) (e₀ ⊗ e₁)
     where   ∈s₀ = λ { (e₀ ⊗ e₁) → e₀ ∈ ⊜ s₀ }
             ∈s₁ = λ { (e₀ ⊗ e₁) → e₁ ∈ ⊜ s₁ }
-⊜ e ∈ ⊜ (⊜ s) = (⊜ e) ∈ (⊜ (⊜ s))
+⊜ e ∈ ⊜ (⊜ s) = {!   !}
 
 
-
-_∈-Bool_ : ∀ {t} → FinElem t → FinSet t → Bool
+_∈-Bool_ : ∀ {t} → Structure Fin t → Structure Fin (⨀ 2 ^ t) → Bool
 ⊙  e    ∈-Bool ⊜ (⊙ s) with lookup e (vmap ⇒Side s)
 ... | inside  = true
 ... | outside = false
@@ -113,11 +121,21 @@ _∈-Bool_ : ∀ {t} → FinElem t → FinSet t → Bool
 ⊕₁ e    ∈-Bool ⊜ (⊕₀ s   ) = false
 ⊕₁ e    ∈-Bool ⊜ (⊕₁ s   ) = e ∈-Bool (⊜ s)
 e₀ ⊗ e₁ ∈-Bool ⊜ (s₀ ⊗ s₁) = (e₀ ∈-Bool (⊜ s₀)) ∧ (e₁ ∈-Bool (⊜ s₁))
-⊜  e    ∈-Bool ⊜ (⊜  s   ) = {!   !}
-{-}
+⊜ e     ∈-Bool ⊜ (⊜ s    ) = {!   !}
+
 ------------------------------------------------------------------------
 -- Set operations
 
+
+-- Singleton
+singleton : ∀ {t} → Structure Fin t → Structure Fin (⨀ 2 ^ t)
+singleton (⊙ e    ) = ⊜ (⊙ (vmap ⇐Side ⁅ e ⁆))
+singleton (⊕₀ e   ) = singleton (⊕₀ e)
+singleton (⊕₁ e   ) = singleton (⊕₁ e)
+singleton (e₀ ⊗ e₁) = singleton (e₀ ⊗ e₁)
+singleton (⊜ e    ) = singleton (⊜ e    )
+
+{-}
 -- Insertion
 
 insert : ∀ {t} → FinElem t → FinSet t → FinSet t
