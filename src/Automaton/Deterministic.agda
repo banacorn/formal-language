@@ -1,53 +1,61 @@
 module Automaton.Deterministic where
 
-open import Automaton.Types using (String)
+-- open import Automaton.Types using (String)
 
-open import Data.List           using (List; _∷_; [])
-open import Data.Dist           using (FinSet; FinElem; Structure; ⨀; _⨁_; _⨂_;
-                                    ⊙; ⊕₀; ⊕₁; _⊗_; _∈_; ∁)
+open import Data.Nat
+open import Data.Fin
+open import Data.Fin.Subset
+open import Data.List
 
-record DFA (Q : Structure) (Σ : Structure) : Set where
+String = List
+
+record DFA (Q Σ : ℕ) : Set where
     constructor dfa
     field
-        δ : FinElem Q → FinElem Σ → FinElem Q
-        startState : FinElem Q
-        acceptStates : FinSet Q
+        δ : Fin Q → Fin Σ → Fin Q
+        startState : Fin Q
+        acceptState : Subset Q
 
 open DFA
 
 ------------------------------------------------------------------------
 -- Run & Accept
 
-run : ∀ {Q Σ} → DFA Q Σ → FinElem Q → String (FinElem Σ) → Set
-run m state (x ∷ xs) = run m (δ m state x) xs
-run m state []       = state ∈ acceptStates m
+run : ∀ {Q Σ} → DFA Q Σ → Fin Q → String (Fin Σ) → Set
+run automata state []       = state ∈ acceptState automata
+run automata state (x ∷ xs) = run automata (δ automata state x) xs
 
-accept : ∀ {Q Σ} → DFA Q Σ → String (FinElem Σ) → Set
-accept m state = run m (startState m) state
+accept : ∀ {Q Σ} → DFA Q Σ → String (Fin Σ) → Set
+accept automata string = run automata (startState automata) string
 
+------------------------------------------------------------------------
+-- operations on DFA
 
 -- Union
-_∪_ : ∀ {Q₀ Q₁ Σ} → DFA Q₀ Σ → DFA Q₁ Σ → DFA (Q₀ ⨂ Q₁) Σ
-_∪_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ accept₁) =
-    dfa δ₂ start₂ accept₂
-    where   δ₂ : FinElem (Q₀ ⨂ Q₁) → FinElem Σ → FinElem (Q₀ ⨂ Q₁)
-            δ₂ (s₀ ⊗ s₁) a = δ₀ s₀ a ⊗ δ₁ s₁ a
-            start₂ : FinElem (Q₀ ⨂ Q₁)
-            start₂ = start₀ ⊗ start₁
-            accept₂ : FinSet (Q₀ ⨂ Q₁)
-            accept₂ = {!   !}
+-- _∪_ : ∀ {Q₀ Q₁ Σ} → DFA Q₀ Σ → DFA Q₁ Σ → DFA (Q₀ ⨂ Q₁) Σ
 
--- Intersection
-_∩_ : ∀ {Q₀ Q₁ Σ} → DFA Q₀ Σ → DFA Q₁ Σ → DFA (Q₀ ⨂ Q₁) Σ
-_∩_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ accept₁) =
-    dfa δ₂ start₂ accept₂
-    where   δ₂ : FinElem (Q₀ ⨂ Q₁) → FinElem Σ → FinElem (Q₀ ⨂ Q₁)
-            δ₂ (s₀ ⊗ s₁) a = δ₀ s₀ a ⊗ δ₁ s₁ a
-            start₂ : FinElem (Q₀ ⨂ Q₁)
-            start₂ = start₀ ⊗ start₁
-            accept₂ : FinSet (Q₀ ⨂ Q₁)
-            accept₂ = accept₀ ⊗ accept₁
 
--- Complement
-¬_ : ∀ {Q Σ} → DFA Q Σ → DFA Q Σ
-¬_ (dfa δ start accept) = dfa δ start (∁ accept)
+
+-- _∪_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ accept₁) =
+--     dfa δ₂ start₂ accept₂
+--     where   δ₂ : FinElem (Q₀ ⨂ Q₁) → FinElem Σ → FinElem (Q₀ ⨂ Q₁)
+--             δ₂ (s₀ ⊗ s₁) a = δ₀ s₀ a ⊗ δ₁ s₁ a
+--             start₂ : FinElem (Q₀ ⨂ Q₁)
+--             start₂ = start₀ ⊗ start₁
+--             accept₂ : FinSet (Q₀ ⨂ Q₁)
+--             accept₂ = {!   !}
+--
+-- -- Intersection
+-- _∩_ : ∀ {Q₀ Q₁ Σ} → DFA Q₀ Σ → DFA Q₁ Σ → DFA (Q₀ ⨂ Q₁) Σ
+-- _∩_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ accept₁) =
+--     dfa δ₂ start₂ accept₂
+--     where   δ₂ : FinElem (Q₀ ⨂ Q₁) → FinElem Σ → FinElem (Q₀ ⨂ Q₁)
+--             δ₂ (s₀ ⊗ s₁) a = δ₀ s₀ a ⊗ δ₁ s₁ a
+--             start₂ : FinElem (Q₀ ⨂ Q₁)
+--             start₂ = start₀ ⊗ start₁
+--             accept₂ : FinSet (Q₀ ⨂ Q₁)
+--             accept₂ = accept₀ ⊗ accept₁
+--
+-- -- Complement
+-- ¬_ : ∀ {Q Σ} → DFA Q Σ → DFA Q Σ
+-- ¬_ (dfa δ start accept) = dfa δ start (∁ accept)
