@@ -1,16 +1,21 @@
 module Data.Dist where
 
-open import Data.Fin            using (Fin; fromℕ; inject₁)
-open import Data.Fin.Subset     using (Subset; inside; outside; ⁅_⁆)
-                                renaming (_∪_ to _S∪_; _∩_ to _S∩_; _∈_ to _S∈_)
+import Data.Fin as Fin
+open import Data.Fin            using (Fin; fromℕ; toℕ; inject₁)
+open import Data.Fin.Subset     using (inside; outside; ⁅_⁆)
+                                renaming (Subset to SubsetFin; _∪_ to _∪S_; _∩_ to _∩S_; _∈_ to _∈S_)
 open import Data.List           using (List; []; _∷_; map; zipWith)
-open import Data.Vec            using (lookup; reverse)
-                                renaming ([] to v[]; _∷_ to _v∷_; map to vmap)
-open import Data.Nat            using (ℕ; zero; suc; _+_; _*_)
+import Data.Vec as Vec
+open import Data.Vec            using (lookup; reverse; replicate)
+                                renaming ([] to []V; _∷_ to _∷V_; map to mapV; _++_ to _++V_)
+open import Data.Nat            -- using (ℕ; zero; suc; _+_; _*_; compare)
 open import Data.Empty          using (⊥)
 open import Data.Bool           using (Bool; true; false; _∧_; not)
 import Relation.Unary           as RU
 open import Function            using (_∘_)
+open import Relation.Nullary using (yes; no)
+-- open import Relation.Binary.PropositionalEquality
+
 
 infixr 5 _⊗_
 infixr 3 _⨁_ _⨂_
@@ -30,18 +35,21 @@ data Dist (S : ℕ → Set) : Structure → Set where
     -- "product"
     _⊗_  : ∀ {m n} → Dist S m → Dist S n → Dist S (m ⨂ n)
 
-FinSet = Dist Subset
-FinElem = Dist Fin
+Subset : Structure → Set
+Subset = Dist SubsetFin
+
+Elem : Structure → Set
+Elem = Dist Fin
 
 --
---  FinSet
+--  Subset
 --
 
 ------------------------------------------------------------------------
--- Membership and subset predicates
+-- Membership and Subset predicates
 
-_∈_ : ∀ {t} → FinElem t → FinSet t → Set
-⊙  e    ∈ ⊙  s    = e S∈ s
+_∈_ : ∀ {t} → Elem t → Subset t → Set
+⊙  e    ∈ ⊙  s    = e ∈S s
 ⊕₀ e    ∈ ⊕₀ s    = e ∈ s
 ⊕₀ e    ∈ ⊕₁ s    = ⊥
 ⊕₁ e    ∈ ⊕₀ s    = ⊥
@@ -50,7 +58,8 @@ e₀ ⊗ e₁ ∈ s₀ ⊗ s₁ = (∈s₀ RU.∪ ∈s₁) (e₀ ⊗ e₁)
     where   ∈s₀ = λ { (e₀ ⊗ e₁) → e₀ ∈ s₀ }
             ∈s₁ = λ { (e₀ ⊗ e₁) → e₁ ∈ s₁ }
 
-_∈-Bool_ : ∀ {t} → FinElem t → FinSet t → Bool
+
+_∈-Bool_ : ∀ {t} → Elem t → Subset t → Bool
 ⊙  e    ∈-Bool ⊙  s with lookup e s
 ... | inside  = true
 ... | outside = false
@@ -65,8 +74,8 @@ e₀ ⊗ e₁ ∈-Bool s₀ ⊗ s₁ = (e₀ ∈-Bool s₀) ∧ (e₁ ∈-Bool s
 
 -- Insertion
 
-insert : ∀ {t} → FinElem t → FinSet t → FinSet t
-insert {   ⨀ x}  (⊙ e)     (⊙ s)     = ⊙ (⁅ e ⁆ S∪ s)
+insert : ∀ {t} → Elem t → Subset t → Subset t
+insert {   ⨀ x}  (⊙ e)     (⊙ s)     = ⊙ (⁅ e ⁆ ∪S s)
 insert {tₒ ⨁ t₁} (⊕₀ e)    (⊕₀ s)    = ⊕₀ (insert e s)
 insert {tₒ ⨁ t₁} (⊕₀ e)    (⊕₁ s)    = ⊕₁ s    -- element discarded, inserting to wrong set
 insert {tₒ ⨁ t₁} (⊕₁ e)    (⊕₀ s)    = ⊕₀ s    -- element discarded, inserting to wrong set
@@ -76,8 +85,8 @@ insert {tₒ ⨂ t₁} (e₀ ⊗ e₁) (s₀ ⊗ s₁) = insert e₀ s₀ ⊗ in
 -- Union
 -- non-abelian, i.e., a ∪ b ≠ b ∪ a
 
-_∪_ : ∀ {t} → FinSet t → FinSet t → FinSet t
-⊙  a    ∪ ⊙  b    = ⊙  (a S∪ b)
+_∪_ : ∀ {t} → Subset t → Subset t → Subset t
+⊙  a    ∪ ⊙  b    = ⊙  (a ∪S b)
 ⊕₀ a    ∪ ⊕₀ b    = ⊕₀ (a ∪ b)
 ⊕₀ a    ∪ ⊕₁ b    = ⊕₀ a          -- second set discarded!
 ⊕₁ a    ∪ ⊕₀ b    = ⊕₁ a          -- second set discarded!
@@ -87,8 +96,8 @@ a₀ ⊗ a₁ ∪ b₀ ⊗ b₁ = (a₀ ∪ b₀) ⊗ (a₁ ∪ b₁)
 -- Intersection
 -- non-abelian, i.e., a ∪ b ≠ b ∪ a
 
-_∩_ : ∀ {t} → FinSet t → FinSet t → FinSet t
-⊙  a    ∩ ⊙  b    = ⊙  (a S∩ b)
+_∩_ : ∀ {t} → Subset t → Subset t → Subset t
+⊙  a    ∩ ⊙  b    = ⊙  (a ∩S b)
 ⊕₀ a    ∩ ⊕₀ b    = ⊕₀ (a ∩ b)
 ⊕₀ a    ∩ ⊕₁ b    = ⊕₀ a
 ⊕₁ a    ∩ ⊕₀ b    = ⊕₁ a
@@ -97,8 +106,8 @@ a₀ ⊗ a₁ ∩ b₀ ⊗ b₁ = (a₀ ∩ b₀) ⊗ (a₁ ∩ b₁)
 
 -- Complement
 
-∁ : ∀ {t} → FinSet t → FinSet t
-∁ (⊙ a)     = ⊙ (vmap not a)
+∁ : ∀ {t} → Subset t → Subset t
+∁ (⊙ a)     = ⊙ (mapV not a)
 ∁ (⊕₀ a)    = ⊕₀ (∁ a)
 ∁ (⊕₁ a)    = ⊕₁ (∁ a)
 ∁ (a₀ ⊗ a₁) = (∁ a₀) ⊗ (∁ a₁)
@@ -111,17 +120,30 @@ size (⨀ s) = s
 size (s₀ ⨁ s₁) = size s₀ + size s₁
 size (s₀ ⨂ s₁) = size s₀ * size s₁
 
--- build a list with elements collected from a subset
-Subset⇒List : ∀ {n} → Subset n → List (Fin n)
-Subset⇒List = tesbuS⇒List ∘ reverse
-    where   -- accepts reversed Subset representation
-            tesbuS⇒List : ∀ {n} → Subset n → List (Fin n)
-            tesbuS⇒List {zero} xs = []
-            tesbuS⇒List {suc n} (inside  v∷ xs) = fromℕ n ∷ map inject₁ (tesbuS⇒List xs)
-            tesbuS⇒List {suc n} (outside v∷ xs) =           map inject₁ (tesbuS⇒List xs)
+-- Fin.Subset to List, elements indexed in reverse order
+-- e.g. [++-+] → [3, 2, 0]
+-- FS→L : ∀ {n} → SubsetFin n → List (Fin n)
+-- FS→L {zero}  []V       = []
+-- FS→L {suc n} (inside  ∷V xs) = fromℕ n ∷ map inject₁ (FS→L xs)
+-- FS→L {suc n} (outside ∷V xs) =           map inject₁ (FS→L xs)
 
-⇒List : ∀ {t} → FinSet t → List (FinElem t)
-⇒List (⊙ a)   = map ⊙ (Subset⇒List a)
-⇒List (⊕₀ a)  = map ⊕₀ (⇒List a)
-⇒List (⊕₁ a)  = map ⊕₁ (⇒List a)
-⇒List (a ⊗ b) = zipWith _⊗_ (⇒List a) (⇒List b)
+-- Subset to List
+-- S→L : ∀ {s} → Subset s → List (Elem s)
+-- S→L (⊙ xs)    = map ⊙ (FS→L xs)
+-- S→L (⊕₀ xs)   = map ⊕₀ (S→L xs)
+-- S→L (⊕₁ ys)   = map ⊕₁ (S→L ys)
+-- S→L (xs ⊗ ys) = zipWith _⊗_ (S→L xs) (S→L ys)
+
+
+-- List to Fin.Subset
+-- e.g. [3, 2, 0] → [++-+]
+-- L→FS : ∀ {n} → List (Fin n) → SubsetFin n
+-- L→FS []       = replicate outside
+-- L→FS (x ∷ xs) = flipAt (toℕ x) (L→FS xs)
+--     where   -- make the nth element inside (reverse indexed)
+-- flipAt : ∀ {n} → ℕ → SubsetFin n → SubsetFin n
+-- flipAt i []V = []V
+-- flipAt {suc n} i (x ∷V xs) with compare n i
+-- flipAt {suc .n}             .(suc (n + k)) (x ∷V xs) | less     n k = x      ∷V xs -- quit searching
+-- flipAt {suc .n}             n              (x ∷V xs) | equal   .n   = inside ∷V xs -- found
+-- flipAt {suc .(suc (i + k))} i              (x ∷V xs) | greater .i k = x      ∷V flipAt i xs -- keep searching
