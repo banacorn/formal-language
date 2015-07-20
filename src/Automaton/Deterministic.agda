@@ -5,7 +5,7 @@ module Automaton.Deterministic where
 open import Data.Nat
 open import Data.Bool
 open import Data.Fin
-open import Data.List
+open import Data.List using (List; []; _∷_)
 open import Data.Dist renaming (_∪_ to _∪D_; _∩_ to _∩D_)
 open import Function
 
@@ -55,6 +55,19 @@ _∩_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ acce
             accept₂ : Elem (Q₀ ⨂ Q₁) → Bool
             accept₂ (x ⊗ y) = accept₀ x ∧ accept₁ y
 
--- Complement
+-- Concatenation
+_++_ : ∀ {Q₀ Q₁ Σ} → DFA Q₀ Σ → DFA Q₁ Σ → DFA (Q₀ ⨁ Q₁) Σ
+_++_ {Q₀} {Q₁} {Σ} (dfa δ₀ start₀ accept₀) (dfa δ₁ start₁ accept₁) =
+    dfa δ₂ start₂ accept₂
+    where   δ₂ : Elem (Q₀ ⨁ Q₁) → Elem Σ → Elem (Q₀ ⨁ Q₁)
+            δ₂ (⊕₀ s) a = ⊕₀ (δ₀ s a)
+            δ₂ (⊕₁ s) a = ⊕₁ (δ₁ s a)
+            start₂ : Elem (Q₀ ⨁ Q₁)
+            start₂ = ⊕₀ start₀
+            accept₂ : Elem (Q₀ ⨁ Q₁) → Bool
+            accept₂ (⊕₀ s) = false
+            accept₂ (⊕₁ s) = accept₁ s
+
+-- Negation
 ¬_ : ∀ {Q Σ} → DFA Q Σ → DFA Q Σ
 ¬_ (dfa δ start accept) = dfa δ start (not ∘ accept)
