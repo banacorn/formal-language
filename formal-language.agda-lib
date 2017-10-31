@@ -1,0 +1,3 @@
+name: formal-language
+depend: standard-library
+include: src
