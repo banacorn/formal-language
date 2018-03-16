@@ -57,64 +57,18 @@ acceptable (dfa δ initial accepts) = accepts initial
 
 open import Relation.Unary hiding (Decidable)
 
-Language : Set → Set _
+Language : (Σ : Set) → Set _
 Language Σ = Pred (String Σ) zero
 
 -- machine ⇒ language
 ⟦_⟧ : ∀ {P Σ} → DFA P Σ → Language Σ
 ⟦ machine ⟧ = λ string → T (acceptable (steps machine string))
 
--- prefix : ∀ {Σ} → Σ → Language Σ → Language Σ
--- prefix x language = λ xs → language (x ∷ xs)
---
--- prefix-step : ∀ {P Σ x} → (M : DFA P Σ) → ⟦ M ⟧ ⊆ prefix x ⟦ step M x ⟧
--- prefix-step {x = x} M {[]}      P = {!   !}
--- prefix-step {x = x} M {x' ∷ xs} P = {! prefix-step {x = x} (step M x) {x' ∷ xs}  !}
-
 _∈?_ : ∀ {P Σ} → (string : String Σ) → (M : DFA P Σ) → Dec (string ∈ ⟦ M ⟧)
 string ∈? machine with acceptable (steps machine string)
 string ∈? machine | false = no id
 string ∈? machine | true = yes tt
 
---------------------------------------------------------------------------------
---  language equivalence
---------------------------------------------------------------------------------
-
-
-
--- open import Function.Equivalence
---
--- -- automaton equivalence is a heterogeneous binary relation
--- _≋_ : ∀ {P Q Σ} → REL (DFA P Σ) (DFA Q Σ) _
--- A ≋ B = A ⇔ {!   !} --∀ xs → xs ∈ A ⇔ xs ∈ B
---
--- ⇔-setoid-isEquivalence : IsEquivalence {_} {zero} _⇔_
--- ⇔-setoid-isEquivalence = Setoid.isEquivalence (FuncEq.⇔-setoid _)
---
--- ≋-refl : {P Σ : Set} → Reflexive (_≋_ {P} {P} {Σ})
--- ≋-refl _ = IsEquivalence.refl ⇔-setoid-isEquivalence
---
--- ≋-sym : {P Q Σ : Set} → Sym (_≋_ {P} {Q} {Σ}) (_≋_ {Q} {P} {Σ})
--- ≋-sym A≋B string = IsEquivalence.sym ⇔-setoid-isEquivalence (A≋B string)
---
--- ≋-trans : {P Q R Σ : Set} → Trans (_≋_ {P} {Q} {Σ}) (_≋_ {Q} {R} {Σ}) (_≋_ {P} {R} {Σ})
--- ≋-trans A≋B B≋C string = IsEquivalence.trans ⇔-setoid-isEquivalence (A≋B string) (B≋C string)
---
--- ≋-isEquivalence : {P Σ : Set} → IsEquivalence (_≋_ {P} {P} {Σ})
--- ≋-isEquivalence = record
---     { refl = ≋-refl
---     ; sym = ≋-sym
---     ; trans = ≋-trans
---     }
---
--- ≋-setoid : (Q Σ : Set) → Setoid _ _
--- ≋-setoid Q Σ = record
---     { Carrier = DFA Q Σ
---     ; _≈_ = _≋_
---     ; isEquivalence = ≋-isEquivalence
---     }
-
---
 --------------------------------------------------------------------------------
 --  product and sum
 --------------------------------------------------------------------------------
@@ -146,78 +100,6 @@ A ∪ᴹ B = dfa
 infixl 31 Cᴹ_
 Cᴹ_ : ∀ {P Σ} → DFA P Σ → DFA P Σ
 Cᴹ dfa δ initial accepts = dfa δ initial (not ∘ accepts)
-
-module Properties where
-
-    open import Function.Equality using (Π)
-    open Π
-    open import Function.Equivalence using (_⇔_; Equivalence)
-    open import Data.Bool.Properties as BoolProp
-    open import Relation.Nullary.Negation
-    -- extracting one direction of a function equivalence
-    ⟦_⟧→ : {A B : Set} → A ⇔ B → A → B
-    ⟦ A⇔B ⟧→ A = Equivalence.to A⇔B ⟨$⟩ A
-
-    ←⟦_⟧ : {A B : Set} → A ⇔ B → B → A
-    ←⟦ A⇔B ⟧ B = Equivalence.from A⇔B ⟨$⟩ B
-
-
-    infixl 4 _≋_
-    _≋_ : ∀ {Σ} → (P Q : Language Σ) → Set
-    P ≋ Q = P ⊆ Q × Q ⊆ P
-
-    ∩⇒ : ∀ {P Q Σ} → (A : DFA P Σ) → (B : DFA Q Σ)
-        → ⟦ A ∩ᴹ B ⟧ ⊆ ⟦ A ⟧ ∩ ⟦ B ⟧
-    ∩⇒ A B {[]}     P = ⟦ BoolProp.T-∧ ⟧→ P
-    ∩⇒ A B {x ∷ xs} P = ∩⇒ (step A x) (step B x) {xs} P
-
-    ∩⇐ : ∀ {P Q Σ} → (A : DFA P Σ) → (B : DFA Q Σ)
-        → ⟦ A ⟧ ∩ ⟦ B ⟧ ⊆ ⟦ A ∩ᴹ B ⟧
-    ∩⇐ A B {[]}     P = ←⟦ BoolProp.T-∧ ⟧ P
-    ∩⇐ A B {x ∷ xs} P = ∩⇐ (step A x) (step B x) {xs} P
-
-    ∪⇒ : ∀ {P Q Σ} → (A : DFA P Σ) → (B : DFA Q Σ)
-        → ⟦ A ∪ᴹ B ⟧ ⊆ ⟦ A ⟧ ∪ ⟦ B ⟧
-    ∪⇒ A B {[]}     P = ⟦ BoolProp.T-∨ ⟧→ P
-    ∪⇒ A B {x ∷ xs} P = ∪⇒ (step A x) (step B x) {xs} P
-
-    ∪⇐ : ∀ {P Q Σ} → (A : DFA P Σ) → (B : DFA Q Σ)
-        → ⟦ A ⟧ ∪ ⟦ B ⟧ ⊆ ⟦ A ∪ᴹ B ⟧
-    ∪⇐ A B {[]}     P = ←⟦ BoolProp.T-∨ ⟧ P
-    ∪⇐ A B {x ∷ xs} P = ∪⇐ (step A x) (step B x) {xs} P
-
-    T-not-¬ : {b : Bool} → T (not b) → ¬ (T b)
-    T-not-¬ {false} P Q = Q
-    T-not-¬ {true}  P Q = P
-
-    T-¬-not : {b : Bool} → ¬ (T b) → T (not b)
-    T-¬-not {false} P = tt
-    T-¬-not {true}  P = P tt
-
-    C⇒ : ∀ {P Σ} → (M : DFA P Σ)
-        → ∁ ⟦ M ⟧ ⊆ ⟦ Cᴹ M ⟧
-    C⇒ M {[]}     = T-¬-not
-    C⇒ M {x ∷ xs} = C⇒ (step M x) {xs}
-
-    C⇐ : ∀ {P Σ} → (M : DFA P Σ)
-        → ⟦ Cᴹ M ⟧ ⊆ ∁ ⟦ M ⟧
-    C⇐ M {[]}     = T-not-¬
-    C⇐ M {x ∷ xs} = C⇐ (step M x) {xs}
-
-    C-∩-∅⇒ : ∀ {P Σ} → (M : DFA P Σ) → ⟦ M ∩ᴹ Cᴹ M ⟧ ⊆ ∅
-    C-∩-∅⇒ M {[]} P =
-        let
-            Q , ¬Q = ∩⇒ M (Cᴹ M) {[]} P
-        in contradiction Q (C⇐ M {[]} ¬Q)
-    C-∩-∅⇒ M {x ∷ xs} = C-∩-∅⇒ (step M x) {xs}
-
-    C-∩-∅⇐ : ∀ {P Σ} → (M : DFA P Σ) → ∅ ⊆ ⟦ M ∩ᴹ Cᴹ M ⟧
-    C-∩-∅⇐ M {[]} ()
-    C-∩-∅⇐ M {x ∷ xs} = C-∩-∅⇐ (step M x) {xs}
-
-    C-∩-U⇒ : ∀ {P Σ} → (M : DFA P Σ) → ⟦ M ∪ᴹ Cᴹ M ⟧ ⊆ U
-    C-∩-U⇒ M {[]} P = tt
-    C-∩-U⇒ M {x ∷ xs} = C-∩-U⇒ (step M x) {xs}
 
 --------------------------------------------------------------------------------
 --  concatenation
@@ -335,3 +217,125 @@ _* {Q} {Σ} M = dfa δ' (initial M) accepts'
         open import Relation.Nullary.Decidable
         accepts' : Carrier Q → Bool
         accepts' state = ⌊ state ≟s initial M ⌋
+
+--------------------------------------------------------------------------------
+--  Properties
+--------------------------------------------------------------------------------
+
+module Properties (Σ : Set) where
+
+    open import Function.Equality using (Π)
+    open Π
+    open import Function.Equivalence using (_⇔_; Equivalence)
+    open import Data.Bool.Properties as BoolProp
+    open import Relation.Nullary.Negation
+    -- extracting one direction of a function equivalence
+    ⟦_⟧→ : {A B : Set} → A ⇔ B → A → B
+    ⟦ A⇔B ⟧→ A = Equivalence.to A⇔B ⟨$⟩ A
+
+    ←⟦_⟧ : {A B : Set} → A ⇔ B → B → A
+    ←⟦ A⇔B ⟧ B = Equivalence.from A⇔B ⟨$⟩ B
+
+    open import Relation.Unary.Membership (String Σ)
+    open ⊆-Reasoning
+
+    ∩-homo⇒ : ∀ {P Q} → (A : DFA P Σ) → (B : DFA Q Σ)
+        → ⟦ A ∩ᴹ B ⟧ ⊆′ ⟦ A ⟧ ∩ ⟦ B ⟧
+    ∩-homo⇒ A B []       = ⟦ BoolProp.T-∧ ⟧→
+    ∩-homo⇒ A B (x ∷ xs) = ∩-homo⇒ (step A x) (step B x) xs
+
+    ∩-homo⇐ : ∀ {P Q} → (A : DFA P Σ) → (B : DFA Q Σ)
+        → ⟦ A ⟧ ∩ ⟦ B ⟧ ⊆′ ⟦ A ∩ᴹ B ⟧
+    ∩-homo⇐ A B []       = ←⟦ BoolProp.T-∧ ⟧
+    ∩-homo⇐ A B (x ∷ xs) = ∩-homo⇐ (step A x) (step B x) xs
+
+    ∩-homo : ∀ {P Q} → (A : DFA P Σ) → (B : DFA Q Σ)
+        → ⟦ A ∩ᴹ B ⟧ ≋ ⟦ A ⟧ ∩ ⟦ B ⟧
+    ∩-homo A B = (∩-homo⇒ A B) , (∩-homo⇐ A B)
+
+    ∩-sym⇒ : ∀ {P Q} → (A : DFA P Σ) → (B : DFA Q Σ)
+        → ⟦ A ∩ᴹ B ⟧ ⊆′ ⟦ B ∩ᴹ A ⟧
+    ∩-sym⇒ A B xs P =
+            xs
+        ∈⟨ P ⟩
+            ⟦ A ∩ᴹ B ⟧
+        ⊆⟨ ∩-homo⇒ A B ⟩
+            ⟦ A ⟧ ∩ ⟦ B ⟧
+        →⟨ swap ⟩
+            ⟦ B ⟧ ∩ ⟦ A ⟧
+        ⊆⟨ ∩-homo⇐ B A ⟩
+            ⟦ B ∩ᴹ A ⟧
+        ∎
+
+    ∩-sym : ∀ {P Q} → (A : DFA P Σ) → (B : DFA Q Σ)
+        → ⟦ A ∩ᴹ B ⟧ ≋ ⟦ B ∩ᴹ A ⟧
+    ∩-sym A B = (∩-sym⇒ A B) , (∩-sym⇒ B A)
+
+    ∪-homo⇒ : ∀ {P Q} → (A : DFA P Σ) → (B : DFA Q Σ)
+        → ⟦ A ∪ᴹ B ⟧ ⊆′ ⟦ A ⟧ ∪ ⟦ B ⟧
+    ∪-homo⇒ A B []       P = ⟦ BoolProp.T-∨ ⟧→ P
+    ∪-homo⇒ A B (x ∷ xs) P = ∪-homo⇒ (step A x) (step B x) xs P
+
+    ∪-homo⇐ : ∀ {P Q} → (A : DFA P Σ) → (B : DFA Q Σ)
+        → ⟦ A ⟧ ∪ ⟦ B ⟧ ⊆′ ⟦ A ∪ᴹ B ⟧
+    ∪-homo⇐ A B []       P = ←⟦ BoolProp.T-∨ ⟧ P
+    ∪-homo⇐ A B (x ∷ xs) P = ∪-homo⇐ (step A x) (step B x) xs P
+
+    ∪-homo : ∀ {P Q} → (A : DFA P Σ) → (B : DFA Q Σ)
+        → ⟦ A ∪ᴹ B ⟧ ≋ ⟦ A ⟧ ∪ ⟦ B ⟧
+    ∪-homo A B = (∪-homo⇒ A B) , (∪-homo⇐ A B)
+
+    ∪-sym⇒ : ∀ {P Q} → (A : DFA P Σ) → (B : DFA Q Σ)
+        → ⟦ A ∪ᴹ B ⟧ ⊆′ ⟦ B ∪ᴹ A ⟧
+    ∪-sym⇒ A B xs P =
+            xs
+        ∈⟨ P ⟩
+            ⟦ A ∪ᴹ B ⟧
+        ⊆⟨ ∪-homo⇒ A B ⟩
+            ⟦ A ⟧ ∪ ⟦ B ⟧
+        →⟨ ⊎-swap ⟩
+            ⟦ B ⟧ ∪ ⟦ A ⟧
+        ⊆⟨ ∪-homo⇐ B A ⟩
+            ⟦ B ∪ᴹ A ⟧
+        ∎
+        where
+            ⊎-swap : ∀ {a b} {A : Set a} {B : Set b} → A ⊎ B → B ⊎ A
+            ⊎-swap (inj₁ x) = inj₂ x
+            ⊎-swap (inj₂ y) = inj₁ y
+
+    ∪-sym : ∀ {P Q} → (A : DFA P Σ) → (B : DFA Q Σ)
+        → ⟦ A ∪ᴹ B ⟧ ≋ ⟦ B ∪ᴹ A ⟧
+    ∪-sym A B = (∪-sym⇒ A B) , (∪-sym⇒ B A)
+
+    T-not-¬ : {b : Bool} → T (not b) → ¬ (T b)
+    T-not-¬ {false} P Q = Q
+    T-not-¬ {true}  P Q = P
+
+    T-¬-not : {b : Bool} → ¬ (T b) → T (not b)
+    T-¬-not {false} P = tt
+    T-¬-not {true}  P = P tt
+
+    C⇒ : ∀ {P} → (M : DFA P Σ)
+        → ∁ ⟦ M ⟧ ⊆ ⟦ Cᴹ M ⟧
+    C⇒ M {[]}     = T-¬-not
+    C⇒ M {x ∷ xs} = C⇒ (step M x) {xs}
+
+    C⇐ : ∀ {P} → (M : DFA P Σ)
+        → ⟦ Cᴹ M ⟧ ⊆ ∁ ⟦ M ⟧
+    C⇐ M {[]}     = T-not-¬
+    C⇐ M {x ∷ xs} = C⇐ (step M x) {xs}
+
+    C-∩-∅⇒ : ∀ {P} → (M : DFA P Σ) → ⟦ M ∩ᴹ Cᴹ M ⟧ ⊆ ∅
+    C-∩-∅⇒ M {[]} P =
+        let
+            Q , ¬Q = ∩-homo⇒ M (Cᴹ M) [] P
+        in contradiction Q (C⇐ M {[]} ¬Q)
+    C-∩-∅⇒ M {x ∷ xs} = C-∩-∅⇒ (step M x) {xs}
+
+    C-∩-∅⇐ : ∀ {P} → (M : DFA P Σ) → ∅ ⊆ ⟦ M ∩ᴹ Cᴹ M ⟧
+    C-∩-∅⇐ M {[]} ()
+    C-∩-∅⇐ M {x ∷ xs} = C-∩-∅⇐ (step M x) {xs}
+
+    C-∩-U⇒ : ∀ {P} → (M : DFA P Σ) → ⟦ M ∪ᴹ Cᴹ M ⟧ ⊆ U
+    C-∩-U⇒ M {[]} P = tt
+    C-∩-U⇒ M {x ∷ xs} = C-∩-U⇒ (step M x) {xs}
