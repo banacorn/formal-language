@@ -1,27 +1,13 @@
 module DFA where
 
--- open import Algebra using (BooleanAlgebra)
 open import Level
--- open import Data.Product
--- open import Data.Sum
 open import Data.Unit
 open import Data.List using (List; []; _∷_)
--- open import Data.List.Base using (foldr)
 open import Data.Bool using (Bool; true; false; _∧_; _∨_; T; not)
--- open import Data.Bool.Properties as BoolProp using ()
- -- using (T-∧; T-≡; T-not-≡; not-¬)
 open import Function
--- open import Function.Equivalence as FuncEq using (Equivalence; _⇔_)
--- open import Function.Equality using (Π)
--- open import Relation.Nullary.Decidable
 open import Relation.Nullary using (Dec; yes; no; ¬_)
 open import Relation.Nullary.Negation using (contradiction)
 open import Relation.Binary
--- open import Relation.Binary.PropositionalEquality as Eq
---     using (_≡_; _≢_; refl)
-
--- open Π
--- open Equivalence
 
 open DecSetoid
 
@@ -336,6 +322,15 @@ module Properties (Σ : Set) where
     C-∩-∅⇐ M {[]} ()
     C-∩-∅⇐ M {x ∷ xs} = C-∩-∅⇐ (step M x) {xs}
 
-    C-∩-U⇒ : ∀ {P} → (M : DFA P Σ) → ⟦ M ∪ᴹ Cᴹ M ⟧ ⊆ U
-    C-∩-U⇒ M {[]} P = tt
-    C-∩-U⇒ M {x ∷ xs} = C-∩-U⇒ (step M x) {xs}
+    C-∪-U⇒ : ∀ {P} → (M : DFA P Σ) → ⟦ M ∪ᴹ Cᴹ M ⟧ ⊆ U
+    C-∪-U⇒ M {[]} P = tt
+    C-∪-U⇒ M {x ∷ xs} = C-∪-U⇒ (step M x) {xs}
+
+    C-∪-U⇐ : ∀ {P} → (M : DFA P Σ) → U ⊆ ⟦ M ∪ᴹ Cᴹ M ⟧
+    C-∪-U⇐ M {[]} P with [] ∈? M
+    C-∪-U⇐ M {[]} P | yes p = ←⟦ T-∨ ⟧ (inj₁ p)
+    C-∪-U⇐ M {[]} P | no ¬p = ←⟦ T-∨
+            {accepts M (initial M)}
+            {not (accepts M (initial M))}
+        ⟧ (inj₂ (T-¬-not ¬p))
+    C-∪-U⇐ M {x ∷ xs} = C-∪-U⇐ (step M x) {xs}
